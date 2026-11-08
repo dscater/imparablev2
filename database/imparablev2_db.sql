@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 08-11-2026 a las 21:07:40
+-- Tiempo de generación: 08-11-2026 a las 21:12:55
 -- Versión del servidor: 8.0.30
 -- Versión de PHP: 8.2.22
 
@@ -414,7 +414,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (44, '2026_11_08_163239_create_inscripcion_pagos_table', 1),
 (45, '2026_11_08_163240_create_movimiento_cajas_table', 1),
 (46, '2026_11_08_163241_create_movimiento_metodos_table', 1),
-(47, '2026_11_08_164916_create_plan_disciplinas_table', 1);
+(47, '2026_11_08_164916_create_plan_disciplinas_table', 1),
+(48, '2026_11_08_171238_create_telescope_entries_table', 2);
 
 -- --------------------------------------------------------
 
@@ -784,6 +785,68 @@ CREATE TABLE `sucursal_plans` (
   `plan_id` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `telescope_entries`
+--
+
+CREATE TABLE `telescope_entries` (
+  `sequence` bigint UNSIGNED NOT NULL,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `batch_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `family_hash` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `should_display_on_index` tinyint(1) NOT NULL DEFAULT '1',
+  `type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `telescope_entries`
+--
+
+INSERT INTO `telescope_entries` (`sequence`, `uuid`, `batch_id`, `family_hash`, `should_display_on_index`, `type`, `content`, `created_at`) VALUES
+(1, 'a32dd4a0-421c-406d-b80f-0c5b5a0e8042', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"select exists (select 1 from information_schema.tables where table_schema = schema() and table_name = \'migrations\' and table_type in (\'BASE TABLE\', \'SYSTEM VERSIONED\')) as `exists`\",\"time\":\"4.29\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"472343cbf78736393ab995dc1735b75f\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(2, 'a32dd4a0-4558-484c-b6cb-1fd835edb6e5', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"select exists (select 1 from information_schema.tables where table_schema = schema() and table_name = \'migrations\' and table_type in (\'BASE TABLE\', \'SYSTEM VERSIONED\')) as `exists`\",\"time\":\"1.33\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"472343cbf78736393ab995dc1735b75f\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(3, 'a32dd4a0-4722-4b71-aa25-2a6dacb24e48', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"select `migration` from `migrations` order by `batch` asc, `migration` asc\",\"time\":\"0.73\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"ed08a59c7f0b8851f0fd2291ca94d5c7\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(4, 'a32dd4a0-4802-431a-89bd-52e1d14808f4', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"select `migration` from `migrations` order by `batch` asc, `migration` asc\",\"time\":\"0.32\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"ed08a59c7f0b8851f0fd2291ca94d5c7\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(5, 'a32dd4a0-4874-472c-b960-1dc675206cec', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"select max(`batch`) as aggregate from `migrations`\",\"time\":\"0.37\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"06e60d7b3d1a0c2de504de4e6f27735e\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(6, 'a32dd4a0-5107-48d4-b633-7b78642c1b16', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"create table `telescope_entries` (`sequence` bigint unsigned not null auto_increment primary key, `uuid` char(36) not null, `batch_id` char(36) not null, `family_hash` varchar(255) null, `should_display_on_index` tinyint(1) not null default \'1\', `type` varchar(20) not null, `content` longtext not null, `created_at` datetime null) default character set utf8mb4 collate \'utf8mb4_unicode_ci\'\",\"time\":\"9.79\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"d9429550f8856c1af1c89f24a6440cb5\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(7, 'a32dd4a0-54f2-4bc7-a2c5-7eaac8a0d18b', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries` add unique `telescope_entries_uuid_unique`(`uuid`)\",\"time\":\"9.44\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"9fb859ae1faff74c6b9e0b70dfd8eea9\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(8, 'a32dd4a0-5777-4a76-8f52-b921a19be3d6', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries` add index `telescope_entries_batch_id_index`(`batch_id`)\",\"time\":\"5.95\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"2b075509a9242d6e3f622536c5ccca07\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(9, 'a32dd4a0-5a1e-417b-9548-c48f61060759', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries` add index `telescope_entries_family_hash_index`(`family_hash`)\",\"time\":\"6.29\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"3d25a2a244bd2028dfa0326d3dbf7f4c\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(10, 'a32dd4a0-5cce-43a5-82d5-cf48cfa4549d', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries` add index `telescope_entries_created_at_index`(`created_at`)\",\"time\":\"6.43\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"7352e7f84460fb7ffc450e7ea4de9dc7\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(11, 'a32dd4a0-5fd1-456d-ad3b-1b56fa62933c', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries` add index `telescope_entries_type_should_display_on_index_index`(`type`, `should_display_on_index`)\",\"time\":\"7.22\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":24,\"hash\":\"7317a4cad2dfa1a5167548a6acd0b6a5\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(12, 'a32dd4a0-6329-4f4d-a4a5-fefe3b37a4a6', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"create table `telescope_entries_tags` (`entry_uuid` char(36) not null, `tag` varchar(255) not null, primary key (`entry_uuid`, `tag`)) default character set utf8mb4 collate \'utf8mb4_unicode_ci\'\",\"time\":\"7.28\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":41,\"hash\":\"f8c7e1e3c3d557b70e7a918609f839f2\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(13, 'a32dd4a0-69fd-4736-ab54-81e97bcbef3b', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries_tags` add index `telescope_entries_tags_tag_index`(`tag`)\",\"time\":\"16.88\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":41,\"hash\":\"0bdb35d17e876d6225a7774a2c17647d\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(14, 'a32dd4a0-757e-4222-b827-95289c581750', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"alter table `telescope_entries_tags` add constraint `telescope_entries_tags_entry_uuid_foreign` foreign key (`entry_uuid`) references `telescope_entries` (`uuid`) on delete cascade\",\"time\":\"28.86\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":41,\"hash\":\"662a818f80a3a9ba2570081fd7a6af2f\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(15, 'a32dd4a0-78a6-46bf-bd50-f245f344e471', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"create table `telescope_monitoring` (`tag` varchar(255) not null, primary key (`tag`)) default character set utf8mb4 collate \'utf8mb4_unicode_ci\'\",\"time\":\"7.40\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\database\\\\migrations\\\\2026_11_08_171238_create_telescope_entries_table.php\",\"line\":54,\"hash\":\"18d1fa09eade84a80848982d91caec5c\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(16, 'a32dd4a0-7b5c-47bd-abb0-feec5a07f2c4', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'query', '{\"connection\":\"mysql\",\"driver\":\"mysql\",\"bindings\":[],\"sql\":\"insert into `migrations` (`migration`, `batch`) values (\'2026_11_08_171238_create_telescope_entries_table\', 2)\",\"time\":\"1.59\",\"slow\":false,\"file\":\"C:\\\\laragon\\\\www\\\\imparablev2\\\\artisan\",\"line\":16,\"hash\":\"f2b8e8e4266db16aec6db940c643eb68\",\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(17, 'a32dd4a0-7bea-4a89-aa3f-4d3c93ac363c', 'a32dd4a0-7ca8-4a9f-9a57-8793cd45f22d', NULL, 1, 'command', '{\"command\":\"migrate\",\"exit_code\":0,\"arguments\":{\"command\":\"migrate\"},\"options\":{\"database\":null,\"force\":false,\"path\":[],\"realpath\":false,\"schema-path\":null,\"pretend\":false,\"seed\":false,\"seeder\":null,\"step\":false,\"graceful\":false,\"isolated\":false,\"help\":false,\"silent\":false,\"quiet\":false,\"verbose\":false,\"version\":false,\"ansi\":null,\"no-interaction\":false,\"env\":null},\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:41'),
+(18, 'a32dd4a3-fba7-4fd5-b716-6944a7a06d59', 'a32dd4a3-ffff-4231-a453-8e8b0fe9a2f1', NULL, 1, 'command', '{\"command\":\"optimize\",\"exit_code\":0,\"arguments\":{\"command\":\"optimize\"},\"options\":{\"except\":null,\"help\":false,\"silent\":false,\"quiet\":false,\"verbose\":false,\"version\":false,\"ansi\":null,\"no-interaction\":false,\"env\":null},\"hostname\":\"DESKTOP-M0TID9S\"}', '2026-11-08 17:12:43');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `telescope_entries_tags`
+--
+
+CREATE TABLE `telescope_entries_tags` (
+  `entry_uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tag` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `telescope_monitoring`
+--
+
+CREATE TABLE `telescope_monitoring` (
+  `tag` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1302,6 +1365,30 @@ ALTER TABLE `sucursal_plans`
   ADD KEY `sucursal_plans_plan_id_foreign` (`plan_id`);
 
 --
+-- Indices de la tabla `telescope_entries`
+--
+ALTER TABLE `telescope_entries`
+  ADD PRIMARY KEY (`sequence`),
+  ADD UNIQUE KEY `telescope_entries_uuid_unique` (`uuid`),
+  ADD KEY `telescope_entries_batch_id_index` (`batch_id`),
+  ADD KEY `telescope_entries_family_hash_index` (`family_hash`),
+  ADD KEY `telescope_entries_created_at_index` (`created_at`),
+  ADD KEY `telescope_entries_type_should_display_on_index_index` (`type`,`should_display_on_index`);
+
+--
+-- Indices de la tabla `telescope_entries_tags`
+--
+ALTER TABLE `telescope_entries_tags`
+  ADD PRIMARY KEY (`entry_uuid`,`tag`),
+  ADD KEY `telescope_entries_tags_tag_index` (`tag`);
+
+--
+-- Indices de la tabla `telescope_monitoring`
+--
+ALTER TABLE `telescope_monitoring`
+  ADD PRIMARY KEY (`tag`);
+
+--
 -- Indices de la tabla `tipo_ingresos`
 --
 ALTER TABLE `tipo_ingresos`
@@ -1496,7 +1583,7 @@ ALTER TABLE `metodo_pagos`
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT de la tabla `modulos`
@@ -1617,6 +1704,12 @@ ALTER TABLE `sucursals`
 --
 ALTER TABLE `sucursal_plans`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `telescope_entries`
+--
+ALTER TABLE `telescope_entries`
+  MODIFY `sequence` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_ingresos`
@@ -1883,6 +1976,12 @@ ALTER TABLE `salida_productos`
 ALTER TABLE `sucursal_plans`
   ADD CONSTRAINT `sucursal_plans_plan_id_foreign` FOREIGN KEY (`plan_id`) REFERENCES `plans` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `sucursal_plans_sucursal_id_foreign` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursals` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `telescope_entries_tags`
+--
+ALTER TABLE `telescope_entries_tags`
+  ADD CONSTRAINT `telescope_entries_tags_entry_uuid_foreign` FOREIGN KEY (`entry_uuid`) REFERENCES `telescope_entries` (`uuid`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `traspasos`
