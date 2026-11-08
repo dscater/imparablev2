@@ -1,0 +1,454 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Certificado;
+use App\Models\User;
+use App\Models\Venta;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+
+class UserService
+{
+    private const CACHE_TTL = 28800; // 8 horas
+
+    private $modulo = "USUARIOS";
+    public function __construct(private  CargarArchivoService $cargarArchivoService, private HistorialAccionService $historialAccionService) {}
+
+    public function listado(
+        $activo = null,
+        array $columns = [
+            'id',
+            "usuario",
+            "nombre",
+            "paterno",
+            "materno",
+            "ci",
+            "ci_exp",
+            "role_id",
+            "sucursal_id",
+            "sucursal_todos",
+            "status",
+        ],
+        array $hidden = []
+    ) {
+
+        // Garantizar columnas necesarias
+        $columns = array_unique(array_merge(
+            ['id', 'sucursal_id', 'role_id'],
+            $columns
+        ));
+
+        return Cache::remember(
+            'usuarios_listado_' . md5(json_encode([$activo, $columns])),
+            self::CACHE_TTL,
+            function () use ($activo, $columns, $hidden) {
+
+                $users = User::select($columns)
+                    ->with([
+                        "sucursal:id,nombre",
+                        "role:id,nombre"
+                    ])
+                    ->where("users.id", "!=", 1);
+
+                if ($activo == 1) {
+                    $users->where("status", 1);
+                }
+
+                return $users->get()->makeHidden($hidden);
+            }
+        );
+    }
+
+
+    public function listadoByTipo(
+        $tipo = null,
+        $order = null,
+        $order_ad = 'asc',
+        $activo = null,
+        array $columns = [
+            'id',
+            "usuario",
+            "nombre",
+            "paterno",
+            "materno",
+            "ci",
+            "ci_exp",
+            "role_id",
+            "sucursal_id",
+            "sucursal_todos",
+            "status",
+        ],
+        array $hidden = []
+    ) {
+        $version = Cache::get('usuarios_cache_version', 1);
+
+        // Garantizar columnas necesarias
+        $columns = array_unique(array_merge(
+            ['id', 'sucursal_id', 'role_id'],
+            $columns
+        ));
+
+        $key = 'usuarios_v' . $version . '_tipo_' . md5(serialize([
+            'tipo' => $tipo,
+            'order' => $order,
+            'order_ad' => $order_ad,
+            'activo' => $activo,
+            'columns' => $columns,
+        ]));
+
+        return Cache::remember(
+            $key,
+            self::CACHE_TTL,
+            function () use ($tipo, $order, $order_ad, $activo, $columns, $hidden) {
+
+                $usuarios = User::select($columns)
+                    ->with([
+                        "sucursal:id,nombre",
+                        "role:id,nombre"
+                    ])
+                    ->where('users.id', '!=', 1);
+
+                if ($tipo !== null) {
+                    if (is_array($tipo)) {
+                        $usuarios->whereIn('tipo', $tipo);
+                    } else {
+                        $usuarios->where('tipo', $tipo);
+                    }
+                }
+
+                if ($order !== null) {
+                    $usuarios->orderBy('users.id', $order_ad);
+                }
+
+                if ($activo == 1) {
+                    $usuarios->where('status', 1);
+                }
+
+                return $usuarios->get()->makeHidden($hidden);
+            }
+        );
+    }
+
+    public function limpiarCacheListado(): void
+    {
+        Cache::forget('usuarios_listado');
+
+        $version = Cache::get('usuarios_cache_version', 1);
+
+        Cache::forever('usuarios_cache_version', $version + 1);
+    }
+
+    /**
+     * Lista de users paginado con filtros
+     *
+     * @param integer $length
+     * @param integer $page
+     * @param string $search
+     * @param array $columnsSerachLike
+     * @param array $columnsFilter
+     * @return LengthAwarePaginator
+     */
+    public function listadoPaginado(int $length, int $page, string $search, array $columnsSerachLike = [], array $columnsFilter = [], array $columnsBetweenFilter = [], array $orderBy = []): LengthAwarePaginator
+    {
+        $users = User::select("users.*")
+            ->with(["sucursal:id,nombre", "role:id,nombre"])
+            ->where("users.id", "!=", 1);
+
+        $users->buscarNombre($search);
+
+        // Ordenamiento
+        foreach ($orderBy as $value) {
+            if (isset($value[0], $value[1])) {
+                $users->orderBy($value[0], $value[1]);
+            }
+        }
+
+
+        $users = $users->paginate($length, ['*'], 'page', $page);
+        return $users;
+    }
+
+
+    /**
+     * Lista de users paginado con filtros (eliminados)
+     *
+     * @param integer $length
+     * @param integer $page
+     * @param string $search
+     * @param array $columnsSerachLike
+     * @param array $columnsFilter
+     * @return LengthAwarePaginator
+     */
+    public function listadoPaginadoEliminados(int $length, int $page, string $search, array $columnsSerachLike = [], array $columnsFilter = [], array $columnsBetweenFilter = [], array $orderBy = []): LengthAwarePaginator
+    {
+        $users = User::select("users.*")
+            ->where("id", "!=", 1);
+        $users->where("tipo", "!=", "POSTULANTE");
+        $users->where("status", 0);
+
+        // Filtros exactos
+        foreach ($columnsFilter as $key => $value) {
+            if (!is_null($value)) {
+                $users->where("users.$key", $value);
+            }
+        }
+
+        // Filtros por rango
+        foreach ($columnsBetweenFilter as $key => $value) {
+            if (isset($value[0], $value[1])) {
+                $users->whereBetween("users.$key", $value);
+            }
+        }
+
+        // Búsqueda en múltiples columnas con LIKE
+        if (!empty($search) && !empty($columnsSerachLike)) {
+            $users->where(function ($query) use ($search, $columnsSerachLike) {
+                foreach ($columnsSerachLike as $col) {
+                    $query->orWhere("users.$col", "LIKE", "%$search%");
+                }
+            });
+        }
+
+        // Ordenamiento
+        foreach ($orderBy as $value) {
+            if (isset($value[0], $value[1])) {
+                $users->orderBy($value[0], $value[1]);
+            }
+        }
+
+
+        $users = $users->paginate($length, ['*'], 'page', $page);
+        return $users;
+    }
+
+    /**
+     * Obtener nombre de usuario
+     *
+     * @param string $nom
+     * @param string $apep
+     * @return string
+     */
+    public function getNombreUsuario(string $nom, string $apep, int $id = 0): string
+    {
+        //determinando el nombre de usuario inicial del 1er_nombre+apep+tipoUser
+        $cont = 0;
+        do {
+            $nombre = mb_strtoupper($nom);
+            $paterno = mb_strtoupper($apep);
+            $nombre_user = substr($nombre, 0, 1); //inicial 1er_nombre
+            $nombre_user .= $paterno;
+            if ($cont > 0) {
+                $nombre_user = $nombre_user . $cont;
+            }
+            $cont++;
+
+            $existe = User::where('usuario', $nombre_user)->get()->first();
+            if ($id > 0 && $existe) {
+                if ($existe->id == $id) {
+                    $existe = false;
+                }
+            }
+        } while ($existe);
+        return $nombre_user;
+    }
+    /**
+     * Crear user
+     *
+     * @param array $datos
+     * @return User
+     */
+    public function crear(array $datos): User
+    {
+        $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
+        $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+
+        $user = User::create([
+            "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
+            "nombre" => mb_strtoupper($datos["nombre"]),
+            "paterno" => mb_strtoupper($datos["paterno"]),
+            "materno" => mb_strtoupper($datos["materno"]),
+            "dir" => mb_strtoupper($datos["dir"]),
+            "ci" => $datos["ci"],
+            "ci_exp" => mb_strtoupper($datos["ci_exp"]),
+            "correo" => $datos["correo"],
+            "fono" => $datos["fono"],
+            "acceso" => $datos["acceso"],
+            "password" => $datos["ci"],
+            "tipo" => mb_strtoupper($datos["tipo"]),
+            "role_id" => $datos["role_id"],
+            "sucursal_id" => $sucursal_id,
+            "sucursal_todos" => $sucursal_todos,
+            "fecha_registro" => date("Y-m-d")
+        ]);
+
+        // cargar foto
+        if (isset($datos["foto"]) && !is_string($datos["foto"])) {
+            $this->cargarFoto($user, $datos["foto"]);
+        }
+
+        $this->limpiarCacheListado();
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UN USUARIO", $user);
+        return $user;
+    }
+
+    /**
+     * Actualizar user
+     *
+     * @param array $datos
+     * @param User $user
+     * @return User
+     */
+    public function actualizar(array $datos, User $user): User
+    {
+        $old_user = clone $user;
+
+        $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
+        $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+
+        $user->update([
+            "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
+            "nombre" => mb_strtoupper($datos["nombre"]),
+            "paterno" => mb_strtoupper($datos["paterno"]),
+            "materno" => mb_strtoupper($datos["materno"]),
+            "dir" => mb_strtoupper($datos["dir"]),
+            "ci" => $datos["ci"],
+            "ci_exp" => mb_strtoupper($datos["ci_exp"]),
+            "correo" => $datos["correo"],
+            "fono" => $datos["fono"],
+            "acceso" => $datos["acceso"],
+            "password" => $datos["ci"],
+            "tipo" => mb_strtoupper($datos["tipo"]),
+            "role_id" => $datos["role_id"],
+            "sucursal_id" => $sucursal_id,
+            "sucursal_todos" => $sucursal_todos,
+        ]);
+
+        // cargar foto
+        if (isset($datos["foto"]) && !is_string($datos["foto"])) {
+            $this->cargarFoto($user, $datos["foto"]);
+        }
+
+        $this->limpiarCacheListado();
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "MODIFICACIÓN", "ACTUALIZÓ UN USUARIO", $old_user, $user->withoutRelations());
+        return $user;
+    }
+
+    /**
+     * Actualizar password
+     *
+     * @param array $datos
+     * @param User $user
+     * @return User
+     */
+    public function actualizarPassword(array $datos, User $user): User
+    {
+        $user->password = Hash::make($datos["password"]);
+        $user->save();
+        return $user;
+    }
+
+    /**
+     * Cargar foto
+     *
+     * @param User $user
+     * @param UploadedFile $foto
+     * @return void
+     */
+    public function cargarFoto(User $user, UploadedFile $foto): void
+    {
+        $directorio = public_path('imgs/users');
+
+        $nombre = $$user->id . '_' . Str::uuid();
+
+        $nuevoArchivo = $this->cargarArchivoService->cargarArchivo(
+            $foto,
+            $directorio,
+            $nombre
+        );
+
+        if (!$nuevoArchivo) {
+            throw new RuntimeException(
+                'No se pudo guardar el archivo.'
+            );
+        }
+
+        $archivoAnterior = $user->foto;
+
+        // Actualizar la referencia en la base de datos.
+        $user->foto = $nuevoArchivo;
+        $user->save();
+
+        // Eliminar el archivo anterior después de guardar el nuevo.
+        if ($archivoAnterior && $archivoAnterior !== $nuevoArchivo) {
+            File::delete(
+                $directorio . DIRECTORY_SEPARATOR . $archivoAnterior
+            );
+        }
+    }
+
+    /**
+     * Eliminar user
+     *
+     * @param User $user
+     * @return boolean
+     */
+    public function eliminar(User $user): bool
+    {
+        $old_user = clone $user;
+
+        // TODO: Validar si el user tiene ventas asociadas
+        $usos = Certificado::where("user_id", $user->id)->get();
+        if (count($usos) > 0) {
+            throw new Exception("No es posible eliminar el registro porque esta ligado a otros registros");
+        }
+        $user->status = 0;
+        $user->save();
+        $this->limpiarCacheListado();
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ AL USUARIO " . $old_user->usuario, $old_user, $user);
+
+        return true;
+    }
+
+    /**
+     * Reestablecer user
+     *
+     * @param User $user
+     * @return boolean
+     */
+    public function reestablecer(User $user): bool
+    {
+        $old_user = clone $user;
+        $user->status = 1;
+        $user->save();
+
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "REESTABLECER", "REESTABLECIÓ EL REGISTRO DE UN USUARIO " . $old_user->usuario, $old_user, $user);
+        return true;
+    }
+
+    /**
+     * Eliminación permanente de user
+     *
+     * @param User $user
+     * @return boolean
+     */
+    public function eliminacion_permanente(User $user): bool
+    {
+        $old_user = clone $user;
+        $user->delete();
+
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN PERMANENTE", "ELIMINÓ PERMANENTEMENTE EL REGISTRO DE UN USUARIO " . $old_user->usuario, $old_user);
+        return true;
+    }
+}

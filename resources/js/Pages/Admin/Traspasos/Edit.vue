@@ -1,0 +1,67 @@
+<script setup>
+import Content from "@/Components/Content.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { useTraspasos } from "@/composables/traspasos/useTraspasos";
+import { ref, onMounted, onBeforeMount } from "vue";
+import Formulario from "./Formulario.vue";
+const { props: props_page } = usePage();
+
+const props = defineProps({
+    traspaso: {
+        type: Object,
+        required: true,
+    },
+    almacens: {
+        type: Array,
+        default: () => [],
+    },
+    categorias: {
+        type: Array,
+        default: () => [],
+    },
+    marcas: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const { setTraspaso, limpiarTraspaso, form } = useTraspasos();
+</script>
+<template>
+    <Head title="Traspaso de Productos"></Head>
+    <Content>
+        <template #header>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3 class="m-0">
+                        <i class="fa fa-boxes"></i> Traspaso de Productos
+                    </h3>
+                </div>
+                <!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item">
+                            <Link :href="route('inicio')">Inicio</Link>
+                        </li>
+                        <li class="breadcrumb-item active">
+                            Traspaso de Productos
+                        </li>
+                    </ol>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </template>
+        <div class="row">
+            <div class="col-md-12">
+                <Formulario
+                    :form="form"
+                    :almacens="almacens"
+                    :categorias="categorias"
+                    :marcas="marcas"
+                    @envio-formulario="limpiarTraspaso"
+                ></Formulario>
+            </div>
+        </div>
+    </Content>
+</template>

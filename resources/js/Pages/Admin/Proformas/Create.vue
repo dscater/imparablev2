@@ -1,0 +1,60 @@
+<script setup>
+import Content from "@/Components/Content.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { useProformas } from "@/composables/proformas/useProformas";
+import Formulario from "./Formulario.vue";
+const { props: props_page } = usePage();
+
+const props = defineProps({
+    almacens: {
+        type: Array,
+        default: () => [],
+    },
+    categorias: {
+        type: Array,
+        default: () => [],
+    },
+    marcas: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const { setProforma, limpiarProforma, form } = useProformas();
+</script>
+<template>
+    <Head title="Nueva Proforma"></Head>
+    <Content>
+        <template #header>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3 class="m-0">
+                        <i class="fa fa-clipboard-list"></i> Nueva Proforma
+                    </h3>
+                </div>
+                <!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item">
+                            <Link :href="route('inicio')">Inicio</Link>
+                        </li>
+                        <li class="breadcrumb-item active">Nueva Proforma</li>
+                    </ol>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </template>
+        <div class="row">
+            <div class="col-md-12">
+                <Formulario
+                    :form="form"
+                    :almacens="almacens"
+                    :categorias="categorias"
+                    :marcas="marcas"
+                    @envio-formulario="limpiarProforma"
+                ></Formulario>
+            </div>
+        </div>
+    </Content>
+</template>

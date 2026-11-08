@@ -1,0 +1,314 @@
+<script setup>
+import Content from "@/Components/Content.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { useIngresoProductos } from "@/composables/ingreso_productos/useIngresoProductos";
+import { ref, onMounted, onBeforeMount } from "vue";
+import FormularioPago from "./FormularioPago.vue";
+import { useDate } from "@/composables/useDate.js";
+import axios from "axios";
+
+const { getFechaActual } = useDate();
+const { props: props_page } = usePage();
+
+const { setIngresoProducto, limpiarIngresoProducto, form } =
+    useIngresoProductos();
+
+const listAlmacens = ref([]);
+const almacen_id = ref("todos");
+const codigo = ref("");
+const fecha_ini = ref("");
+const fecha_fin = ref("");
+const ingreso_productos = ref([]);
+
+const cargarAlmacens = async () => {
+    try {
+        const res = await axios.get(route("almacens.listado"));
+        listAlmacens.value = res.data.almacens;
+        listAlmacens.value.unshift({
+            id: "todos",
+            nombre: "Todos los almacenes",
+        });
+    } catch (e) {
+        console.log(e);
+    } finally {
+    }
+};
+
+const cargarIngresosFormularioPagos = () => {
+    axios
+        .get(route("ingreso_productos.lista_pagos_pendientes"), {
+            params: {
+                almacen_id: almacen_id.value,
+                codigo: codigo.value,
+                fecha_ini: fecha_ini.value,
+                fecha_fin: fecha_fin.value,
+            },
+        })
+        .then((response) => {
+            ingreso_productos.value = response.data.ingreso_productos;
+        });
+};
+
+const intervalTimeOutListado = ref(null);
+const cargaListado = () => {
+    clearInterval(intervalTimeOutListado.value);
+    setTimeout(() => {
+        cargarIngresosFormularioPagos();
+    }, 700);
+};
+
+onBeforeMount(() => {
+    cargarAlmacens();
+    cargarIngresosFormularioPagos();
+});
+
+const recepcionar = (item) => {
+    setIngresoProducto(item);
+    muestra_formulario.value = true;
+};
+
+const updateIngresos = () => {
+    // muestra_formulario.value = false;
+    // limpiarIngresoProducto();
+    cargarIngresosFormularioPagos();
+};
+
+const muestra_formulario = ref(false);
+</script>
+<template>
+    <Head title="Pago de Compras"></Head>
+    <Content>
+        <template #header>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3 class="m-0">
+                        <i class="fa fa-cash-register"></i> Pago de Compras
+                    </h3>
+                </div>
+                <!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item">
+                            <Link :href="route('inicio')">Inicio</Link>
+                        </li>
+                        <li class="breadcrumb-item active">Pago de Compras</li>
+                    </ol>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </template>
+        <div class="row mb-2">
+            <div class="col-md-3 col-sm-12">
+                <span class="text-muted text-sm">Almacén</span>
+                <el-select
+                    v-model="almacen_id"
+                    class="el-select-input-group-right"
+                    no-data-text="Sin datos"
+                    no-match-text="Sin resultados"
+                    placeholder="Seleccionar Almacén"
+                    filterable
+                    @change="cargarIngresosFormularioPagos"
+                >
+                    <el-option
+                        v-for="item in listAlmacens"
+                        :key="item.id"
+                        :value="item.id"
+                        :label="`${item.nombre} ${item.sucursal ? ' - ' + item.sucursal.nombre : ''}`"
+                    ></el-option>
+                </el-select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <span class="text-muted text-sm">Código</span>
+                <input
+                    type="text"
+                    v-model="codigo"
+                    class="form-control"
+                    placeholder="Ingresar Código"
+                    @keyup="cargaListado"
+                    @change="cargarIngresosFormularioPagos"
+                />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <span class="text-muted text-sm">Desde</span>
+                <input
+                    type="date"
+                    v-model="fecha_ini"
+                    class="form-control"
+                    @keyup="cargaListado"
+                    @change="cargarIngresosFormularioPagos"
+                />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <span class="text-muted text-sm">Hasta</span>
+                <input
+                    type="date"
+                    v-model="fecha_fin"
+                    class="form-control"
+                    @keyup="cargaListado"
+                    @change="cargarIngresosFormularioPagos"
+                />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 text-md">
+                Total registros: {{ ingreso_productos.length }}
+            </div>
+        </div>
+        <div class="row" v-if="ingreso_productos.length > 0">
+            <div
+                class="col-md-6 col-lg-4 mt-2"
+                v-for="item in ingreso_productos"
+                :key="item.id"
+            >
+                <div class="card">
+                    <div class="card-header py-2">
+                        <span class="text-sm fw-bold text-muted float-end">
+                            {{ item.fecha_registro_t }}
+                        </span>
+                        <h4 class="text-primary fw-bold fs-6 mb-0">
+                            {{ item.codigo }}
+                        </h4>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-6 text-end border-end">
+                                <div class="row">
+                                    <div class="col-12 text-sm text-center">
+                                        {{ item.proveedor.nombre }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-muted text-center"
+                                    >
+                                        <i
+                                            class="fa fa-truck"
+                                            title="Proveedor"
+                                        ></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div class="row">
+                                    <div class="col-12 text-sm text-center">
+                                        {{ item.tipo_ingreso.nombre }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-muted text-center"
+                                    >
+                                        <i
+                                            class="fa fa-clipboard-list"
+                                            title="Tipo"
+                                        ></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="col-6 text-center border-top pt-2 border-end"
+                            >
+                                <div class="row">
+                                    <div class="col-12 text-sm text-center">
+                                        {{ item.sucursal?.nombre }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-muted text-center"
+                                    >
+                                        <i
+                                            class="fa fa-building"
+                                            title="Sucursal"
+                                        ></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 text-center border-top pt-2">
+                                <div class="row">
+                                    <div class="col-12 text-sm text-center">
+                                        {{ item.almacen?.nombre }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-muted text-center"
+                                    >
+                                        <i
+                                            class="fa fa-warehouse"
+                                            title="Almacén"
+                                        ></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row border-top mt-1">
+                            <div
+                                class="col-6 pt-1 fw-bold text-success bgActivo2"
+                            >
+                                <div class="row">
+                                    <div class="col-12 text-md text-center">
+                                        {{ item.total }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-success text-center"
+                                    >
+                                        Total Bs.
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="col-6 pt-1 fw-bold text-danger bgInactivo2"
+                            >
+                                <div class="row">
+                                    <div class="col-12 text-md text-center">
+                                        {{ item.saldo }}
+                                    </div>
+                                    <div
+                                        class="col-12 text-xs text-danger text-center"
+                                    >
+                                        Saldo Bs.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12">
+                                <button
+                                    class="btn btn-sm btn-primary float-end"
+                                    @click="recepcionar(item)"
+                                >
+                                    <i class="fa fa-external-link-alt"></i>
+                                    Registros
+                                </button>
+                                <a
+                                    class="btn btn-sm btn-info float-end me-1"
+                                    :href="
+                                        route(
+                                            'ingreso_productos.pdf_pagos',
+                                            item.id,
+                                        )
+                                    "
+                                    target="_blank"
+                                >
+                                    <i class="fa fa-file-pdf"></i>
+                                    Imprimir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" v-else>
+            <div class="col-12">
+                <h4 class="text-center text-muted fs-3">
+                    <i class="fa fa-info-circle"></i> No hay pagos pendientes
+                    para realizar
+                </h4>
+            </div>
+        </div>
+        <FormularioPago
+            v-if="muestra_formulario"
+            :muestra_formulario="muestra_formulario"
+            :form="form"
+            @envio-formulario="updateIngresos"
+            @cerrar-formulario="muestra_formulario = false"
+        ></FormularioPago>
+    </Content>
+</template>

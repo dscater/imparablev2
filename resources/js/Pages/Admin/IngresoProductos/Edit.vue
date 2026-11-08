@@ -1,0 +1,78 @@
+<script setup>
+import Content from "@/Components/Content.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { useIngresoProductos } from "@/composables/ingreso_productos/useIngresoProductos";
+import { onBeforeMount } from "vue";
+import Formulario from "./Formulario.vue";
+const { props: props_page } = usePage();
+
+const props = defineProps({
+    ingreso_producto: {
+        type: Object,
+        default: null,
+    },
+    almacens: {
+        type: Array,
+        default: () => [],
+    },
+    categorias: {
+        type: Array,
+        default: () => [],
+    },
+    marcas: {
+        type: Array,
+        default: () => [],
+    },
+    proveedors: {
+        type: Array,
+        default: () => [],
+    },
+    tipo_ingresos: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const { setIngresoProducto, limpiarIngresoProducto, form } =
+    useIngresoProductos();
+</script>
+<template>
+    <Head title="Compra de Productos"></Head>
+    <Content>
+        <template #header>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3 class="m-0">
+                        <i class="fa fa-boxes"></i> Compra de Productos
+                    </h3>
+                </div>
+                <!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item">
+                            <Link :href="route('inicio')">Inicio</Link>
+                        </li>
+                        <li class="breadcrumb-item active">
+                            Compra de Productos
+                        </li>
+                    </ol>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </template>
+        <div class="row">
+            <div class="col-md-12">
+                <Formulario
+                    :form="form"
+                    :almacens="almacens"
+                    :categorias="categorias"
+                    :marcas="marcas"
+                    :proveedors="proveedors"
+                    :tipo_ingresos="tipo_ingresos"
+                    @envio-formulario="limpiarIngresoProducto"
+                ></Formulario>
+            </div>
+        </div>
+    </Content>
+</template>

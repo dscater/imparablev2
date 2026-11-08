@@ -1,0 +1,230 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\ProductoSucursalStoreRequest;
+use App\Http\Requests\ProductoSucursalUpdateRequest;
+use App\Models\ProductoSucursal;
+use App\Models\User;
+use App\Services\AlmacenService;
+use App\Services\CategoriaService;
+use App\Services\MarcaService;
+use App\Services\ProductoSucursalService;
+use App\Services\SucursalService;
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response as ResponseInertia;
+
+class ProductoSucursalController extends Controller
+{
+    public function __construct(
+        private ProductoSucursalService $producto_sucursalService,
+        private AlmacenService $almacen_service,
+        private CategoriaService $categoria_service,
+        private MarcaService $marca_service,
+
+    ) {}
+
+    /**
+     * Página index
+     *
+     * @return Response
+     */
+    public function index(): ResponseInertia
+    {
+        $almacens = $this->almacen_service->listado(1);
+        $categorias = $this->categoria_service->listado();
+        $marcas = $this->marca_service->listado();
+
+        return Inertia::render("Admin/ProductoSucursals/Index", [
+            "almacens" => $almacens,
+            "categorias" => $categorias,
+            "marcas" => $marcas,
+        ]);
+    }
+
+    /**
+     * Listado de producto_sucursals sin ids: 1 y 2
+     *
+     * @return JsonResponse
+     */
+    public function listado(Request $request): JsonResponse
+    {
+        return response()->JSON([
+            "producto_sucursals" => $this->producto_sucursalService->listado(
+                $request->input("almacen_id", ""),
+                $request->input("categoria_id", ""),
+                $request->input("marca_id", ""),
+                $request->input("nombreProducto", "")
+            )
+        ]);
+    }
+
+    public function paginado(Request $request)
+    {
+        $perPage = $request->perPage;
+        $page = (int)($request->input("page", 1));
+        $search = (string)$request->input("search", "");
+
+        $almacen_id = $request->input("almacen_id", "");
+        $categoria_id = $request->input("categoria_id", "");
+        $marca_id = $request->input("marca_id", "");
+        $nombreProducto = $request->input("nombreProducto", "");
+        $activo = $request->input("activo", NULL);
+
+        $orderBy = $request->orderBy;
+        $orderAsc = $request->orderAsc;
+
+        $columnsSerachLike = [
+            "productos.codigo",
+            "productos.nombre",
+        ];
+        $arrayOrderBy = [];
+        if ($orderBy && $orderAsc) {
+            $arrayOrderBy = [
+                [$orderBy, $orderAsc]
+            ];
+        }
+
+        $producto_sucursals = $this->producto_sucursalService->listadoPaginado(
+            $perPage,
+            $page,
+            $search,
+            $columnsSerachLike,
+            $almacen_id,
+            $categoria_id,
+            $marca_id,
+            $nombreProducto,
+            $activo,
+            $arrayOrderBy
+        );
+        return response()->JSON([
+            "data" => $producto_sucursals->items(),
+            "total" => $producto_sucursals->total(),
+            "lastPage" => $producto_sucursals->lastPage()
+        ]);
+    }
+
+    /**
+     * Registrar un nuevo producto_sucursal
+     *
+     * @param ProductoSucursalStoreRequest $request
+     * @return RedirectResponse|Response
+     */
+    public function store(ProductoSucursalStoreRequest $request): RedirectResponse|Response
+    {
+        DB::beginTransaction();
+        try {
+            // crear el ProductoSucursal
+            $this->producto_sucursalService->crear($request->validated());
+            DB::commit();
+            return redirect()->route("producto_sucursals.index")->with("bien", "Registro realizado");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'error' =>  $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Mostrar un producto_sucursal
+     *
+     * @param ProductoSucursal $producto_sucursal
+     * @return JsonResponse
+     */
+    public function show(ProductoSucursal $producto_sucursal): JsonResponse
+    {
+        return response()->JSON($producto_sucursal);
+    }
+
+    public function update(ProductoSucursal $producto_sucursal, ProductoSucursalUpdateRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            // actualizar producto_sucursal
+            $this->producto_sucursalService->actualizar($request->validated(), $producto_sucursal);
+            DB::commit();
+            return redirect()->route("producto_sucursals.index")->with("bien", "Registro actualizado");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Log::debug($e->getMessage());
+            throw ValidationException::withMessages([
+                'error' =>  $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Eliminar producto_sucursal
+     *
+     * @param ProductoSucursal $producto_sucursal
+     * @return JsonResponse|Response
+     */
+    public function destroy(ProductoSucursal $producto_sucursal): JsonResponse|Response
+    {
+        DB::beginTransaction();
+        try {
+            $this->producto_sucursalService->eliminar($producto_sucursal);
+            DB::commit();
+            return response()->JSON([
+                'sw' => true,
+                'message' => 'El registro se eliminó correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'error' =>  $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function formato()
+    {
+        return response()->download(
+            public_path("files/formato_producto_sucursals.xlsx"),
+            "formato_producto_sucursals" . time() . ".xlsx"
+        );
+    }
+
+    public function cargaProductoSucursals(Request $request)
+    {
+        $request->validate([
+            "almacen_id" => "required",
+            "archivo" => [
+                "required",
+                "file",
+                "mimes:xlsx,xls",
+                "max:8192",
+            ],
+        ], [
+            "almacen_id.required" => "Debes seleccionar un almacén",
+            "archivo.required" => "Debe seleccionar un archivo.",
+            "archivo.file" => "El archivo seleccionado no es válido.",
+            "archivo.mimes" => "El archivo debe ser de tipo Excel (.xlsx o .xls).",
+            "archivo.max" => "El archivo no debe superar los 8 MB.",
+        ]);
+        DB::beginTransaction();
+        try {
+            // crear el Producto
+            $datos["archivo"] = $request->file("archivo");
+            $datos["almacen_id"] = $request->input("almacen_id", "");
+            $this->producto_sucursalService->cargaProductoSucursals($datos);
+            DB::commit();
+            return redirect()->route("producto_sucursals.index")->with("bien", "Registro realizado");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'error' =>  $e->getMessage(),
+            ]);
+        }
+    }
+}

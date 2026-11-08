@@ -1,0 +1,82 @@
+<script setup>
+// includes
+import { ref, onMounted, onBeforeMount, nextTick } from "vue";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import Footer from "./includes/Footer.vue";
+import NavBar from "./includes/NavBar.vue";
+import SideBar from "./includes/SideBar.vue";
+import { useAppStore } from "@/stores/aplicacion/appStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useConfiguracionStore } from "@/stores/configuracion/configuracionStore";
+const configuracionStore = useConfiguracionStore();
+const appStore = useAppStore();
+const authStore = useAuthStore();
+const { auth } = usePage().props;
+
+let inactivityTimer = null;
+// const INACTIVITY_LIMIT = 60 * 1000; // 1 minuto en ms
+let INACTIVITY_LIMIT = 60 * 5000; // 5 minuto en ms
+
+// Resetear temporizador
+const resetTimer = () => {
+    if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+    }
+
+    if (!authStore.cerrandoSesion) {
+        inactivityTimer = setTimeout(() => {
+            // CERRAR SESIÓN
+            authStore.salir({ confirmar: false });
+        }, INACTIVITY_LIMIT);
+    }
+};
+
+onMounted(async () => {
+    // Inicializar info de usuario
+    appStore.stopLoading();
+    console.log("App.vue onMounted");
+
+    await nextTick();
+
+    // // reinicializa treeview
+    // document.querySelectorAll('[data-lte-toggle="treeview"]');
+
+    // Eventos que consideran actividad del usuario
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+    window.addEventListener("click", resetTimer);
+
+    resetTimer();
+});
+
+onBeforeMount(async () => {
+    appStore.setLoading(true);
+    appStore.initUserInfo();
+    configuracionStore.initConfiguracion();
+    appStore.initUserInfo();
+});
+</script>
+<template>
+    <div class="loading" :class="[appStore.getLoading == true ? 'show' : '']">
+        <!-- <div class="loading show"> -->
+        <template v-if="$slots.loading">
+            <slot name="loading"></slot>
+        </template>
+        <template v-else>
+            <i class="fa fa-spin fa-spinner fa-4x text1"></i>
+            <br />
+            <span class="font-weight-bold text1 h4">
+                {{ configuracionStore.oConfiguracion.nombre_sistema }}
+            </span>
+        </template>
+    </div>
+    <div class="app-wrapper">
+        <NavBar></NavBar>
+        <SideBar
+            :usuario="appStore.getUsuario"
+            :permisos="auth.user.permisos"
+        ></SideBar>
+        <slot />
+        <Footer></Footer>
+    </div>
+</template>

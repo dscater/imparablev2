@@ -1,0 +1,294 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\MovimientoCaja;
+use App\Services\HistorialAccionService;
+use App\Models\VentaCobro;
+use App\Models\Venta;
+use App\Models\Producto;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Exception;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+
+class VentaCobroService
+{
+    private $modulo = "COBROS DE CRÉDITOS POR VENTAS";
+
+    public function __construct(
+        private  CargarArchivoService $cargarArchivoService,
+        private HistorialAccionService $historialAccionService,
+        private MovimientoCajaService $movimiento_caja_service
+    ) {}
+
+    public function listado($venta_id = null): Collection
+    {
+        $venta_cobros = VentaCobro::with([
+            "sucursal:id,nombre",
+            "almacen:id,nombre",
+            "cliente:id,nombre",
+            "user:id,nombre,paterno,materno",
+        ])
+            ->select("venta_cobros.*");
+        if ($venta_id) {
+            $venta_cobros->where("venta_id", $venta_id);
+        }
+        $venta_cobros = $venta_cobros->get();
+        return $venta_cobros;
+    }
+    /**
+     * Lista de venta_cobros paginado con filtros
+     *
+     * @param integer $length
+     * @param integer $page
+     * @param string $search
+     * @param array $columnsSerachLike
+     * @param array $columnsFilter
+     * @return LengthAwarePaginator
+     */
+    public function listadoPaginado(int $length, int $page, string $search, array $columnsSerachLike = [], array $columnsFilter = [], array $columnsBetweenFilter = [], array $orderBy = []): LengthAwarePaginator
+    {
+        $venta_cobros = VentaCobro::select("venta_cobros.*");
+
+        // Filtros exactos
+        foreach ($columnsFilter as $key => $value) {
+            if (!is_null($value)) {
+                $venta_cobros->where("venta_cobros.$key", $value);
+            }
+        }
+
+        // Filtros por rango
+        foreach ($columnsBetweenFilter as $key => $value) {
+            if (isset($value[0], $value[1])) {
+                $venta_cobros->whereBetween("venta_cobros.$key", $value);
+            }
+        }
+
+        // Búsqueda en múltiples columnas con LIKE
+        if (!empty($search) && !empty($columnsSerachLike)) {
+            $venta_cobros->where(function ($query) use ($search, $columnsSerachLike) {
+                foreach ($columnsSerachLike as $col) {
+                    $query->orWhere("$col", "LIKE", "%$search%");
+                }
+            });
+        }
+
+        // Ordenamiento
+        foreach ($orderBy as $value) {
+            if (isset($value[0], $value[1])) {
+                $venta_cobros->orderBy($value[0], $value[1]);
+            }
+        }
+
+
+        $venta_cobros = $venta_cobros->paginate($length, ['*'], 'page', $page);
+        return $venta_cobros;
+    }
+
+    /**
+     * Crear venta_cobro
+     *
+     * @param array $datos
+     * @return VentaCobro
+     */
+    public function crear(array $datos): VentaCobro
+    {
+        if (!$datos["monto_efectivo"] && !$datos["monto_qr"]) {
+            throw new Exception("No puedes dejar vacíos los campos EFECTIVO y QR");
+        }
+
+        if ((float)$datos["monto_efectivo"] <= 0 && (float)$datos["monto_qr"] <= 0) {
+            throw new Exception("No puedes registrar EFECTIVO y QR con un valor menor o igual a 0");
+        }
+
+        $tipo_pago = 'EFECTIVO';
+        if ((float)$datos["monto_qr"] > 0) {
+            $tipo_pago = 'QR';
+        }
+        if ((float)$datos["monto_efectivo"] > 0 && (float)$datos["monto_qr"] > 0) {
+            $tipo_pago = 'EFECTIVO-QR';
+        }
+
+        $monto_total = (float)($datos["monto_efectivo"] ?? 0) + (float)($datos["monto_qr"] ?? 0);
+
+        $venta_cobro = VentaCobro::create([
+            "sucursal_id" => $datos["sucursal_id"],
+            "almacen_id" => $datos["almacen_id"],
+            "venta_id" => $datos["venta_id"],
+            "cliente_id" => $datos["cliente_id"],
+            "tipo_pago" => $tipo_pago,
+            "monto_efectivo" => $datos["monto_efectivo"],
+            "monto_qr" => $datos["monto_qr"],
+            "monto_total" => $monto_total,
+            "saldo" => 0,
+            "fecha" => date("Y-m-d"),
+            "hora" => date("H:i:s"),
+            "user_id" => Auth::user()->id,
+        ]);
+
+        $venta = Venta::findOrFail($venta_cobro->venta_id);
+        if ((float)$monto_total > (float)$venta->saldo) {
+            throw new Exception("El monto cancelado no puede ser mayor al saldo actual de $venta->saldo");
+        }
+
+        // INGRESO CAJA
+        $movimiento_caja = [
+            "sucursal_id" => $venta_cobro->sucursal_id,
+            "almacen_id" => $venta_cobro->almacen_id,
+            "tipo" => "COBRO POR VENTA DE PRODUCTOS",
+            "modulo" => "VentaCobro",
+            "registro_id" => $venta_cobro->id,
+            "monto_qr" => $venta_cobro->monto_qr,
+            "monto_efectivo" => $venta_cobro->monto_efectivo,
+            "tipo_movimiento" => "INGRESO",
+            "tipo_pago" => $venta_cobro->tipo_pago,
+            "descripcion" => "COBRO POR VENTA DE PRODUCTOS",
+        ];
+
+        // SALDO
+        $venta = $venta_cobro->venta;
+        $venta->cancelado_efectivo = (float)$venta->venta_cobros->sum("monto_efectivo");
+        $venta->cancelado_qr = (float)$venta->venta_cobros->sum("monto_qr");
+        $venta->total_cancelado = (float)$venta->venta_cobros->sum("monto_total");
+        $venta->saldo = (float)$venta->saldo - (float)$venta_cobro->monto_total;
+        $venta->save();
+        if ($venta->saldo < 0) {
+            throw new Exception("No se pudo realizar el registro por que el saldo calculado es menor a 0");
+        }
+
+        $this->movimiento_caja_service->crear($movimiento_caja);
+
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UN PAGO POR COMPRA DE PRODUCTOS", $venta_cobro);
+
+        return $venta_cobro;
+    }
+
+    /**
+     * Actualizar venta_cobro
+     *
+     * @param array $datos
+     * @param VentaCobro $venta_cobro
+     * @return VentaCobro
+     */
+    public function actualizar(array $datos, VentaCobro $venta_cobro): VentaCobro
+    {
+        $old_venta_cobro = clone $venta_cobro;
+
+        if (!$datos["monto_efectivo"] && !$datos["monto_qr"]) {
+            throw new Exception("No puedes dejar vacíos los campos EFECTIVO y QR");
+        }
+
+        if ((float)$datos["monto_efectivo"] <= 0 && (float)$datos["monto_qr"] <= 0) {
+            throw new Exception("No puedes registrar EFECTIVO y QR con un valor menor o igual a 0");
+        }
+
+        $tipo_pago = 'EFECTIVO';
+        if ((float)$datos["monto_qr"] > 0) {
+            $tipo_pago = 'QR';
+        }
+        if ((float)$datos["monto_efectivo"] > 0 && (float)$datos["monto_qr"] > 0) {
+            $tipo_pago = 'EFECTIVO-QR';
+        }
+
+        $monto_total = (float)($datos["monto_efectivo"] ?? 0) + (float)($datos["monto_qr"] ?? 0);
+
+        $venta_cobro->update([
+            "sucursal_id" => $datos["sucursal_id"],
+            "almacen_id" => $datos["almacen_id"],
+            "venta_id" => $datos["venta_id"],
+            "cliente_id" => $datos["cliente_id"],
+            "tipo_pago" => $tipo_pago,
+            "monto_efectivo" => $datos["monto_efectivo"],
+            "monto_qr" => $datos["monto_qr"],
+            "monto_total" => $monto_total,
+            "saldo" => 0,
+            "fecha" => date("Y-m-d"),
+            "hora" => date("H:i:s"),
+            "user_id" => Auth::user()->id,
+        ]);
+
+        $cancelado = $venta_cobro->venta->total_cancelado;
+        $monto_total_cancelado = VentaCobro::where("id", "!=", $venta_cobro->id)
+            ->where("venta_id", $venta_cobro->venta_id)
+            ->sum("monto_total");
+        $monto_total_cancelado = (float)$monto_total_cancelado + (float)$venta_cobro->monto_total + $cancelado;
+        if ((float)$monto_total_cancelado > (float)$venta_cobro->venta->total) {
+            throw new Exception("El monto cancelado no puede ser mayor al total de la venta " . $venta_cobro->venta->total);
+        }
+
+        // DATOS CAJA
+        $datos_movimiento_caja = [
+            "sucursal_id" => $venta_cobro->sucursal_id,
+            "almacen_id" => $venta_cobro->almacen_id,
+            "tipo" => "COBRO POR VENTA DE PRODUCTOS",
+            "modulo" => "VentaCobro",
+            "registro_id" => $venta_cobro->id,
+            "monto_qr" => $venta_cobro->monto_qr,
+            "monto_efectivo" => $venta_cobro->monto_efectivo,
+            "tipo_movimiento" => "INGRESO",
+            "tipo_pago" => $venta_cobro->tipo_pago,
+            "descripcion" => "COBRO POR VENTA DE PRODUCTOS",
+        ];
+
+        // SALDO
+        $venta = $venta_cobro->venta;
+        $venta->cancelado_efectivo = (float)$venta->venta_cobros->sum("monto_efectivo");
+        $venta->cancelado_qr = (float)$venta->venta_cobros->sum("monto_qr");
+        $venta->total_cancelado = (float)$venta->venta_cobros->sum("monto_total");
+        $venta->saldo = (float)$venta->total - (float)$monto_total_cancelado;
+        $venta->save();
+        if ($venta->saldo < 0) {
+            throw new Exception("No se pudo realizar el registro por que el saldo calculado es menor a 0");
+        }
+
+        $movimiento_caja = MovimientoCaja::where("registro_id", $venta_cobro->id)
+            ->where("modulo", "VentaCobro")
+            ->where("tipo", "COBRO POR VENTA DE PRODUCTOS")
+            ->get()->first();
+        $this->movimiento_caja_service->actualizar($datos_movimiento_caja, $movimiento_caja);
+
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "MODIFICACIÓN", "ACTUALIZÓ UN PAGO POR VENTA DE PRODUCTOS", $old_venta_cobro, $venta_cobro->withoutRelations());
+
+        return $venta_cobro;
+    }
+
+    /**
+     * Eliminar venta_cobro
+     *
+     * @param VentaCobro $venta_cobro
+     * @return boolean
+     */
+    public function eliminar(VentaCobro $venta_cobro): bool|Exception
+    {
+        $old_venta_cobro = clone $venta_cobro;
+        $venta = $venta_cobro->venta;
+
+        $cancelado = $venta_cobro->venta->cancelado;
+        $monto_total_cancelado = VentaCobro::where("id", "!=", $venta_cobro->id)
+            ->where("venta_id", $venta_cobro->venta_id)
+            ->sum("monto_total");
+        $monto_total_cancelado = (float)$monto_total_cancelado + $cancelado;
+        $venta->saldo = (float)$venta->total - (float)$monto_total_cancelado;
+        $venta->save();
+
+        $movimiento_caja = MovimientoCaja::where("registro_id", $venta_cobro->id)
+            ->where("modulo", "VentaCobro")
+            ->where("tipo", "COBRO POR VENTA DE PRODUCTOS")
+            ->get()->first();
+        $this->movimiento_caja_service->eliminar($movimiento_caja, false);
+
+        $venta_cobro->delete();
+
+        // registrar accion
+        $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ UN PAGO POR VENTA DE PRODUCTOS", $old_venta_cobro, null);
+
+        return true;
+    }
+}
