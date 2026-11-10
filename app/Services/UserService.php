@@ -32,7 +32,6 @@ class UserService
             "ci",
             "ci_exp",
             "role_id",
-            "sucursal_id",
             "sucursal_todos",
             "status",
         ],
@@ -41,7 +40,7 @@ class UserService
 
         // Garantizar columnas necesarias
         $columns = array_unique(array_merge(
-            ['id', 'sucursal_id', 'role_id'],
+            ['id', 'role_id'],
             $columns
         ));
 
@@ -81,7 +80,6 @@ class UserService
             "ci",
             "ci_exp",
             "role_id",
-            "sucursal_id",
             "sucursal_todos",
             "status",
         ],
@@ -91,7 +89,7 @@ class UserService
 
         // Garantizar columnas necesarias
         $columns = array_unique(array_merge(
-            ['id', 'sucursal_id', 'role_id'],
+            ['id', 'role_id'],
             $columns
         ));
 
@@ -267,7 +265,7 @@ class UserService
     public function crear(array $datos): User
     {
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
-        $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+        // $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
 
         $user = User::create([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
@@ -283,7 +281,6 @@ class UserService
             "password" => $datos["ci"],
             "tipo" => mb_strtoupper($datos["tipo"]),
             "role_id" => $datos["role_id"],
-            "sucursal_id" => $sucursal_id,
             "sucursal_todos" => $sucursal_todos,
             "fecha_registro" => date("Y-m-d")
         ]);
@@ -311,7 +308,7 @@ class UserService
         $old_user = clone $user;
 
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
-        $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+        // $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
 
         $user->update([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
@@ -327,7 +324,6 @@ class UserService
             "password" => $datos["ci"],
             "tipo" => mb_strtoupper($datos["tipo"]),
             "role_id" => $datos["role_id"],
-            "sucursal_id" => $sucursal_id,
             "sucursal_todos" => $sucursal_todos,
         ]);
 

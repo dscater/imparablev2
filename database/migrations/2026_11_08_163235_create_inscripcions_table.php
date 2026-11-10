@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('inscripcions', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger("sucursal_id");
+            $table->unsignedBigInteger("user_cliente_id");
             $table->unsignedBigInteger("cliente_id");
-            $table->unsignedBigInteger("plan_id");
-            $table->unsignedBigInteger("promocion_id")->nullable();
-            $table->decimal("total", 24, 2);
-            $table->decimal("descuento", 24, 2)->nullable();
-            $table->double("porcentaje_descuento")->nullable();
-            $table->decimal("cancelado", 24, 2);
-            $table->decimal("saldo", 24, 2);
+            $table->unsignedBigInteger("producto_id");
+            $table->unsignedBigInteger("venta_detalle_id");
+            $table->string("declaracion_jurada")->nullable();
             $table->date("fecha_inicio");
             $table->integer("estado")->default(1); //0: INACTIVO, 1:ACTIVO, 2: PAUSADO
             $table->date("fecha_pausa")->nullable();
@@ -34,9 +32,11 @@ return new class extends Migration
             $table->unsignedBigInteger("user_pausa_id")->nullable();
             $table->timestamps();
 
+            $table->foreign("sucursal_id")->on("sucursals")->references("id");
+            $table->foreign("user_cliente_id")->on("users")->references("id");
             $table->foreign("cliente_id")->on("clientes")->references("id");
-            $table->foreign("plan_id")->on("plans")->references("id");
-            $table->foreign("promocion_id")->on("promocions")->references("id");
+            $table->foreign("producto_id")->on("productos")->references("id");
+            $table->foreign("venta_detalle_id")->on("venta_detalles")->references("id");
             $table->foreign("user_id")->on("users")->references("id");
             $table->foreign("user_pausa_id")->on("users")->references("id");
         });

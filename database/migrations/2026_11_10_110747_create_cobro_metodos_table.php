@@ -11,19 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inscripcion_pagos', function (Blueprint $table) {
+        Schema::create('cobro_metodos', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger("inscripcion_id");
+            $table->unsignedBigInteger("venta_cobro_id");
             $table->unsignedBigInteger("metodo_pago_id");
             $table->decimal("monto", 24, 2);
-            $table->date("fecha");
-            $table->time("hora");
-            $table->unsignedBigInteger("user_id");
             $table->timestamps();
 
-            $table->foreign("inscripcion_id")->on("inscripcions")->references("id");
+            $table->foreign("venta_cobro_id")->on("venta_cobros")->references("id");
             $table->foreign("metodo_pago_id")->on("metodo_pagos")->references("id");
-            $table->foreign("user_id")->on("users")->references("id");
         });
     }
 
@@ -32,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inscripcion_pagos');
+        Schema::dropIfExists('cobro_metodos');
     }
 };

@@ -30,7 +30,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign("user_id")->on("users")->references("id");
-            $table->unique(["ci", "ci_exp"], "ci_ci_exp_unique");
+            $table->unique(["ci", "ci_exp"], "clientes_ci_ci_exp_unique");
+            $table->index(["status", "ci"], "clientes_status_ci_index");
+            $table->index(["status", "paterno"], "clientes_status_paterno_index");
+            $table->index(["status", "fecha_registro"], "clientes_status_fecha_registro_index");
         });
     }
 

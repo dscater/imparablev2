@@ -34,13 +34,12 @@ class User extends Authenticatable
         "tipo",
         "role_id",
         "acceso",
-        "sucursal_id",
         "sucursal_todos",
         "fecha_registro",
         "status",
     ];
 
-    protected $appends = ["permisos", "url_foto", "foto_b64", "full_name", "full_ci", "fecha_registro_t", "usuario_abrev"];
+    protected $appends = ["url_foto", "full_name", "full_ci", "fecha_registro_t", "usuario_abrev"];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -140,9 +139,9 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id');
     }
 
-    public function sucursal()
+    public function user_sucursals()
     {
-        return $this->belongsTo(Sucursal::class, 'sucursal_id');
+        return $this->hasMany(UserSucursal::class, 'user_id');
     }
     public function notificacion_users()
     {

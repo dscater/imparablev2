@@ -23,7 +23,7 @@ class ConfiguracionTableSeeder extends Seeder
             "fono" => "2323232 - 7776666",
             "actividad" => "ACTIVIDAD EMPRESA",
             "correo" => "imparable@gmail.com",
-            "logo" => "logo.jpg"
+            "logo" => "logo.png"
         ]);
     }
 }

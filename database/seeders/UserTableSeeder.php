@@ -25,7 +25,6 @@ class UserTableSeeder extends Seeder
             "correo" => "",
             "tipo" => "ADMINISTRACIÓN",
             "role_id" => 1,
-            "sucursal_id" => NULL,
             "sucursal_todos" => 1,
             "fecha_registro" => date("Y-m-d"),
             "acceso" => 1,

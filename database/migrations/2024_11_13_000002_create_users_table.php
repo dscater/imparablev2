@@ -27,14 +27,12 @@ class CreateUsersTable extends Migration
             $table->string('foto', 255)->nullable();
             $table->string('tipo'); //ADMINISTRACIÓN, EMPLEADO, CLIENTE
             $table->unsignedBigInteger("role_id")->nullable();
-            $table->unsignedBigInteger('sucursal_id')->nullable();
             $table->integer('sucursal_todos')->default(0);
             $table->date('fecha_registro');
             $table->integer("acceso")->default(1);
             $table->integer("status")->default(1);
             $table->timestamps();
 
-            $table->foreign("sucursal_id")->on("sucursals")->references("id");
             $table->foreign("role_id")->on("roles")->references("id");
             $table->unique(["ci", "ci_exp"], "ci_ci_exp_unique");
         });

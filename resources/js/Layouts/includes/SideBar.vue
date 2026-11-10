@@ -540,7 +540,6 @@ onUnmounted(() => {
                             permisos.includes('usuarios.index') ||
                             permisos.includes('clientes.index') ||
                             permisos.includes('sucursals.index') ||
-                            permisos.includes('almacens.index') ||
                             permisos.includes('productos.index') ||
                             permisos.includes('categorias.index') ||
                             permisos.includes('marcas.index') ||
@@ -594,15 +593,6 @@ onUnmounted(() => {
                         :label="'Sucursales'"
                         :ruta="'sucursals.index'"
                         :icon="'fa fa-building'"
-                    ></ItemMenu>
-                    <ItemMenu
-                        v-if="
-                            permisos == '*' ||
-                            permisos.includes('almacens.index')
-                        "
-                        :label="'Almacenes'"
-                        :ruta="'almacens.index'"
-                        :icon="'fa fa-warehouse'"
                     ></ItemMenu>
                     <li
                         class="nav-item"

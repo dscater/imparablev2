@@ -16,11 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger("sucursal_id");
             $table->unsignedBigInteger("venta_id");
             $table->unsignedBigInteger("cliente_id");
-            $table->unsignedBigInteger("metodo_pago_id");
-            $table->decimal("monto_efectivo", 24, 2);
-            $table->decimal("monto_qr", 24, 2);
-            $table->decimal("monto_total", 24, 2);
-            $table->decimal("saldo", 24, 2);
+            $table->decimal("monto", 24, 2);
             $table->date("fecha");
             $table->time("hora");
             $table->unsignedBigInteger("user_id");
@@ -29,7 +25,6 @@ return new class extends Migration
             $table->foreign("sucursal_id")->on("sucursals")->references("id");
             $table->foreign("venta_id")->on("ventas")->references("id");
             $table->foreign("cliente_id")->on("clientes")->references("id");
-            $table->foreign("metodo_pago_id")->on("metodo_pagos")->references("id");
             $table->foreign("user_id")->on("users")->references("id");
         });
     }

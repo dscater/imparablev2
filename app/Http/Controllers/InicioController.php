@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Almacen;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\User;
 use App\Models\Venta;
@@ -22,7 +21,7 @@ use Inertia\Inertia;
 class InicioController extends Controller
 {
 
-    public function __construct(private AlmacenService $almacen_service, private UserService $user_service) {}
+    public function __construct(private UserService $user_service) {}
 
     public function verificaLogin()
     {
@@ -46,7 +45,6 @@ class InicioController extends Controller
             'ci',
             'ci_exp',
             'role_id',
-            'sucursal_id',
             'sucursal_todos',
             'status'
         ], [
@@ -59,12 +57,9 @@ class InicioController extends Controller
             'fecha_registro_t',
             'usuario_abrev'
         ]);
-        $almacens = $this->almacen_service->listado(1);
         return Inertia::render('Admin/Home', [
             'array_infos' => $array_infos,
-
             'usuarios' => $usuarios,
-            'almacens' => $almacens,
         ]);
     }
 

@@ -32,7 +32,8 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         if ($user) {
-            $user->loadMissing(['sucursal', 'role']);
+            $user->loadMissing(['user_sucursals', 'role']);
+            $user->append(["permisos"]);
         }
 
         return [
