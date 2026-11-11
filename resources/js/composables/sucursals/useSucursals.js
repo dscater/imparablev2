@@ -4,8 +4,10 @@ export const useSucursals = () => {
     const initialState = {
         id: 0,
         nombre: "",
-        descripcion: "",
+        fono: "",
+        dir: "",
         activo: 1,
+        fecha_registro: "",
         _method: "POST",
     };
 

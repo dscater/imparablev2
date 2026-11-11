@@ -18,17 +18,12 @@ const muestra_form = ref(props.muestra_formulario);
 const enviando = ref(false);
 const form = props.form;
 
-const listExpedido = [
-    { value: "LP", label: "La Paz" },
-    { value: "CB", label: "Cochabamba" },
-    { value: "SC", label: "Santa Cruz" },
-    { value: "CH", label: "Chuquisaca" },
-    { value: "OR", label: "Oruro" },
-    { value: "PT", label: "Potosi" },
-    { value: "TJ", label: "Tarija" },
-    { value: "PD", label: "Pando" },
-    { value: "BN", label: "Beni" },
-];
+const listExpedidos = ref([]);
+const cargarListaExpedidos = () => {
+    axios.get(route("lista_expedidos.listado")).then((response) => {
+        listExpedidos.value = response.data.lista_expedidos;
+    });
+};
 
 const listRoles = ref([]);
 const cargarRoles = () => {
@@ -46,9 +41,15 @@ const cargarTipoUsuarios = () => {
 
 const listSucursals = ref([]);
 const cargarSucursals = () => {
-    axios.get(route("sucursals.listado")).then((response) => {
-        listSucursals.value = response.data.sucursals;
-    });
+    axios
+        .get(route("sucursals.listado"), {
+            params: {
+                activo: 1,
+            },
+        })
+        .then((response) => {
+            listSucursals.value = response.data.sucursals;
+        });
 };
 
 const foto = ref(null);
@@ -152,6 +153,7 @@ const cerrarFormulario = () => {
 };
 
 const cargarListas = () => {
+    cargarListaExpedidos();
     cargarRoles();
     cargarSucursals();
     cargarTipoUsuarios();
@@ -279,7 +281,7 @@ onMounted(() => {
                         >
                             <option value="">- Seleccione -</option>
                             <option
-                                v-for="item in listExpedido"
+                                v-for="item in listExpedidos"
                                 :value="item.value"
                             >
                                 {{ item.label }}
@@ -291,6 +293,25 @@ onMounted(() => {
                         >
                             <li class="parsley-required">
                                 {{ form.errors?.ci_exp }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <label class="">Teléfono/Celular</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            :class="{
+                                'parsley-error': form.errors?.fono,
+                            }"
+                            v-model="form.fono"
+                        />
+                        <ul
+                            v-if="form.errors?.fono"
+                            class="list-unstyled text-danger"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.fono }}
                             </li>
                         </ul>
                     </div>
@@ -310,45 +331,6 @@ onMounted(() => {
                         >
                             <li class="parsley-required">
                                 {{ form.errors?.correo }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label>Dirección</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            :class="{
-                                'parsley-error': form.errors?.dir,
-                            }"
-                            v-model="form.dir"
-                        />
-
-                        <ul
-                            v-if="form.errors?.dir"
-                            class="list-unstyled text-danger"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.dir }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Celular</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            :class="{
-                                'parsley-error': form.errors?.fono,
-                            }"
-                            v-model="form.fono"
-                        />
-                        <ul
-                            v-if="form.errors?.fono"
-                            class="list-unstyled text-danger"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.fono }}
                             </li>
                         </ul>
                     </div>
@@ -418,13 +400,14 @@ onMounted(() => {
                         <label class="required">Seleccionar Sucursal</label>
                         <el-select
                             :class="{
-                                'parsley-error': form.errors?.sucursal_id,
+                                'parsley-error': form.errors?.sucursal_ids,
                             }"
+                            multiple
                             no-data-text="Sin datos"
                             no-data-match="Sin resultados"
                             size="large"
                             placeholder="- Seleccione -"
-                            v-model="form.sucursal_id"
+                            v-model="form.sucursal_ids"
                             filterable
                         >
                             <el-option
@@ -435,11 +418,11 @@ onMounted(() => {
                             ></el-option>
                         </el-select>
                         <ul
-                            v-if="form.errors?.sucursal_id"
+                            v-if="form.errors?.sucursal_ids"
                             class="list-unstyled text-danger"
                         >
                             <li class="parsley-required">
-                                {{ form.errors?.sucursal_id }}
+                                {{ form.errors?.sucursal_ids }}
                             </li>
                         </ul>
                     </div>

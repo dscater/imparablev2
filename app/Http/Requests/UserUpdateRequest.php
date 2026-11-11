@@ -25,7 +25,6 @@ class UserUpdateRequest extends FormRequest
             "nombre" => "required|min:2",
             "paterno" => "required|min:2",
             "materno" => "nullable",
-            "dir" => "nullable",
             "ci" => "required|unique:users,ci," . $this->user->id,
             "ci_exp" => "required",
             "correo" => "nullable|email|unique:users,correo," . $this->user->id,
@@ -33,11 +32,11 @@ class UserUpdateRequest extends FormRequest
             "acceso" => "required",
             "tipo" => "required",
             "role_id" => "required",
-            "sucursal_id" => "required",
+            "sucursal_ids" => "required|array",
         ];
 
         if ($this->tipo == 'ADMINISTRACIÓN') {
-            $rules['sucursal_id'] = 'nullable';
+            $rules['sucursal_ids'] = 'nullable';
         }
 
         if ($this->foto && !is_string($this->foto)) {
@@ -66,7 +65,7 @@ class UserUpdateRequest extends FormRequest
             "acceso.required" => "Este campo es obligatorio",
             "tipo.required" => "Este campo es obligatorio",
             "role_id.required" => "Este campo es obligatorio",
-            "sucursal_id.required" => "Este campo es obligatorio",
+            "sucursal_ids.required" => "Este campo es obligatorio",
         ];
     }
 }

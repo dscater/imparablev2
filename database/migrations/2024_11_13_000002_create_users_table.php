@@ -23,6 +23,7 @@ class CreateUsersTable extends Migration
             $table->string("ci");
             $table->string("ci_exp");
             $table->string('password', 255);
+            $table->string('fono', 255)->nullable();
             $table->string('correo', 255)->nullable();
             $table->string('foto', 255)->nullable();
             $table->string('tipo'); //ADMINISTRACIÓN, EMPLEADO, CLIENTE

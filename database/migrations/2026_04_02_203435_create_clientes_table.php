@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date("fecha_nac");
             $table->string("dir")->nullable();
             $table->string("fono", 155)->nullable();
+            $table->string("nom_ref")->nullable();
             $table->string("fono_ref", 155)->nullable();
             $table->string("correo")->nullable();
             $table->string('foto', 255)->nullable();

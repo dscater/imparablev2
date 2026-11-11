@@ -1042,15 +1042,6 @@ onUnmounted(() => {
                     <ItemMenu
                         v-if="
                             permisos == '*' ||
-                            permisos.includes('tipo_documentos.index')
-                        "
-                        :label="'Tipos de Documentos'"
-                        :ruta="'tipo_documentos.index'"
-                        :icon="'fa fa-list'"
-                    ></ItemMenu>
-                    <ItemMenu
-                        v-if="
-                            permisos == '*' ||
                             permisos.includes('configuracions.index')
                         "
                         :label="'Configuración Sistema'"

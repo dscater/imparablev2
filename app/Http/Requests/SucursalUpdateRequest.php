@@ -24,8 +24,9 @@ class SucursalUpdateRequest extends FormRequest
     {
         return [
             "nombre" => "required|string|unique:sucursals,nombre," . $this->sucursal->id,
+            "fono" => "nullable|string",
+            "dir" => "nullable|string",
             "activo" => "required",
-            "descripcion" => "nullable|string"
         ];
     }
 

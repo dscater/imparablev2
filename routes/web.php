@@ -49,6 +49,7 @@ use App\Http\Controllers\IngresoFaltanteController;
 use App\Http\Controllers\IngresoPagoController;
 use App\Http\Controllers\IngresoProductoController;
 use App\Http\Controllers\InicioController;
+use App\Http\Controllers\ListaExpedidoController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\NotificacionUserController;
@@ -121,8 +122,8 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
         ["index", "show", "update"]
     );
 
-    // TIPO PAGOS
-    Route::get("tipo_pagos/listado", [TipoPagoController::class, 'listado'])->name("tipo_pagos.listado");
+    // LISTA EXPEDIDOS
+    Route::get("lista_expedidos/listado", [ListaExpedidoController::class, 'listado'])->name("lista_expedidos.listado");
 
     // TIPO VENTA
     Route::get("tipo_ventas/listado", [TipoVentaController::class, 'listado'])->name("tipo_ventas.listado");

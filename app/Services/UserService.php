@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -156,7 +157,7 @@ class UserService
     public function listadoPaginado(int $length, int $page, string $search, array $columnsSerachLike = [], array $columnsFilter = [], array $columnsBetweenFilter = [], array $orderBy = []): LengthAwarePaginator
     {
         $users = User::select("users.*")
-            ->with(["sucursal:id,nombre", "role:id,nombre"])
+            ->with(["user_sucursals.sucursal:id,nombre", "role:id,nombre"])
             ->where("users.id", "!=", 1);
 
         $users->buscarNombre($search);
@@ -170,6 +171,11 @@ class UserService
 
 
         $users = $users->paginate($length, ['*'], 'page', $page);
+
+        $users->getCollection()->each(function ($user) {
+            $user->append(['sucursal_ids']);
+        });
+
         return $users;
     }
 
@@ -265,14 +271,14 @@ class UserService
     public function crear(array $datos): User
     {
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
-        // $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+        $sucursal_ids = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_ids"];
 
+        Log::debug($datos);
         $user = User::create([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
             "nombre" => mb_strtoupper($datos["nombre"]),
             "paterno" => mb_strtoupper($datos["paterno"]),
             "materno" => mb_strtoupper($datos["materno"]),
-            "dir" => mb_strtoupper($datos["dir"]),
             "ci" => $datos["ci"],
             "ci_exp" => mb_strtoupper($datos["ci_exp"]),
             "correo" => $datos["correo"],
@@ -290,6 +296,17 @@ class UserService
             $this->cargarFoto($user, $datos["foto"]);
         }
 
+        Log::debug("AAAA");
+
+        $sucursales = collect($sucursal_ids)->map(function ($id) {
+            return [
+                'sucursal_id' => $id,
+            ];
+        })->toArray();
+
+        $user->user_sucursals()->createMany($sucursales);
+
+        Log::debug("BBB");
         $this->limpiarCacheListado();
         // registrar accion
         $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UN USUARIO", $user);
@@ -308,14 +325,13 @@ class UserService
         $old_user = clone $user;
 
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
-        // $sucursal_id = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_id"];
+        $sucursal_ids = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_ids"];
 
         $user->update([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
             "nombre" => mb_strtoupper($datos["nombre"]),
             "paterno" => mb_strtoupper($datos["paterno"]),
             "materno" => mb_strtoupper($datos["materno"]),
-            "dir" => mb_strtoupper($datos["dir"]),
             "ci" => $datos["ci"],
             "ci_exp" => mb_strtoupper($datos["ci_exp"]),
             "correo" => $datos["correo"],
@@ -331,6 +347,16 @@ class UserService
         if (isset($datos["foto"]) && !is_string($datos["foto"])) {
             $this->cargarFoto($user, $datos["foto"]);
         }
+
+        $sucursales = collect($sucursal_ids)->map(function ($id) {
+            return [
+                'sucursal_id' => $id,
+            ];
+        })->toArray();
+
+        $user->user_sucursals()->delete();
+
+        $user->user_sucursals()->createMany($sucursales);
 
         $this->limpiarCacheListado();
         // registrar accion
@@ -363,7 +389,7 @@ class UserService
     {
         $directorio = public_path('imgs/users');
 
-        $nombre = $$user->id . '_' . Str::uuid();
+        $nombre = $user->id . '_' . Str::uuid();
 
         $nuevoArchivo = $this->cargarArchivoService->cargarArchivo(
             $foto,

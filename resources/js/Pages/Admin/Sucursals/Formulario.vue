@@ -139,7 +139,7 @@ onMounted(() => {});
                     <span class="text-danger">(*)</span> son obligatorios.
                 </p>
                 <div class="row">
-                    <div class="col-md-6 mt-2">
+                    <div class="col-md-4 mt-2">
                         <label class="required">Nombre de Sucursal</label>
                         <el-input
                             type="text"
@@ -158,22 +158,41 @@ onMounted(() => {});
                             </li>
                         </ul>
                     </div>
-                    <div class="col-md-6 mt-2">
-                        <label class="">Descripción</label>
+                    <div class="col-md-4 mt-2">
+                        <label class="">Teléfono/Celular</label>
                         <el-input
                             type="text"
                             :class="{
-                                'parsley-error': form.errors?.descripcion,
+                                'parsley-error': form.errors?.fono,
                             }"
-                            v-model="form.descripcion"
+                            v-model="form.fono"
                             autosize
                         ></el-input>
                         <ul
-                            v-if="form.errors?.descripcion"
+                            v-if="form.errors?.fono"
                             class="d-block text-danger list-unstyled"
                         >
                             <li class="parsley-required">
-                                {{ form.errors?.descripcion }}
+                                {{ form.errors?.fono }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <label class="">Dirección</label>
+                        <el-input
+                            type="text"
+                            :class="{
+                                'parsley-error': form.errors?.dir,
+                            }"
+                            v-model="form.dir"
+                            autosize
+                        ></el-input>
+                        <ul
+                            v-if="form.errors?.dir"
+                            class="d-block text-danger list-unstyled"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.dir }}
                             </li>
                         </ul>
                     </div>

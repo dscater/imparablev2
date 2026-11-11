@@ -9,6 +9,7 @@ use App\Services\HistorialAccionService;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use App\Models\User;
+use App\Models\UserSucursal;
 use App\Models\Venta;
 use Illuminate\Http\UploadedFile;
 use Exception;
@@ -103,8 +104,9 @@ class SucursalService
     {
         $sucursal = Sucursal::create([
             "nombre" => mb_strtoupper($datos["nombre"]),
+            "fono" => mb_strtoupper($datos["fono"]) ?? null,
+            "dir" => mb_strtoupper($datos["dir"]) ?? null,
             "activo" => $datos["activo"],
-            "descripcion" => mb_strtoupper($datos["descripcion"]) ?? null,
             "fecha_registro" => date("Y-m-d")
         ]);
 
@@ -125,16 +127,16 @@ class SucursalService
     {
         $old_sucursal = clone $sucursal;
 
-        $almacenes_activos = Almacen::where("sucursal_id", $sucursal->id)
-            ->where("activo", 1)->count();
-        if ($almacenes_activos > 0 && $datos["activo"] == 0) {
-            throw new Exception("No es posible poner INACTIVA la sucursal {$sucursal->nombre}, porque tiene {$almacenes_activos} almacenes activos");
+        $user_sucursals = UserSucursal::where("sucursal_id", $sucursal->id)->count();
+        if ($user_sucursals > 0 && $datos["activo"] == 0) {
+            throw new Exception("No es posible poner INACTIVA la sucursal {$sucursal->nombre}, porque tiene {$user_sucursals} usuarios asignados");
         }
 
         $sucursal->update([
             "nombre" => mb_strtoupper($datos["nombre"]),
+            "fono" => mb_strtoupper($datos["fono"]) ?? null,
+            "dir" => mb_strtoupper($datos["dir"]) ?? null,
             "activo" => $datos["activo"],
-            "descripcion" => mb_strtoupper($datos["descripcion"]) ?? null,
         ]);
 
         // registrar accion
@@ -177,11 +179,6 @@ class SucursalService
             throw new Exception("No es posible eliminar el registro " . $sucursal->nombre . ", porque fue usado en traspasos/transferencias");
         }
 
-        $almacenes_activos = Almacen::where("sucursal_id", $sucursal->id)
-            ->where("activo", 1)->count();
-        if ($almacenes_activos > 0) {
-            throw new Exception("No es posible eliminar la sucursal {$sucursal->nombre}, porque tiene {$almacenes_activos} almacenes activos");
-        }
         $sucursal->delete();
 
         // registrar accion

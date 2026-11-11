@@ -21,21 +21,21 @@ class User extends Authenticatable
      */
     protected $fillable = [
         "usuario",
+        "codigo",
         "nombre",
         "paterno",
         "materno",
         "ci",
         "ci_exp",
-        "dir",
-        "correo",
-        "fono",
         "password",
+        "fono",
+        "correo",
         "foto",
         "tipo",
         "role_id",
-        "acceso",
         "sucursal_todos",
         "fecha_registro",
+        "acceso",
         "status",
     ];
 
@@ -63,6 +63,10 @@ class User extends Authenticatable
         ];
     }
 
+    public function getSucursalIdsAttribute()
+    {
+        return $this->user_sucursals->pluck("sucursal_id")->toArray();
+    }
 
     public function getUsuarioAbrevAttribute()
     {

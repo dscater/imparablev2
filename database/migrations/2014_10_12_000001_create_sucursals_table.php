@@ -18,6 +18,7 @@ class CreateSucursalsTable extends Migration
             $table->string("nombre", 255);
             $table->string("fono")->nullable();
             $table->string("dir", 800)->nullable();
+            $table->integer("activo")->default(1);
             $table->date("fecha_registro");
             $table->timestamps();
         });

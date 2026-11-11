@@ -72,6 +72,11 @@ const headers = [
         sortable: true,
     },
     {
+        label: "SUCURSAL",
+        key: "user_sucursals",
+        sortable: true,
+    },
+    {
         label: "FOTO",
         key: "foto",
         sortable: true,
@@ -262,6 +267,14 @@ function tablaConError() {
                                     :src="item.url_foto"
                                     alt="Foto"
                                 />
+                            </template>
+                            <template #user_sucursals="{ item }">
+                                <div
+                                    v-for="user_sucursal in item.user_sucursals"
+                                >
+                                    <i class="fa fa-check"></i>
+                                    {{ user_sucursal.sucursal.nombre }}
+                                </div>
                             </template>
 
                             <template #acceso="{ item }">

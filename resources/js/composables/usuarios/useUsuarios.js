@@ -18,7 +18,7 @@ export const useUsuarios = () => {
         tipo: "",
         role_id: "",
         acceso: 1,
-        sucursal_id: "",
+        sucursal_ids: [],
         sucursal_todos: "",
         fecha_registro: "",
         status: "",

@@ -19,5 +19,17 @@ class SucursalTableSeeder extends Seeder
             "dir" => "ZONA LOS PEDREGALES",
             "fecha_registro" => date("Y-m-d"),
         ]);
+        Sucursal::create([
+            "nombre" => "SUCURSAL 2",
+            "fono" => "SUCURSAL 2",
+            "dir" => "ZONA LOS PEDREGALES",
+            "fecha_registro" => date("Y-m-d"),
+        ]);
+        Sucursal::create([
+            "nombre" => "SUCURSAL 3",
+            "fono" => "SUCURSAL 3",
+            "dir" => "ZONA LOS PEDREGALES",
+            "fecha_registro" => date("Y-m-d"),
+        ]);
     }
 }

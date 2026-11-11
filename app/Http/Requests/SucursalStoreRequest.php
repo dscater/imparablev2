@@ -24,8 +24,9 @@ class SucursalStoreRequest extends FormRequest
     {
         return [
             "nombre" => "required|string|unique:sucursals,nombre",
+            "fono" => "nullable|string",
+            "dir" => "nullable|string",
             "activo" => "required",
-            "descripcion" => "nullable|string"
         ];
     }
 
