@@ -65,7 +65,7 @@ use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TipoCompraController;
 use App\Http\Controllers\TipoDocumentoController;
 use App\Http\Controllers\TipoIngresoController;
-use App\Http\Controllers\TipoPagoController;
+use App\Http\Controllers\TipoProductoController;
 use App\Http\Controllers\TipoSalidaController;
 use App\Http\Controllers\TipoUsuarioController;
 use App\Http\Controllers\TipoVentaController;
@@ -124,6 +124,10 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
 
     // LISTA EXPEDIDOS
     Route::get("lista_expedidos/listado", [ListaExpedidoController::class, 'listado'])->name("lista_expedidos.listado");
+
+
+    // TIPO DE PRODUCTOS
+    Route::get("tipo_productos/listado", [TipoProductoController::class, 'listado'])->name("tipo_productos.listado");
 
     // TIPO VENTA
     Route::get("tipo_ventas/listado", [TipoVentaController::class, 'listado'])->name("tipo_ventas.listado");

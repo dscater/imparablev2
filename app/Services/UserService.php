@@ -52,7 +52,6 @@ class UserService
 
                 $users = User::select($columns)
                     ->with([
-                        "sucursal:id,nombre",
                         "role:id,nombre"
                     ])
                     ->where("users.id", "!=", 1);
@@ -61,11 +60,11 @@ class UserService
                     $users->where("status", 1);
                 }
 
+                Log::debug($hidden);
                 return $users->get()->makeHidden($hidden);
             }
         );
     }
-
 
     public function listadoByTipo(
         $tipo = null,
@@ -273,7 +272,6 @@ class UserService
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
         $sucursal_ids = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_ids"];
 
-        Log::debug($datos);
         $user = User::create([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
             "nombre" => mb_strtoupper($datos["nombre"]),
@@ -296,7 +294,6 @@ class UserService
             $this->cargarFoto($user, $datos["foto"]);
         }
 
-        Log::debug("AAAA");
 
         $sucursales = collect($sucursal_ids)->map(function ($id) {
             return [
@@ -306,7 +303,6 @@ class UserService
 
         $user->user_sucursals()->createMany($sucursales);
 
-        Log::debug("BBB");
         $this->limpiarCacheListado();
         // registrar accion
         $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UN USUARIO", $user);

@@ -125,9 +125,15 @@ const listCalidads = ref([
         label: "COMERCIAL",
     },
 ]);
+const listTipoProductos = ref([]);
 const listCategorias = ref([]);
 const listMarcas = ref([]);
 const listUnidadMedidas = ref([]);
+const cargarTipoProductos = () => {
+    axios.get(route("tipo_productos.listado")).then((response) => {
+        listTipoProductos.value = response.data.tipo_productos;
+    });
+};
 const cargarCategorias = () => {
     axios.get(route("categorias.listado")).then((response) => {
         listCategorias.value = response.data.categorias;
@@ -144,6 +150,7 @@ const cargarUnidadMedidas = () => {
     });
 };
 const cargarListas = () => {
+    cargarTipoProductos();
     cargarCategorias();
     cargarMarcas();
     cargarUnidadMedidas();
@@ -214,6 +221,32 @@ onMounted(() => {
                         >
                             <li class="parsley-required">
                                 {{ form.errors?.nombre }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mt-2">
+                        <label class="required">Tipo de Producto</label>
+                        <el-select
+                            type="text"
+                            :class="{
+                                'parsley-error': form.errors?.tipo,
+                            }"
+                            v-model="form.tipo"
+                            placeholder="- Seleccione -"
+                        >
+                            <el-option
+                                v-for="item in listTipoProductos"
+                                :key="item.value"
+                                :value="item.value"
+                                :label="item.lable"
+                            ></el-option>
+                        </el-select>
+                        <ul
+                            v-if="form.errors?.tipo"
+                            class="d-block text-danger list-unstyled"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.tipo }}
                             </li>
                         </ul>
                     </div>

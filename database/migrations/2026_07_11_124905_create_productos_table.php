@@ -14,15 +14,15 @@ return new class extends Migration
         Schema::create('productos', function (Blueprint $table) {
             $table->id();
             $table->string("codigo", 255)->unique();
-            $table->string("nombre", 255)->unique();
-            $table->unsignedBigInteger("categoria_id");
-            $table->unsignedBigInteger("marca_id");
+            $table->string("nombre", 255);
+            $table->string("tipo"); // PRODUCTO, SERVICIO, PLAN (afecta el control de stock)
+            $table->unsignedBigInteger("categoria_id")->nullable();
+            $table->unsignedBigInteger("marca_id")->nullable();
             $table->unsignedBigInteger("unidad_medida_id");
             $table->text("caracteristicas")->nullable();
-            $table->string("tipo"); // SERVICIO, NORMAL (afecta el control de stock)
             $table->decimal("precio", 24, 2);
-            $table->decimal("precio_compra", 24, 2);
-            $table->double("stock_min", 8, 2);
+            $table->decimal("precio_compra", 24, 2)->nullable();
+            $table->double("stock_min", 8, 2)->nullable();
             $table->string("imagen", 255)->nullable();
             $table->boolean("activo")->default(1);
             $table->date("fecha_registro");

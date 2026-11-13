@@ -50,8 +50,6 @@ class InicioController extends Controller
         ], [
             'password',
             'remember_token',
-            "permisos",
-            'foto_b64',
             'url_foto',
             'full_ci',
             'fecha_registro_t',
