@@ -620,7 +620,7 @@ onUnmounted(() => {
                         >
                             <i class="nav-icon fa fa-clipboard-list"></i>
                             <p>
-                                Productos
+                                Productos y Servicios
                                 <i class="nav-arrow fa fa-chevron-right"></i>
                             </p>
                         </a>

@@ -15,13 +15,18 @@ return new class extends Migration
             $table->id();
             $table->string("codigo", 255)->unique();
             $table->string("nombre", 255);
-            $table->string("tipo"); // PRODUCTO, SERVICIO, PLAN (afecta el control de stock)
+            $table->string("tipo"); // PRODUCTO, SERVICIO, PLAN (afecta el control de stock e inscripciones)
             $table->unsignedBigInteger("categoria_id")->nullable();
             $table->unsignedBigInteger("marca_id")->nullable();
-            $table->unsignedBigInteger("unidad_medida_id");
+            $table->unsignedBigInteger("unidad_medida_id")->nullable();
             $table->text("caracteristicas")->nullable();
             $table->decimal("precio", 24, 2);
             $table->decimal("precio_compra", 24, 2)->nullable();
+            $table->integer("duracion_dias")->nullable();
+            $table->string("horario")->nullable(); // COMPLETO, MAÑANA, TARDE, NOCHE
+            $table->time("hora_ini")->nullable();
+            $table->time("hora_fin")->nullable();
+            $table->boolean("indefinido")->nullable(); // 0: CALCULAR EL FIN DE LA INSCRIPCIÓN, 1: DESCONTAR DÍAS DE LA INSCRIPCIÓN
             $table->double("stock_min", 8, 2)->nullable();
             $table->string("imagen", 255)->nullable();
             $table->boolean("activo")->default(1);

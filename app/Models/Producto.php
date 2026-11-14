@@ -12,18 +12,18 @@ class Producto extends Model
     protected $fillable = [
         "codigo",
         "nombre",
+        "tipo", // PRODUCTO, SERVICIO, PLAN (afecta el control de stock e inscripciones)
         "categoria_id",
         "marca_id",
         "unidad_medida_id",
         "caracteristicas",
-        "calidad", //EXTRA/COMERCIAL (afecta el precio)
-        "cobertura",
-        "formato",
         "precio",
-        "precio2",
-        "precio3",
-        "precio4",
         "precio_compra",
+        "duracion_dias",
+        "horario", // COMPLETO, MAÑANA, TARDE, NOCHE
+        "hora_ini",
+        "hora_fin",
+        "indefinido", // 0: CALCULAR EL FIN DE LA INSCRIPCIÓN, 1: DESCONTAR DÍAS DE LA INSCRIPCIÓN
         "stock_min",
         "imagen",
         "activo",

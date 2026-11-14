@@ -6,7 +6,12 @@ use App\Http\Requests\ProductoStoreRequest;
 use App\Http\Requests\ProductoUpdateRequest;
 use App\Models\Producto;
 use App\Models\User;
+use App\Services\CategoriaService;
+use App\Services\ListaHorarioService;
+use App\Services\MarcaService;
 use App\Services\ProductoService;
+use App\Services\TipoProductoService;
+use App\Services\UnidadMedidaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +26,14 @@ use Inertia\Response as ResponseInertia;
 
 class ProductoController extends Controller
 {
-    public function __construct(private ProductoService $productoService) {}
+    public function __construct(
+        private ProductoService $productoService,
+        private TipoProductoService $tipoProductoService,
+        private ListaHorarioService $lista_horario_service,
+        private UnidadMedidaService $unidadMedidaService,
+        private CategoriaService $categoriaService,
+        private MarcaService $marcaService
+    ) {}
 
     /**
      * Página index
@@ -74,6 +86,25 @@ class ProductoController extends Controller
         ]);
     }
 
+    public function create(): ResponseInertia
+    {
+        $tipo_productos = $this->tipoProductoService->listado();
+        $lista_horarios = $this->lista_horario_service->listado();
+        $categorias = $this->categoriaService->listado();
+        $marcas = $this->marcaService->listado();
+        $unidad_medidas = $this->unidadMedidaService->listado();
+        return Inertia::render(
+            "Admin/Productos/Create",
+            [
+                "tipo_productos" => $tipo_productos,
+                "lista_horarios" => $lista_horarios,
+                "categorias" => $categorias,
+                "marcas" => $marcas,
+                "unidad_medidas" => $unidad_medidas,
+            ]
+        );
+    }
+
     /**
      * Registrar un nuevo producto
      *
@@ -105,6 +136,26 @@ class ProductoController extends Controller
     public function show(Producto $producto): JsonResponse
     {
         return response()->JSON($producto);
+    }
+
+    public function edit(Producto $producto): ResponseInertia
+    {
+        $tipo_productos = $this->tipoProductoService->listado();
+        $lista_horarios = $this->lista_horario_service->listado();
+        $categorias = $this->categoriaService->listado();
+        $marcas = $this->marcaService->listado();
+        $unidad_medidas = $this->unidadMedidaService->listado();
+        return Inertia::render(
+            "Admin/Productos/Edit",
+            [
+                "producto" => $producto,
+                "tipo_productos" => $tipo_productos,
+                "lista_horarios" => $lista_horarios,
+                "categorias" => $categorias,
+                "marcas" => $marcas,
+                "unidad_medidas" => $unidad_medidas,
+            ]
+        );
     }
 
     public function update(Producto $producto, ProductoUpdateRequest $request)

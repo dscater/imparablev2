@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger("cliente_id");
             $table->unsignedBigInteger("producto_id");
             $table->unsignedBigInteger("venta_detalle_id");
-            $table->string("declaracion_jurada")->nullable();
+            $table->string("declaracion_jurada")->nullable(); // SI LA EDAD DEL INSCRITO ES MENOR A 18 AÑOS
             $table->date("fecha_inicio");
             $table->integer("estado")->default(1); //0: INACTIVO, 1:ACTIVO, 2: PAUSADO
             $table->date("fecha_pausa")->nullable();

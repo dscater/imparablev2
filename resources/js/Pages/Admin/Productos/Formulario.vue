@@ -1,7 +1,9 @@
 <script setup>
-import MiModal from "@/Components/MiModal.vue";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { watch, ref, computed, onMounted, nextTick } from "vue";
+import { ElPopover } from "element-plus";
+import "element-plus/es/components/popover/style/css";
+
 const props = defineProps({
     muestra_formulario: {
         type: Boolean,
@@ -9,6 +11,26 @@ const props = defineProps({
     },
     form: {
         type: Object,
+    },
+    tipo_productos: {
+        type: Array,
+        default: () => [],
+    },
+    lista_horarios: {
+        type: Array,
+        default: () => [],
+    },
+    categorias: {
+        type: Array,
+        default: () => [],
+    },
+    marcas: {
+        type: Array,
+        default: () => [],
+    },
+    unidad_medidas: {
+        type: Array,
+        default: () => [],
     },
 });
 
@@ -29,12 +51,12 @@ const tituloDialog = computed(() => {
 
 const textBtn = computed(() => {
     if (enviando.value) {
-        return `<i class="fa fa-spin fa-spinner"></i> Enviando...`;
+        return `<i class="fa fa-spin fa-spinner"></i> Enviando datos...`;
     }
     if (form.id == 0) {
-        return `<i class="fa fa-save"></i> Guardar`;
+        return `<i class="fa fa-save"></i> Guardar registro`;
     }
-    return `<i class="fa fa-edit"></i> Actualizar`;
+    return `<i class="fa fa-edit"></i> Actualizar registro`;
 });
 
 const enviarFormulario = () => {
@@ -115,451 +137,603 @@ const cerrarFormulario = () => {
     document.getElementsByTagName("body")[0].classList.remove("modal-open");
 };
 
-const listCalidads = ref([
-    {
-        value: "EXTRA",
-        label: "EXTRA",
-    },
-    {
-        value: "COMERCIAL",
-        label: "COMERCIAL",
-    },
-]);
-const listTipoProductos = ref([]);
-const listCategorias = ref([]);
-const listMarcas = ref([]);
-const listUnidadMedidas = ref([]);
-const cargarTipoProductos = () => {
-    axios.get(route("tipo_productos.listado")).then((response) => {
-        listTipoProductos.value = response.data.tipo_productos;
-    });
-};
-const cargarCategorias = () => {
-    axios.get(route("categorias.listado")).then((response) => {
-        listCategorias.value = response.data.categorias;
-    });
-};
-const cargarMarcas = () => {
-    axios.get(route("marcas.listado")).then((response) => {
-        listMarcas.value = response.data.marcas;
-    });
-};
-const cargarUnidadMedidas = () => {
-    axios.get(route("unidad_medidas.listado")).then((response) => {
-        listUnidadMedidas.value = response.data.unidad_medidas;
-    });
-};
-const cargarListas = () => {
-    cargarTipoProductos();
-    cargarCategorias();
-    cargarMarcas();
-    cargarUnidadMedidas();
-};
+const tipoSeleccionado = computed(() =>
+    props.tipo_productos.find((item) => item.value === form.tipo),
+);
 
 onMounted(() => {
-    cargarListas();
     imagen.value.value = null;
 });
 </script>
 
 <template>
-    <MiModal
-        :open_modal="muestra_form"
-        @close="cerrarFormulario"
-        :size="'modal-xl'"
-        :header-class="'bg-principal'"
-        :footer-class="'justify-content-end'"
-    >
-        <template #header>
-            <h4 class="modal-title text-white" v-html="tituloDialog"></h4>
-            <button
-                type="button"
-                class="btn-close btn-close-white"
-                @click.prevent="cerrarFormulario()"
-            ></button>
-        </template>
-
-        <template #body>
-            <form @submit.prevent="enviarFormulario()">
-                <p class="text-muted text-xs mb-0">
-                    Todos los campos con
-                    <span class="text-danger">(*)</span> son obligatorios.
-                </p>
-                <div class="row">
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Código de Producto</label>
-                        <el-input
-                            type="text"
-                            :class="{
-                                'parsley-error': form.errors?.codigo,
-                            }"
-                            v-model="form.codigo"
-                            autosize
-                        ></el-input>
-                        <ul
-                            v-if="form.errors?.codigo"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.codigo }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Nombre de Producto</label>
-                        <el-input
-                            type="text"
-                            :class="{
-                                'parsley-error': form.errors?.nombre,
-                            }"
-                            v-model="form.nombre"
-                            autosize
-                        ></el-input>
-                        <ul
-                            v-if="form.errors?.nombre"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.nombre }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Tipo de Producto</label>
-                        <el-select
-                            type="text"
-                            :class="{
-                                'parsley-error': form.errors?.tipo,
-                            }"
-                            v-model="form.tipo"
-                            placeholder="- Seleccione -"
-                        >
-                            <el-option
-                                v-for="item in listTipoProductos"
-                                :key="item.value"
-                                :value="item.value"
-                                :label="item.lable"
-                            ></el-option>
-                        </el-select>
-                        <ul
-                            v-if="form.errors?.tipo"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.tipo }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Categoría</label>
-                        <el-select
-                            v-model="form.categoria_id"
-                            filterable
-                            no-data-text="Sin datos"
-                            no-match-text="Sin datos"
-                            placeholder="- Seleccione -"
-                        >
-                            <el-option
-                                v-for="item in listCategorias"
-                                :key="item.id"
-                                :value="item.id"
-                                :label="item.nombre"
-                            ></el-option>
-                        </el-select>
-                        <ul
-                            v-if="form.errors?.categoria_id"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.categoria_id }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Marca</label>
-                        <el-select
-                            v-model="form.marca_id"
-                            filterable
-                            no-data-text="Sin datos"
-                            no-match-text="Sin datos"
-                            placeholder="- Seleccione -"
-                        >
-                            <el-option
-                                v-for="item in listMarcas"
-                                :key="item.id"
-                                :value="item.id"
-                                :label="item.nombre"
-                            ></el-option>
-                        </el-select>
-                        <ul
-                            v-if="form.errors?.marca_id"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.marca_id }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Unidad de Medida</label>
-                        <el-select
-                            v-model="form.unidad_medida_id"
-                            filterable
-                            no-data-text="Sin datos"
-                            no-match-text="Sin datos"
-                            placeholder="- Seleccione -"
-                        >
-                            <el-option
-                                v-for="item in listUnidadMedidas"
-                                :key="item.id"
-                                :value="item.id"
-                                :label="item.nombre"
-                            ></el-option>
-                        </el-select>
-                        <ul
-                            v-if="form.errors?.unidad_medida_id"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.unidad_medida_id }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label>Caracteristicas</label>
-                        <el-input
-                            type="textarea"
-                            v-model="form.caracteristicas"
-                            autosize
-                        ></el-input>
-                        <ul
-                            v-if="form.errors?.caracteristicas"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.caracteristicas }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Calidad </label>
-                        <el-select
-                            v-model="form.calidad"
-                            placeholder="Calidad"
-                            filterable
-                        >
-                            <el-option
-                                v-for="item in listCalidads"
-                                :key="item.value"
-                                :value="item.value"
-                                :label="item.label"
-                            ></el-option>
-                        </el-select>
-                        <ul
-                            v-if="form.errors?.calidad"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.calidad }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="">Cobertura</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            v-model="form.cobertura"
-                        />
-                        <ul
-                            v-if="form.errors?.cobertura"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.cobertura }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="">Formato</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            v-model="form.formato"
-                        />
-                        <ul
-                            v-if="form.errors?.formato"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.formato }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Precio de Compra Bs.</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.precio_compra"
-                        />
-                        <ul
-                            v-if="form.errors?.precio_compra"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.precio_compra }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Stock Mínimo</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.stock_min"
-                        />
-                        <ul
-                            v-if="form.errors?.stock_min"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.stock_min }}
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="col-md-4 mt-2">
-                        <label class="">Imagen</label>
-                        <input
-                            type="file"
-                            class="form-control"
-                            :class="{
-                                'parsley-error': form.errors?.imagen,
-                            }"
-                            @change="cargaArchivo($event, 'imagen')"
-                            ref="imagen"
-                        />
-                        <ul
-                            v-if="form.errors?.imagen"
-                            class="list-unstyled text-danger"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.imagen }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4 mt-2">
-                        <label class="required">Estado</label>
-                        <br />
-                        <small class="text-muted text-xs"
-                            >(Podrá realizar ventas y movimientos con este
-                            producto)</small
-                        >
-                        <br />
-                        <el-switch
-                            size="large"
-                            active-text="ACTIVO"
-                            inactive-text="INACTIVO"
-                            v-model="form.activo"
-                            :active-value="1"
-                            :inactive-value="0"
-                            style="
-                                --el-switch-on-color: #13ce66;
-                                --el-switch-off-color: #ff4949;
-                            "
-                        />
+    <form @submit.prevent="enviarFormulario()">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 class="card-title">
+                                    <i class="fa fa-list"></i> Información del
+                                    Producto o Servicio
+                                </h4>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="required">Código</label>
+                                <el-input
+                                    type="text"
+                                    :class="{
+                                        'parsley-error': form.errors?.codigo,
+                                    }"
+                                    v-model="form.codigo"
+                                    autosize
+                                ></el-input>
+                                <ul
+                                    v-if="form.errors?.codigo"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.codigo }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="required">Nombre</label>
+                                <el-input
+                                    type="text"
+                                    :class="{
+                                        'parsley-error': form.errors?.nombre,
+                                    }"
+                                    v-model="form.nombre"
+                                    autosize
+                                ></el-input>
+                                <ul
+                                    v-if="form.errors?.nombre"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.nombre }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-12 mt-2">
+                                <label class="required"
+                                    >Tipo
+                                    <el-popover :width="300" trigger="click">
+                                        <template #reference>
+                                            <i
+                                                class="fa fa-info-circle cursor-pointer text-primary fs-6"
+                                            ></i>
+                                        </template>
+                                        <template #default>
+                                            <div
+                                                class="demo-rich-conent"
+                                                style="
+                                                    display: flex;
+                                                    gap: 16px;
+                                                    flex-direction: column;
+                                                "
+                                            >
+                                                Tipo de Servicio o Producto
+                                                <div
+                                                    v-for="item in tipo_productos"
+                                                >
+                                                    <p
+                                                        class="demo-rich-content__name"
+                                                        style="
+                                                            margin: 0;
+                                                            font-weight: 500;
+                                                        "
+                                                    >
+                                                        <i
+                                                            :class="item.icon"
+                                                        ></i>
+                                                        {{ item.label }}
+                                                    </p>
+                                                    <p
+                                                        class="demo-rich-content__mention"
+                                                        style="
+                                                            margin: 0;
+                                                            font-size: 14px;
+                                                            color: var(
+                                                                --el-color-info
+                                                            );
+                                                        "
+                                                        v-text="item.detail"
+                                                    ></p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </el-popover>
+                                </label>
+                                <el-select
+                                    type="text"
+                                    :class="{
+                                        'parsley-error': form.errors?.tipo,
+                                    }"
+                                    v-model="form.tipo"
+                                    placeholder="- Seleccione -"
+                                >
+                                    <template #label="{ label, value }">
+                                        <span
+                                            ><i
+                                                :class="tipoSeleccionado.icon"
+                                            ></i>
+                                            {{ tipoSeleccionado.label }}</span
+                                        >
+                                    </template>
+                                    <el-option
+                                        v-for="item in tipo_productos"
+                                        :key="item.value"
+                                        :value="item.value"
+                                        :label="item.label"
+                                    >
+                                        <span style="float: left">
+                                            <i
+                                                :class="item.icon"
+                                                style="
+                                                    color: var(
+                                                        --el-text-color-secondary
+                                                    );
+                                                    font-size: 13px;
+                                                "
+                                            ></i>
+                                            {{ item.label }}</span
+                                        >
+                                    </el-option>
+                                </el-select>
+                                <ul
+                                    v-if="form.errors?.tipo"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.tipo }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-12 mt-2">
+                                <label>Caracteristicas</label>
+                                <el-input
+                                    type="textarea"
+                                    v-model="form.caracteristicas"
+                                    autosize
+                                ></el-input>
+                                <ul
+                                    v-if="form.errors?.caracteristicas"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.caracteristicas }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-12 mt-2">
+                                <label class="">Imagen</label>
+                                <input
+                                    type="file"
+                                    class="form-control"
+                                    :class="{
+                                        'parsley-error': form.errors?.imagen,
+                                    }"
+                                    @change="cargaArchivo($event, 'imagen')"
+                                    ref="imagen"
+                                />
+                                <ul
+                                    v-if="form.errors?.imagen"
+                                    class="list-unstyled text-danger"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.imagen }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-12 mt-2">
+                                <label class="required">Estado</label>
+                                <br />
+                                <small class="text-muted text-xs"
+                                    >(Podrá realizar ventas y movimientos con
+                                    este producto)</small
+                                >
+                                <br />
+                                <el-switch
+                                    size="large"
+                                    active-text="ACTIVO"
+                                    inactive-text="INACTIVO"
+                                    v-model="form.activo"
+                                    :active-value="1"
+                                    :inactive-value="0"
+                                    style="
+                                        --el-switch-on-color: #13ce66;
+                                        --el-switch-off-color: #ff4949;
+                                    "
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-3 mt-2">
-                        <label class="required">Precio de Venta 1 Bs.</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.precio"
-                        />
-                        <ul
-                            v-if="form.errors?.precio"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.precio }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-3 mt-2">
-                        <label class="">Precio de Venta 2 Bs.</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.precio2"
-                        />
-                        <ul
-                            v-if="form.errors?.precio2"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.precio2 }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-3 mt-2">
-                        <label class="">Precio de Venta 3 Bs.</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.precio3"
-                        />
-                        <ul
-                            v-if="form.errors?.precio3"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.precio3 }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-3 mt-2">
-                        <label class="">Precio de Venta 4 Bs.</label>
-                        <input
-                            type="number"
-                            min="0"
-                            class="form-control"
-                            v-model="form.precio4"
-                        />
-                        <ul
-                            v-if="form.errors?.precio4"
-                            class="d-block text-danger list-unstyled"
-                        >
-                            <li class="parsley-required">
-                                {{ form.errors?.precio4 }}
-                            </li>
-                        </ul>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 class="card-title">
+                                    <i class="fa fa-clipboard-check"></i>
+                                    Detalles del Producto o Servicio
+                                </h4>
+                            </div>
+                            <!-- PLAN -->
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PLAN'"
+                            >
+                                <label class="required">Duración días</label>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    v-model="form.duracion_dias"
+                                />
+                                <ul
+                                    v-if="form.errors?.duracion_dias"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.duracion_dias }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PLAN'"
+                            >
+                                <label class="required">Horario</label>
+                                <el-select
+                                    v-model="form.horario"
+                                    placeholder="- Seleccione -"
+                                    filterable
+                                >
+                                    <el-option
+                                        v-for="item in lista_horarios"
+                                        :key="item.value"
+                                        :value="item.value"
+                                        :label="item.label"
+                                    ></el-option>
+                                </el-select>
+                                <ul
+                                    v-if="form.errors?.horario"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.horario }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PLAN'"
+                            >
+                                <label class="">Hora Inicio</label>
+                                <input
+                                    type="time"
+                                    class="form-control"
+                                    v-model="form.hora_ini"
+                                />
+                                <ul
+                                    v-if="form.errors?.hora_ini"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.hora_ini }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PLAN'"
+                            >
+                                <label class="">Hora Fin</label>
+                                <input
+                                    type="time"
+                                    class="form-control"
+                                    v-model="form.hora_fin"
+                                />
+                                <ul
+                                    v-if="form.errors?.hora_fin"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.hora_fin }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div
+                                class="col-md-12 mt-2"
+                                v-if="form.tipo == 'PLAN'"
+                            >
+                                <label class=""
+                                    >Indefinido
+                                    <el-popover :width="300" trigger="click">
+                                        <template #reference>
+                                            <i
+                                                class="fa fa-info-circle cursor-pointer text-primary fs-6"
+                                            ></i>
+                                        </template>
+                                        <template #default>
+                                            <div
+                                                class="demo-rich-conent"
+                                                style="
+                                                    display: flex;
+                                                    gap: 16px;
+                                                    flex-direction: column;
+                                                "
+                                            >
+                                                INDEFINIDO
+                                                <div>
+                                                    <p
+                                                        class="demo-rich-content__name"
+                                                        style="
+                                                            margin: 0;
+                                                            font-weight: 500;
+                                                            color: var(
+                                                                --bgPrecargado
+                                                            );
+                                                        "
+                                                    >
+                                                        <i
+                                                            class="fa fa-circle"
+                                                        ></i>
+                                                        SI
+                                                    </p>
+                                                    <p
+                                                        class="demo-rich-content__mention"
+                                                        style="
+                                                            margin: 0;
+                                                            font-size: 14px;
+                                                            color: var(
+                                                                --el-color-info
+                                                            );
+                                                        "
+                                                    >
+                                                        La duración del PLAN se
+                                                        ira descontando con cada
+                                                        ingreso diario que
+                                                        realice el cliente
+                                                        tomando en cuenta los
+                                                        días que se coloquen.
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p
+                                                        class="demo-rich-content__name"
+                                                        style="
+                                                            margin: 0;
+                                                            font-weight: 500;
+                                                            color: var(
+                                                                --bgNuevo
+                                                            );
+                                                        "
+                                                    >
+                                                        <i
+                                                            class="fa fa-circle"
+                                                        ></i>
+                                                        NO
+                                                    </p>
+                                                    <p
+                                                        class="demo-rich-content__mention"
+                                                        style="
+                                                            margin: 0;
+                                                            font-size: 14px;
+                                                            color: var(
+                                                                --el-color-info
+                                                            );
+                                                        "
+                                                    >
+                                                        La duración del PLAN se
+                                                        calculará
+                                                        automaticamente; por lo
+                                                        que se determinará el
+                                                        final según la duración
+                                                        de días que se coloque.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </el-popover></label
+                                >
+                                <br />
+                                <el-switch
+                                    size="large"
+                                    active-text="SI"
+                                    inactive-text="NO"
+                                    v-model="form.indefinido"
+                                    :active-value="1"
+                                    :inactive-value="0"
+                                    style="
+                                        --el-switch-on-color: #f59e0b;
+                                        --el-switch-off-color: #22c55e;
+                                    "
+                                />
+                                <ul
+                                    v-if="form.errors?.indefinido"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.indefinido }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- PRODUCTO -->
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PRODUCTO'"
+                            >
+                                <label class="required">Categoría</label>
+                                <el-select
+                                    v-model="form.categoria_id"
+                                    filterable
+                                    no-data-text="Sin datos"
+                                    no-match-text="Sin datos"
+                                    placeholder="- Seleccione -"
+                                >
+                                    <el-option
+                                        v-for="item in categorias"
+                                        :key="item.id"
+                                        :value="item.id"
+                                        :label="item.nombre"
+                                    ></el-option>
+                                </el-select>
+                                <ul
+                                    v-if="form.errors?.categoria_id"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.categoria_id }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PRODUCTO'"
+                            >
+                                <label class="required">Marca</label>
+                                <el-select
+                                    v-model="form.marca_id"
+                                    filterable
+                                    no-data-text="Sin datos"
+                                    no-match-text="Sin datos"
+                                    placeholder="- Seleccione -"
+                                >
+                                    <el-option
+                                        v-for="item in marcas"
+                                        :key="item.id"
+                                        :value="item.id"
+                                        :label="item.nombre"
+                                    ></el-option>
+                                </el-select>
+                                <ul
+                                    v-if="form.errors?.marca_id"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.marca_id }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PRODUCTO'"
+                            >
+                                <label class="required">Unidad de Medida</label>
+                                <el-select
+                                    v-model="form.unidad_medida_id"
+                                    filterable
+                                    no-data-text="Sin datos"
+                                    no-match-text="Sin datos"
+                                    placeholder="- Seleccione -"
+                                >
+                                    <el-option
+                                        v-for="item in unidad_medidas"
+                                        :key="item.id"
+                                        :value="item.id"
+                                        :label="item.nombre"
+                                    ></el-option>
+                                </el-select>
+                                <ul
+                                    v-if="form.errors?.unidad_medida_id"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.unidad_medida_id }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PRODUCTO'"
+                            >
+                                <label class="required">Stock Mínimo</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="form-control"
+                                    v-model="form.stock_min"
+                                />
+                                <ul
+                                    v-if="form.errors?.stock_min"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.stock_min }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <hr class="mb-2 mt-2" />
+                            <div class="col-12">
+                                <h4 class="card-title">
+                                    <i class="fa fa-tags"></i> Precios
+                                </h4>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="required"
+                                    >Precio de Venta Bs.</label
+                                >
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="form-control"
+                                    v-model="form.precio"
+                                />
+                                <ul
+                                    v-if="form.errors?.precio"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.precio }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div
+                                class="col-md-6 mt-2"
+                                v-if="form.tipo == 'PRODUCTO'"
+                            >
+                                <label class="required"
+                                    >Precio de Compra Bs.</label
+                                >
+                                <input
+                                    type="number"
+                                    min="0"
+                                    class="form-control"
+                                    v-model="form.precio_compra"
+                                />
+                                <ul
+                                    v-if="form.errors?.precio_compra"
+                                    class="d-block text-danger list-unstyled"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.precio_compra }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </template>
-        <template #footer>
-            <button
-                type="button"
-                class="btn btn-default"
-                @click.prevent="cerrarFormulario()"
-            >
-                Cerrar
-            </button>
-            <button
-                type="button"
-                class="btn btn-primary"
-                :disabled="enviando"
-                @click.prevent="enviarFormulario"
-                v-html="textBtn"
-            ></button>
-        </template>
-    </MiModal>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 text-center">
+                <button
+                    type="button"
+                    style="min-width: 40vw"
+                    class="btn btn-primary mt-2"
+                    :disabled="enviando"
+                    @click.prevent="enviarFormulario"
+                    v-html="textBtn"
+                ></button>
+            </div>
+        </div>
+    </form>
 </template>

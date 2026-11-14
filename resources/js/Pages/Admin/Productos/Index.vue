@@ -185,19 +185,18 @@ function tablaConError() {
             <div class="col-md-12">
                 <div class="row">
                     <div class="col-md-4">
-                        <button
+                        <Link
                             v-if="
                                 props_page.auth?.user.permisos == '*' ||
                                 props_page.auth?.user.permisos.includes(
                                     'productos.create',
                                 )
                             "
-                            type="button"
                             class="btn btn-primary text-sm"
-                            @click="agregarRegistro"
+                            :href="route('productos.create')"
                         >
                             <i class="fa fa-plus"></i> Nuevo Producto
-                        </button>
+                        </Link>
                         <button
                             v-if="
                                 props_page.auth?.user.permisos == '*' ||

@@ -50,6 +50,7 @@ use App\Http\Controllers\IngresoPagoController;
 use App\Http\Controllers\IngresoProductoController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ListaExpedidoController;
+use App\Http\Controllers\ListaHorarioController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\NotificacionUserController;
@@ -125,9 +126,11 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     // LISTA EXPEDIDOS
     Route::get("lista_expedidos/listado", [ListaExpedidoController::class, 'listado'])->name("lista_expedidos.listado");
 
-
     // TIPO DE PRODUCTOS
     Route::get("tipo_productos/listado", [TipoProductoController::class, 'listado'])->name("tipo_productos.listado");
+
+    // LISTA HORARIOS
+    Route::get("lista_horarios/listado", [ListaHorarioController::class, 'listado'])->name("lista_horarios.listado");
 
     // TIPO VENTA
     Route::get("tipo_ventas/listado", [TipoVentaController::class, 'listado'])->name("tipo_ventas.listado");
@@ -226,7 +229,7 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     Route::get("productos/formato", [ProductoController::class, 'formato'])->name("productos.formato");
     Route::post("productos/cargaProductos", [ProductoController::class, 'cargaProductos'])->name("productos.cargaProductos");
     Route::resource("productos", ProductoController::class)->only(
-        ["index", "store", "edit", "show", "update", "destroy"]
+        ["index", "create", "store", "edit", "show", "update", "destroy"]
     );
 
     // CLIENTE-PRODUCTOS
