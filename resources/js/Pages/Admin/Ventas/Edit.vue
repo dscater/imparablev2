@@ -10,7 +10,7 @@ const props = defineProps({
         type: Object,
         required: true,
     },
-    almacens: {
+    sucursals: {
         type: Array,
         default: () => [],
     },
@@ -69,7 +69,7 @@ onBeforeMount(() => {
             <div class="col-md-12">
                 <Formulario
                     :form="form"
-                    :almacens="almacens"
+                    :sucursals="sucursals"
                     :categorias="categorias"
                     :marcas="marcas"
                     :tipo_ventas="tipo_ventas"

@@ -161,15 +161,15 @@ const cargarTipoPagos = async () => {
     }
 };
 
-const listAlmacens = ref([]);
-const cargarAlmacens = async () => {
+const listSucursals = ref([]);
+const cargarSucursals = async () => {
     try {
-        const res = await axios.get(route("almacens.listado"), {
+        const res = await axios.get(route("sucursals.listado"), {
             params: {
                 activo: 1,
             },
         });
-        listAlmacens.value = res.data.almacens;
+        listSucursals.value = res.data.sucursals;
     } catch (e) {
         console.log(e);
     } finally {
@@ -179,7 +179,7 @@ const cargarAlmacens = async () => {
 const initialState = {
     id: 0,
     sucursal_id: "",
-    almacen_id: "",
+    sucursal_id: "",
     venta_id: "",
     cliente_id: "",
     tipo_pago: "EFECTIVO",
@@ -204,10 +204,10 @@ const toggleFormulario = (sw = true) => {
         formCobro.venta_id = form.id;
         formCobro.cliente_id = form.cliente_id;
         formCobro.sucursal_id = form.sucursal_id;
-        formCobro.almacen_id = form.almacen_id;
+        formCobro.sucursal_id = form.sucursal_id;
 
         if (props_page.auth.user.tipo != "ADMINISTRACIÓN")
-            formCobro.almacen_id = "";
+            formCobro.sucursal_id = "";
     }
 };
 
@@ -268,9 +268,9 @@ const totalCancelado = computed(() => {
 
 onMounted(() => {
     cargarTipoPagos();
-    cargarAlmacens();
+    cargarSucursals();
     formCobro.sucursal_id = form.sucursal_id;
-    formCobro.almacen_id = form.almacen_id;
+    formCobro.sucursal_id = form.sucursal_id;
 });
 </script>
 
@@ -368,7 +368,7 @@ onMounted(() => {
                                             >
                                                 <el-select
                                                     v-model="
-                                                        formCobro.almacen_id
+                                                        formCobro.sucursal_id
                                                     "
                                                     class="el-select-input-group-right"
                                                     no-data-text="Sin datos"
@@ -377,7 +377,7 @@ onMounted(() => {
                                                     filterable
                                                 >
                                                     <el-option
-                                                        v-for="item in listAlmacens"
+                                                        v-for="item in listSucursals"
                                                         :key="item.id"
                                                         :value="item.id"
                                                         :label="`${item.nombre} - ${item.sucursal.nombre}`"
@@ -386,12 +386,13 @@ onMounted(() => {
                                             </div>
                                         </div>
                                         <ul
-                                            v-if="formCobro.errors?.almacen_id"
+                                            v-if="formCobro.errors?.sucursal_id"
                                             class="d-block text-danger list-unstyled"
                                         >
                                             <li class="parsley-required">
                                                 {{
-                                                    formCobro.errors?.almacen_id
+                                                    formCobro.errors
+                                                        ?.sucursal_id
                                                 }}
                                             </li>
                                         </ul>
@@ -521,7 +522,7 @@ onMounted(() => {
                                 >
                                     <td>{{ item.fecha_hora_t }}</td>
                                     <td class="">
-                                        {{ item.almacen?.nombre }} -
+                                        {{ item.sucursal?.nombre }} -
                                         {{ item.sucursal?.nombre }}
                                     </td>
                                     <td>{{ item.monto_total }}</td>

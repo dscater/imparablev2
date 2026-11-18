@@ -32,7 +32,6 @@ class SucursalService
             $sucursals->where("activo", 1);
         }
 
-
         if (Auth::user()->tipo != 'ADMINISTRACIÓN') {
             $sucursals->where("id", Auth::user()->sucursal_id);
         }

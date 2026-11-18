@@ -57,7 +57,7 @@ onBeforeMount(() => {
                         </li>
                         <li class="breadcrumb-item">
                             <Link :href="route('productos.index')"
-                                >Productos</Link
+                                >Lista de Productos</Link
                             >
                         </li>
                         <li class="breadcrumb-item active">

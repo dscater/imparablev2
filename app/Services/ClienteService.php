@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\TipoDocumento;
 use App\Models\User;
 use App\Models\Venta;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Exception;
 use Illuminate\Container\Attributes\Auth;
@@ -89,14 +90,20 @@ class ClienteService
      */
     public function crear(array $datos): Cliente
     {
+        $fecha_actual = Carbon::now("America/La_Paz")->format("Y-m-d");
         $cliente = Cliente::create([
             "nombre" => mb_strtoupper($datos["nombre"]),
-            "tipo_documento_id" => $datos["tipo_documento_id"],
-            "nro_documento" => $datos["nro_documento"],
-            "complemento" => $datos["complemento"] ?? NULL,
-            "fono" => $datos["fono"] ?? NULL,
+            "paterno" => mb_strtoupper($datos["paterno"]),
+            "materno" => $datos["materno"] ? mb_strtoupper($datos["materno"]) : NULL,
+            "ci" => $datos["ci"],
+            "ci_exp" => $datos["ci_exp"],
+            "fecha_nac" => $datos["fecha_nac"],
+            "dir" => $datos["dir"] ? mb_strtoupper($datos["dir"]) : NULL,
+            "fono" => $datos["fono"] ? mb_strtoupper($datos["fono"]) : NULL,
+            "nom_ref" => $datos["nom_ref"] ? mb_strtoupper($datos["nom_ref"]) : NULL,
+            "fono_ref" => $datos["fono_ref"] ? mb_strtoupper($datos["fono_ref"]) : NULL,
             "correo" => $datos["correo"] ?? NULL,
-            "fecha_registro" => date("Y-m-d")
+            "fecha_registro" => $fecha_actual
         ]);
 
         // registrar accion
@@ -118,10 +125,15 @@ class ClienteService
 
         $cliente->update([
             "nombre" => mb_strtoupper($datos["nombre"]),
-            "tipo_documento_id" => $datos["tipo_documento_id"],
-            "nro_documento" => $datos["nro_documento"],
-            "complemento" => $datos["complemento"] ?? NULL,
-            "fono" => $datos["fono"] ?? NULL,
+            "paterno" => mb_strtoupper($datos["paterno"]),
+            "materno" => $datos["materno"] ? mb_strtoupper($datos["materno"]) : NULL,
+            "ci" => $datos["ci"],
+            "ci_exp" => $datos["ci_exp"],
+            "fecha_nac" => $datos["fecha_nac"],
+            "dir" => $datos["dir"] ? mb_strtoupper($datos["dir"]) : NULL,
+            "fono" => $datos["fono"] ? mb_strtoupper($datos["fono"]) : NULL,
+            "nom_ref" => $datos["nom_ref"] ? mb_strtoupper($datos["nom_ref"]) : NULL,
+            "fono_ref" => $datos["fono_ref"] ? mb_strtoupper($datos["fono_ref"]) : NULL,
             "correo" => $datos["correo"] ?? NULL,
         ]);
 

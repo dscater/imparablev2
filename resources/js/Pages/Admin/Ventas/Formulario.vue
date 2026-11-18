@@ -13,7 +13,7 @@ const props = defineProps({
     form: {
         type: Object,
     },
-    almacens: {
+    sucursals: {
         type: Array,
         default: () => [],
     },
@@ -29,7 +29,7 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    tipo_pagos: {
+    metodo_pagos: {
         type: Array,
         default: () => [],
     },
@@ -87,7 +87,7 @@ const cancelarVenta = () => {
 
 const enviarFormulario = () => {
     enviando.value = true;
-    form.almacen_id = almacen_id.value;
+    form.sucursal_id = sucursal_id.value;
     let url =
         form.id == 0 ? route("ventas.store") : route("ventas.update", form.id);
 
@@ -157,15 +157,10 @@ const enviarFormulario = () => {
 
 const emits = defineEmits(["envio-formulario"]);
 
-// const listAlmacens = ref([]);
-// const listTipoVentas = ref([]);
-// const listTipoPagos = ref([]);
 const tipo_venta_id_default = ref("");
-// const listCategorias = ref([]);
-// const listMarcas = ref([]);
-const listProductoAlmacens = ref([]);
+const listProductoSucursals = ref([]);
 const loadingLista = ref(true);
-const almacen_id = ref("");
+const sucursal_id = ref("");
 const categoria_id = ref("todos");
 const marca_id = ref("todos");
 const nombreProducto = ref("");
@@ -184,14 +179,14 @@ const cargarProductos = async () => {
             params: {
                 perPage: perPage.value,
                 page: currentPage.value,
-                almacen_id: almacen_id.value,
+                sucursal_id: sucursal_id.value,
                 categoria_id: categoria_id.value,
                 marca_id: marca_id.value,
                 nombreProducto: nombreProducto.value,
                 activo: 1,
             },
         });
-        listProductoAlmacens.value = res.data.data.map((item) => ({
+        listProductoSucursals.value = res.data.data.map((item) => ({
             ...item,
             cantidad: 1,
             precio_venta: item.precio,
@@ -199,7 +194,7 @@ const cargarProductos = async () => {
             tipo_venta_id: tipo_venta_id_default.value,
         }));
 
-        if (form.id != 0 && almacen_id.value != form.almacen_id) {
+        if (form.id != 0 && sucursal_id.value != form.sucursal_id) {
             const ids = form.venta_detalles
                 .filter((detalle) => detalle.id)
                 .map((detalle) => detalle.id);
@@ -229,78 +224,7 @@ const filtrarNombres = () => {
     }, 370);
 };
 
-// const cargarAlmacens = async () => {
-//     try {
-//         const res = await axios.get(route("almacens.listado"), {
-//             params: {
-//                 activo: 1,
-//             },
-//         });
-//         listAlmacens.value = res.data.almacens;
-//     } catch (e) {
-//         console.log(e);
-//     } finally {
-//     }
-// };
-
-// const cargarCategorias = async () => {
-//     try {
-//         const res = await axios.get(route("categorias.listado"));
-//         listCategorias.value = res.data.categorias;
-//         listCategorias.value.unshift({
-//             id: "todos",
-//             nombre: "Todas las Categorías",
-//         });
-//     } catch (e) {
-//         console.log(e);
-//     } finally {
-//     }
-// };
-
-// const cargarMarcas = async () => {
-//     try {
-//         const res = await axios.get(route("marcas.listado"));
-//         listMarcas.value = res.data.marcas;
-//         listMarcas.value.unshift({
-//             id: "todos",
-//             nombre: "Todas las Marcas",
-//         });
-//     } catch (e) {
-//         console.log(e);
-//     } finally {
-//     }
-// };
-
-// const cargarTipoVentas = async () => {
-//     try {
-//         const res = await axios.get(route("tipo_ventas.listado"));
-//         listTipoVentas.value = res.data.tipo_ventas;
-//         // tipo_venta_id_default.value = listTipoVentas.value[0]
-//         //     ? listTipoVentas.value[0].id
-//         //     : "";
-//     } catch (e) {
-//         console.log(e);
-//     } finally {
-//     }
-// };
-
-// const cargarTipoPagos = async () => {
-//     try {
-//         const res = await axios.get(route("tipo_pagos.listado"));
-//         listTipoPagos.value = res.data.tipo_pagos;
-//     } catch (e) {
-//         console.log(e);
-//     } finally {
-//     }
-// };
-
-const cargarListas = () => {
-    // cargarTipoVentas();
-    // cargarTipoPagos();
-    // cargarAlmacens();
-    // cargarCategorias();
-    // cargarMarcas();
-};
+const cargarListas = () => {};
 
 const listClientes = ref([]);
 const cargandoClientes = ref(false);
@@ -532,11 +456,11 @@ const quitarFila = (item, index) => {
 };
 
 const sumarDetalleEliminado = (producto_id, cantidad) => {
-    const item_almacen_origen = listProductoAlmacens.value.find(
+    const item_sucursal_origen = listProductoSucursals.value.find(
         (elem) => elem.id == producto_id,
     );
-    item_almacen_origen.stock_total =
-        Number(item_almacen_origen.stock_total) + Number(cantidad);
+    item_sucursal_origen.stock_total =
+        Number(item_sucursal_origen.stock_total) + Number(cantidad);
 };
 
 const recalcularStockActualCambioDetalle = (
@@ -544,19 +468,20 @@ const recalcularStockActualCambioDetalle = (
     cantidad,
     index = null,
 ) => {
-    const item_almacen_origen = listProductoAlmacens.value.find(
+    const item_sucursal_origen = listProductoSucursals.value.find(
         (elem) => elem.id == producto_id,
     );
 
     if (index !== null) {
-        if (cantidad > item_almacen_origen.stock_aux) {
+        if (cantidad > item_sucursal_origen.stock_aux) {
             toast.error("Stock insuficiente para la cantidad ingresada");
-            form.venta_detalles[index].cantidad = item_almacen_origen.stock_aux;
+            form.venta_detalles[index].cantidad =
+                item_sucursal_origen.stock_aux;
             return;
         }
     }
-    item_almacen_origen.stock_total =
-        Number(item_almacen_origen.stock_aux) - Number(cantidad);
+    item_sucursal_origen.stock_total =
+        Number(item_sucursal_origen.stock_aux) - Number(cantidad);
 };
 
 const subTotalVenta = computed(() => {
@@ -583,9 +508,9 @@ const saldoVenta = computed(() => {
 });
 
 watch([subTotalVenta, totalVenta, saldoVenta], () => {
-    form.tipo_pago = "";
+    form.metodo_pago = "";
     if (form.cancelado > 0) {
-        form.tipo_pago = "EFECTIVO";
+        form.metodo_pago = "EFECTIVO";
     }
     form.subtotal = subTotalVenta.value.toFixed(2);
     form.total = totalVenta.value.toFixed(2);
@@ -642,7 +567,7 @@ onMounted(() => {
     cargarListas();
     // edit
     if (form.id != 0) {
-        almacen_id.value = form.almacen_id;
+        sucursal_id.value = form.sucursal_id;
         cargarProductos();
         buscarClientes(form.cliente.nombre);
     }
@@ -666,33 +591,33 @@ onMounted(() => {
                             <div class="col-12 mt-2">
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <i class="fa fa-warehouse"></i>
+                                        <i class="fa fa-building"></i>
                                     </span>
                                     <div class="form-control border-0 p-0">
                                         <el-select
-                                            v-model="almacen_id"
+                                            v-model="sucursal_id"
                                             class="el-select-input-group-right"
                                             no-data-text="Sin datos"
                                             no-match-text="Sin resultados"
-                                            placeholder="Seleccionar Almacén"
+                                            placeholder="Seleccionar Sucursal"
                                             filterable
                                             @change="detectarCambioSelect"
                                         >
                                             <el-option
-                                                v-for="item in almacens"
+                                                v-for="item in sucursals"
                                                 :key="item.id"
                                                 :value="item.id"
-                                                :label="`${item.nombre} - ${item.sucursal.nombre}`"
+                                                :label="`${item.nombre}`"
                                             ></el-option>
                                         </el-select>
                                     </div>
                                 </div>
                                 <ul
-                                    v-if="form.errors?.almacen_id"
+                                    v-if="form.errors?.sucursal_id"
                                     class="d-block text-danger list-unstyled"
                                 >
                                     <li class="parsley-required">
-                                        {{ form.errors?.almacen_id }}
+                                        {{ form.errors?.sucursal_id }}
                                     </li>
                                 </ul>
                             </div>
@@ -762,7 +687,7 @@ onMounted(() => {
                         class="card-body bgGrayLight"
                         style="max-height: 63vh; overflow: auto"
                     >
-                        <div class="row" v-if="almacen_id">
+                        <div class="row" v-if="sucursal_id">
                             <div class="col-12">
                                 <div class="vacio_info" v-if="loadingLista">
                                     <i
@@ -772,7 +697,7 @@ onMounted(() => {
                                 <div class="row" v-if="!loadingLista">
                                     <div
                                         class="col-md-6 col-sm-12 producto-item-listado"
-                                        v-for="item in listProductoAlmacens"
+                                        v-for="item in listProductoSucursals"
                                         :key="item.id"
                                     >
                                         <div class="card mt-2">
@@ -996,10 +921,10 @@ onMounted(() => {
                         </div>
                         <div class="vacio_info text-muted py-5" v-else>
                             <i class="fa fa-warehouse fs-1"></i>
-                            <div>Selecciona una almacén</div>
+                            <div>Selecciona una sucursal</div>
                         </div>
                     </div>
-                    <div class="card-footer" v-if="almacen_id">
+                    <div class="card-footer" v-if="sucursal_id">
                         <div class="col-12">
                             Total registros: {{ total_registros }}
                             <MiPaginacion
@@ -1322,9 +1247,9 @@ onMounted(() => {
                                         >
                                     </div>
                                     <div class="col-8">
-                                        <el-radio-group v-model="form.tipo_pago"
+                                        <el-radio-group v-model="form.metodo_pago"
                                             ><el-radio-button
-                                                v-for="item in tipo_pagos"
+                                                v-for="item in metodo_pagos"
                                                 :key="item.value"
                                                 :value="item.value"
                                             >

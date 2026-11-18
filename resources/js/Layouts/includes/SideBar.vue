@@ -58,6 +58,8 @@ const sincronizarMenus = () => {
 
     if (
         route_current.value == "productos.index" ||
+        route_current.value == "productos.create" ||
+        route_current.value == "productos.edit" ||
         route_current.value == "categorias.index" ||
         route_current.value == "marcas.index" ||
         route_current.value == "unidad_medidas.index"
@@ -540,6 +542,7 @@ onUnmounted(() => {
                             permisos.includes('usuarios.index') ||
                             permisos.includes('clientes.index') ||
                             permisos.includes('sucursals.index') ||
+                            permisos.includes('metodo_pagos.index') ||
                             permisos.includes('productos.index') ||
                             permisos.includes('categorias.index') ||
                             permisos.includes('marcas.index') ||
@@ -594,11 +597,22 @@ onUnmounted(() => {
                         :ruta="'sucursals.index'"
                         :icon="'fa fa-building'"
                     ></ItemMenu>
+                    <ItemMenu
+                        v-if="
+                            permisos == '*' ||
+                            permisos.includes('metodo_pagos.index')
+                        "
+                        :label="'Métodos de Pago'"
+                        :ruta="'metodo_pagos.index'"
+                        :icon="'fa fa-list'"
+                    ></ItemMenu>
                     <li
                         class="nav-item"
                         v-if="
                             permisos == '*' ||
                             permisos.includes('productos.index') ||
+                            permisos.includes('productos.create') ||
+                            permisos.includes('productos.edit') ||
                             permisos.includes('categorias.index') ||
                             permisos.includes('marcas.index') ||
                             permisos.includes('unidad_medidas.index')
@@ -610,6 +624,8 @@ onUnmounted(() => {
                             class="nav-link"
                             :class="[
                                 route_current == 'productos.index' ||
+                                route_current == 'productos.create' ||
+                                route_current == 'productos.edit' ||
                                 route_current == 'categorias.index' ||
                                 route_current == 'marcas.index' ||
                                 route_current == 'unidad_medidas.index'
@@ -641,6 +657,11 @@ onUnmounted(() => {
                                 "
                                 :label="'Lista de Productos'"
                                 :ruta="'productos.index'"
+                                :array-ruta-class-active="[
+                                    'productos.index',
+                                    'productos.create',
+                                    'productos.edit',
+                                ]"
                                 :icon="'fa fa-angle-right'"
                             ></ItemMenu>
                             <ItemMenu

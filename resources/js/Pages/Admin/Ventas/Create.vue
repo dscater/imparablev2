@@ -6,7 +6,7 @@ import { ref } from "vue";
 import Formulario from "./Formulario.vue";
 const { props: props_page } = usePage();
 const props = defineProps({
-    almacens: {
+    sucursals: {
         type: Array,
         default: () => [],
     },
@@ -57,7 +57,7 @@ const { setVenta, limpiarVenta, form } = useVentas();
             <div class="col-md-12">
                 <Formulario
                     :form="form"
-                    :almacens="almacens"
+                    :sucursals="sucursals"
                     :categorias="categorias"
                     :marcas="marcas"
                     :tipo_ventas="tipo_ventas"

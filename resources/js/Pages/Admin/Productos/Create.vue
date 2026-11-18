@@ -47,6 +47,11 @@ const { setProducto, limpiarProducto, form } = useProductos();
                         <li class="breadcrumb-item">
                             <Link :href="route('inicio')">Inicio</Link>
                         </li>
+                        <li class="breadcrumb-item">
+                            <Link :href="route('productos.index')"
+                                >Lista de Productos</Link
+                            >
+                        </li>
                         <li class="breadcrumb-item active">
                             Nuevo Producto o Servicio
                         </li>

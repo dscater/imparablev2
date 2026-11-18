@@ -23,27 +23,42 @@ const headers = [
     },
     {
         label: "NOMBRE",
-        key: "nombre",
+        key: "full_name",
         sortable: true,
     },
     {
-        label: "DOCUMENTO",
-        key: "tipo_documento.nombre",
+        label: "NRO. DE C.I.",
+        key: "full_ci",
         sortable: true,
     },
     {
-        label: "NRO. DOCUMENTO",
-        key: "nro_documento",
+        label: "FECHA DE NACIMIENTO",
+        key: "fecha_nac",
         sortable: true,
     },
     {
-        label: "CONTACTO",
+        label: "DIRECCIÓN",
+        key: "dir",
+        sortable: true,
+    },
+    {
+        label: "TELÉFONO/CELULAR",
         key: "fono",
         sortable: true,
     },
     {
         label: "CORREO",
         key: "correo",
+        sortable: true,
+    },
+    {
+        label: "FOTO",
+        key: "foto",
+        sortable: true,
+    },
+    {
+        label: "CONTACTO DE REFERENCIA",
+        key: "contacto",
         sortable: true,
     },
     {
@@ -156,7 +171,7 @@ function tablaConError() {
                         >
                             <i class="fa fa-plus"></i> Nuevo Cliente
                         </button>
-                        <button
+                        <!-- <button
                             v-if="
                                 props_page.auth?.user.permisos == '*' ||
                                 props_page.auth?.user.permisos.includes(
@@ -168,7 +183,7 @@ function tablaConError() {
                             @click="muestra_formulario_carga = true"
                         >
                             <i class="fa fa-upload"></i> Cargar Clientes
-                        </button>
+                        </button> -->
                     </div>
                     <div class="col-md-8 my-1">
                         <div class="row justify-content-end">
@@ -229,16 +244,22 @@ function tablaConError() {
                             @ready="tablaPreparada"
                             @load-error="tablaConError"
                         >
-                            <template #nro_documento="{ item }">
+                            <template #foto="{ item }">
+                                <img
+                                    class="direct-chat-img"
+                                    :src="item.url_foto"
+                                    alt="Foto"
+                                />
+                            </template>
+                            <template #contacto="{ item }">
                                 <div>
-                                    {{ item.nro_documento }}
-                                    <span
-                                        v-if="
-                                            item.tipo_documento_id == 1 &&
-                                            item.complemento
-                                        "
-                                        >-{{ item.complemento }}</span
-                                    >
+                                    {{ item.nom_ref }}
+                                </div>
+                                <div>
+                                    {{ item.parentesco_ref }}
+                                </div>
+                                <div>
+                                    {{ item.fono_ref }}
                                 </div>
                             </template>
 

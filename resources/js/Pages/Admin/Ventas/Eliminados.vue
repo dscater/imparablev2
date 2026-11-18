@@ -262,7 +262,7 @@ function tablaConError() {
                         >
                             <template #ubicacion="{ item }">
                                 <span class="text-dark text-sm">{{
-                                    item.almacen?.nombre
+                                    item.sucursal?.nombre
                                 }}</span>
                                 -
                                 <span class="text-dark text-sm">{{

@@ -6,15 +6,15 @@ use App\Http\Requests\VentaCobroStoreRequest;
 use App\Http\Requests\VentaCobroUpdateRequest;
 use App\Http\Requests\VentaStoreRequest;
 use App\Http\Requests\VentaUpdateRequest;
-use App\Models\Almacen;
+use App\Models\Sucursal;
 use App\Models\Venta;
 use App\Models\User;
 use App\Models\VentaCobro;
-use App\Services\AlmacenService;
+use App\Services\SucursalService;
 use App\Services\CategoriaService;
 use App\Services\MarcaService;
 use App\Services\ProveedorService;
-use App\Services\TipoPagoService;
+use App\Services\MetodoPagoService;
 use App\Services\TipoVentaService;
 use App\Services\VentaCobroService;
 use App\Services\VentaService;
@@ -36,11 +36,11 @@ class VentaController extends Controller
     public function __construct(
         private VentaService $ventaService,
         private VentaCobroService $venta_cobro_service,
-        private AlmacenService $almacen_service,
+        private SucursalService $sucursal_service,
         private CategoriaService $categoria_service,
         private MarcaService $marca_service,
         private TipoVentaService $tipo_venta_service,
-        private TipoPagoService $tipo_pago_service
+        private MetodoPagoService $metodo_pago_service
     ) {}
 
     /**
@@ -67,9 +67,9 @@ class VentaController extends Controller
                 'fecha_registro',
                 'cliente_id',
                 'sucursal_id',
-                'almacen_id',
+                'sucursal_id',
             ])
-            ->with(['cliente:id,nombre', "sucursal:id,nombre", "almacen:id,nombre"])
+            ->with(['cliente:id,nombre', "sucursal:id,nombre", "sucursal:id,nombre"])
             ->where('status', 1)
             ->where(function ($query) use ($busqueda) {
                 $query->where('codigo_venta', 'like', "%{$busqueda}%");
@@ -91,27 +91,27 @@ class VentaController extends Controller
 
     public function lista_cobros_pendientes(Request $request): JsonResponse
     {
-        $almacen_id = $request->input("almacen_id", null);
+        $sucursal_id = $request->input("sucursal_id", null);
         $cliente = $request->input("cliente", null);
         $fecha_ini = $request->input("fecha_ini", null);
         $fecha_fin = $request->input("fecha_fin", null);
         $ventas = Venta::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
+            "sucursal:id,nombre",
             "cliente:id,nombre,nro_documento",
             "tipo_documento:id,nombre",
             "user:id,nombre,paterno,materno",
             "venta_detalles",
             "venta_cobros.user",
             "venta_cobros.sucursal",
-            "venta_cobros.almacen",
+            "venta_cobros.sucursal",
         ]);
 
         $ventas->where("saldo", ">", 0);
         $ventas->where("tipo_venta", "CRÉDITO");
 
-        if ($almacen_id && $almacen_id != 'todos') {
-            $ventas->where("almacen_id", $almacen_id);
+        if ($sucursal_id && $sucursal_id != 'todos') {
+            $ventas->where("sucursal_id", $sucursal_id);
         }
 
         if ($cliente) {
@@ -136,9 +136,9 @@ class VentaController extends Controller
         try {
             // crear el Venta
             $datos = $request->validated();
-            $almacen = Almacen::findOrFail($datos["almacen_id"]);
+            $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
             $datos["venta_id"] = $venta->id;
-            $datos["sucursal_id"] = $almacen->sucursal_id;
+            $datos["sucursal_id"] = $sucursal->sucursal_id;
             $datos["cliente_id"] = $venta->cliente_id;
             $venta_cobro = $this->venta_cobro_service->crear($datos);
             DB::commit();
@@ -164,9 +164,9 @@ class VentaController extends Controller
         try {
             // crear el Venta
             $datos = $request->validated();
-            $almacen = Almacen::findOrFail($datos["almacen_id"]);
+            $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
             $datos["venta_id"] = $venta_cobro->venta_id;
-            $datos["sucursal_id"] = $almacen->sucursal_id;
+            $datos["sucursal_id"] = $sucursal->sucursal_id;
             $datos["cliente_id"] = $venta_cobro->cliente_id;
             $venta_cobro = $this->venta_cobro_service->actualizar($datos, $venta_cobro);
             DB::commit();
@@ -292,18 +292,18 @@ class VentaController extends Controller
 
     public function create(): ResponseInertia
     {
-        $almacens = $this->almacen_service->listado(1);
+        $sucursals = $this->sucursal_service->listado(1);
         $categorias = $this->categoria_service->listado();
         $marcas = $this->marca_service->listado();
         $tipo_ventas = $this->tipo_venta_service->listado();
-        $tipo_pagos = $this->tipo_pago_service->listado();
+        $metodo_pagos = $this->metodo_pago_service->listado();
 
         return Inertia::render("Admin/Ventas/Create", [
-            "almacens" => $almacens,
+            "sucursals" => $sucursals,
             "categorias" => $categorias,
             "marcas" => $marcas,
             "tipo_ventas" => $tipo_ventas,
-            "tipo_pagos" => $tipo_pagos,
+            "metodo_pagos" => $metodo_pagos,
         ]);
     }
 
@@ -339,7 +339,7 @@ class VentaController extends Controller
      */
     public function show(Venta $venta): JsonResponse
     {
-        $venta = $venta->load(["venta_detalles.producto", "cliente", "sucursal:id,nombre", "almacen:id,nombre", "tipo_documento:id,nombre"]);
+        $venta = $venta->load(["venta_detalles.producto", "cliente", "sucursal:id,nombre", "sucursal:id,nombre", "tipo_documento:id,nombre"]);
         return response()->JSON($venta);
     }
 
@@ -398,21 +398,21 @@ class VentaController extends Controller
 
     public function edit(Venta $venta): ResponseInertia
     {
-        $venta = $venta->load(["venta_detalles.producto", "cliente", "sucursal:id,nombre", "almacen:id,nombre", "tipo_documento:id,nombre"]);
+        $venta = $venta->load(["venta_detalles.producto", "cliente", "sucursal:id,nombre", "sucursal:id,nombre", "tipo_documento:id,nombre"]);
 
-        $almacens = $this->almacen_service->listado(1);
+        $sucursals = $this->sucursal_service->listado(1);
         $categorias = $this->categoria_service->listado();
         $marcas = $this->marca_service->listado();
         $tipo_ventas = $this->tipo_venta_service->listado();
-        $tipo_pagos = $this->tipo_pago_service->listado();
+        $metodo_pagos = $this->metodo_pago_service->listado();
 
         return Inertia::render("Admin/Ventas/Edit", [
             "venta" => $venta,
-            "almacens" => $almacens,
+            "sucursals" => $sucursals,
             "categorias" => $categorias,
             "marcas" => $marcas,
             "tipo_ventas" => $tipo_ventas,
-            "tipo_pagos" => $tipo_pagos,
+            "metodo_pagos" => $metodo_pagos,
         ]);
     }
 

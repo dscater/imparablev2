@@ -52,6 +52,7 @@ use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ListaExpedidoController;
 use App\Http\Controllers\ListaHorarioController;
 use App\Http\Controllers\MarcaController;
+use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\NotificacionUserController;
 use App\Http\Controllers\ProductoController;
@@ -187,6 +188,13 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     Route::get("tipo_documentos/paginado", [TipoDocumentoController::class, 'paginado'])->name("tipo_documentos.paginado");
     Route::get("tipo_documentos/listado", [TipoDocumentoController::class, 'listado'])->name("tipo_documentos.listado");
     Route::resource("tipo_documentos", TipoDocumentoController::class)->only(
+        ["index", "store", "edit", "show", "update", "destroy"]
+    );
+
+    // METODOS DE PAGOS
+    Route::get("metodo_pagos/paginado", [MetodoPagoController::class, 'paginado'])->name("metodo_pagos.paginado");
+    Route::get("metodo_pagos/listado", [MetodoPagoController::class, 'listado'])->name("metodo_pagos.listado");
+    Route::resource("metodo_pagos", MetodoPagoController::class)->only(
         ["index", "store", "edit", "show", "update", "destroy"]
     );
 

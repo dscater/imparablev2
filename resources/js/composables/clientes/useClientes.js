@@ -12,6 +12,8 @@ export const useClientes = () => {
         fecha_nac: "",
         dir: "",
         fono: "",
+        nom_ref: "",
+        parentesco_ref: "",
         fono_ref: "",
         correo: "",
         foto: "",

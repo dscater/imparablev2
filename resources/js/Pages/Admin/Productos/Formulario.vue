@@ -309,26 +309,6 @@ onMounted(() => {
                                 </ul>
                             </div>
                             <div class="col-md-12 mt-2">
-                                <label class="">Imagen</label>
-                                <input
-                                    type="file"
-                                    class="form-control"
-                                    :class="{
-                                        'parsley-error': form.errors?.imagen,
-                                    }"
-                                    @change="cargaArchivo($event, 'imagen')"
-                                    ref="imagen"
-                                />
-                                <ul
-                                    v-if="form.errors?.imagen"
-                                    class="list-unstyled text-danger"
-                                >
-                                    <li class="parsley-required">
-                                        {{ form.errors?.imagen }}
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-md-12 mt-2">
                                 <label class="required">Estado</label>
                                 <br />
                                 <small class="text-muted text-xs"
@@ -362,6 +342,33 @@ onMounted(() => {
                                     <i class="fa fa-clipboard-check"></i>
                                     Detalles del Producto o Servicio
                                 </h4>
+                            </div>
+
+                            <div class="col-md-12 mt-2">
+                                <label class="">Imagen</label>
+                                <img
+                                    :src="form.url_imagen"
+                                    class="d-block rounded border"
+                                    style="max-width: 250px"
+                                    v-if="form.id != 0"
+                                />
+                                <input
+                                    type="file"
+                                    class="form-control"
+                                    :class="{
+                                        'parsley-error': form.errors?.imagen,
+                                    }"
+                                    @change="cargaArchivo($event, 'imagen')"
+                                    ref="imagen"
+                                />
+                                <ul
+                                    v-if="form.errors?.imagen"
+                                    class="list-unstyled text-danger"
+                                >
+                                    <li class="parsley-required">
+                                        {{ form.errors?.imagen }}
+                                    </li>
+                                </ul>
                             </div>
                             <!-- PLAN -->
                             <div
@@ -670,11 +677,15 @@ onMounted(() => {
                                 </ul>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="card mt-1">
+                    <div class="card-body">
                         <div class="row">
-                            <hr class="mb-2 mt-2" />
                             <div class="col-12">
                                 <h4 class="card-title">
-                                    <i class="fa fa-tags"></i> Precios
+                                    <i class="fa fa-tags"></i> Precio de Venta y
+                                    Compra
                                 </h4>
                             </div>
                             <div class="col-md-6 mt-2">

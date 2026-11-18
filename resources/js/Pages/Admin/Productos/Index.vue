@@ -41,21 +41,6 @@ const headers = [
         sortable: true,
     },
     {
-        label: "CALIDAD",
-        key: "calidad",
-        sortable: true,
-    },
-    {
-        label: "FORMATO",
-        key: "formato",
-        sortable: true,
-    },
-    {
-        label: "COBERTURA",
-        key: "cobertura",
-        sortable: true,
-    },
-    {
         label: "PRECIO VENTA BS.",
         key: "precio",
         sortable: true,
@@ -273,14 +258,42 @@ function tablaConError() {
                         >
                             <template #precio="{ item }">
                                 <div class="fw-bold">Bs. {{ item.precio }}</div>
-                                <div class="fw-bolder" v-if="item.precio2">
-                                    Bs. {{ item.precio2 }}
+                            </template>
+                            <template #[`unidad_medida.nombre`]="{ item }">
+                                <div
+                                    class="text-dark"
+                                    v-if="item.tipo == 'PRODUCTO'"
+                                >
+                                    {{ item.unidad_medida.nombre }}
                                 </div>
-                                <div class="fw-bolder" v-if="item.precio3">
-                                    Bs. {{ item.precio3 }}
-                                </div>
-                                <div class="fw-bolder" v-if="item.precio4">
-                                    Bs. {{ item.precio4 }}
+                                <div
+                                    class="text-dark"
+                                    v-if="item.tipo == 'PLAN'"
+                                >
+                                    <div>
+                                        <i class="fa fa-calendar-alt"></i>
+                                        {{ item.duracion_dias }} día(s)
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-calendar-check"></i>
+                                        {{ item.horario }}
+                                    </div>
+                                    <div>
+                                        <span v-if="item.hora_ini">
+                                            <i class="fa fa-clock"></i>
+                                            {{ item.hora_ini }} -
+                                        </span>
+                                        <span v-if="item.hora_fin">
+                                            {{ item.hora_fin }}</span
+                                        >
+                                    </div>
+                                    <div>
+                                        {{
+                                            item.indefinido == 1
+                                                ? "INDEFINIDO"
+                                                : "FIJO"
+                                        }}
+                                    </div>
                                 </div>
                             </template>
                             <template #activo="{ item }">
@@ -319,14 +332,13 @@ function tablaConError() {
                                         content="Editar"
                                         placement="left-start"
                                     >
-                                        <button
+                                        <Link
                                             class="btn btn-warning"
-                                            @click="
-                                                setProducto(item);
-                                                muestra_formulario = true;
+                                            :href="
+                                                route('productos.edit', item.id)
                                             "
                                         >
-                                            <i class="fa fa-pen"></i></button
+                                            <i class="fa fa-pen"></i></Link
                                     ></el-tooltip>
                                 </template>
 

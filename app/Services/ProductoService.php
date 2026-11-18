@@ -13,6 +13,7 @@ use App\Models\UnidadMedida;
 use App\Models\User;
 use App\Models\VentaDetalle;
 use App\Models\VentaDetalleLote;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Exception;
 use Illuminate\Container\Attributes\Auth;
@@ -21,6 +22,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use RuntimeException;
+use Illuminate\Support\Str;
 
 class ProductoService
 {
@@ -101,26 +104,38 @@ class ProductoService
      */
     public function crear(array $datos): Producto
     {
-        $producto = Producto::create([
+        $fecha_actual = Carbon::now("America/La_Paz")->format("Y-m-d");
+
+        $registro = [
             "codigo" => mb_strtoupper($datos["codigo"]),
             "nombre" => mb_strtoupper($datos["nombre"]),
-            "categoria_id" => $datos["categoria_id"],
-            "marca_id" => $datos["marca_id"],
-            "unidad_medida_id" => $datos["unidad_medida_id"],
-            "caracteristicas" => mb_strtoupper($datos["caracteristicas"]),
-            "calidad" => mb_strtoupper($datos["calidad"]),
-            "cobertura" => $datos["cobertura"],
-            "formato" => $datos["formato"],
-            "precio" => $datos["precio"],
-            "precio2" => $datos["precio2"],
-            "precio3" => $datos["precio3"],
-            "precio4" => $datos["precio4"],
-            "precio_compra" => $datos["precio_compra"],
-            "stock_min" => $datos["stock_min"],
+            "tipo" => mb_strtoupper($datos["tipo"]),
+            "caracteristicas" => $datos["caracteristicas"] ? mb_strtoupper($datos["caracteristicas"]) : NULL,
+            "precio" => $datos["precio"] ?? 0,
             "activo" => $datos["activo"],
-            // "descripcion" => mb_strtoupper($datos["descripcion"]) ?? null,
-            "fecha_registro" => date("Y-m-d")
-        ]);
+            "fecha_registro" => $fecha_actual
+        ];
+
+        if ($datos["tipo"] == 'PRODUCTO') {
+            $registro["categoria_id"] = $datos["categoria_id"];
+            $registro["marca_id"] = $datos["marca_id"];
+            $registro["unidad_medida_id"] = $datos["unidad_medida_id"];
+            $registro["stock_min"] = $datos["stock_min"];
+            $registro["precio_compra"] = $datos["precio_compra"];
+        }
+
+        if ($datos["tipo"] == 'SERVICIO') {
+        }
+
+        if ($datos["tipo"] == 'PLAN') {
+            $registro["duracion_dias"] = $datos["duracion_dias"];
+            $registro["horario"] = $datos["horario"];
+            $registro["hora_ini"] = $datos["hora_ini"];
+            $registro["hora_fin"] = $datos["hora_fin"];
+            $registro["indefinido"] = $datos["indefinido"];
+        }
+
+        $producto = Producto::create($registro);
 
         // cargar imagen
         if (isset($datos["imagen"]) && !is_string($datos["imagen"])) {
@@ -128,7 +143,7 @@ class ProductoService
         }
 
         // registrar accion
-        $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UNA PRODUCTO", $producto);
+        $this->historialAccionService->registrarAccion($this->modulo, "CREACIÓN", "REGISTRO UN PRODUCTO", $producto);
 
         return $producto;
     }
@@ -144,24 +159,35 @@ class ProductoService
     {
         $old_producto = clone $producto;
 
-        $producto->update([
+        $registro = [
             "codigo" => mb_strtoupper($datos["codigo"]),
             "nombre" => mb_strtoupper($datos["nombre"]),
-            "categoria_id" => $datos["categoria_id"],
-            "marca_id" => $datos["marca_id"],
-            "unidad_medida_id" => $datos["unidad_medida_id"],
-            "caracteristicas" => mb_strtoupper($datos["caracteristicas"]),
-            "calidad" => mb_strtoupper($datos["calidad"]),
-            "cobertura" => $datos["cobertura"],
-            "formato" => $datos["formato"],
-            "precio" => $datos["precio"],
-            "precio2" => $datos["precio2"],
-            "precio3" => $datos["precio3"],
-            "precio4" => $datos["precio4"],
-            "precio_compra" => $datos["precio_compra"],
-            "stock_min" => $datos["stock_min"],
+            "tipo" => mb_strtoupper($datos["tipo"]),
+            "caracteristicas" => $datos["caracteristicas"] ? mb_strtoupper($datos["caracteristicas"]) : NULL,
+            "precio" => $datos["precio"] ?? 0,
             "activo" => $datos["activo"],
-        ]);
+        ];
+
+        if ($datos["tipo"] == 'PRODUCTO') {
+            $registro["categoria_id"] = $datos["categoria_id"];
+            $registro["marca_id"] = $datos["marca_id"];
+            $registro["unidad_medida_id"] = $datos["unidad_medida_id"];
+            $registro["stock_min"] = $datos["stock_min"];
+            $registro["precio_compra"] = $datos["precio_compra"];
+        }
+
+        if ($datos["tipo"] == 'SERVICIO') {
+        }
+
+        if ($datos["tipo"] == 'PLAN') {
+            $registro["duracion_dias"] = $datos["duracion_dias"];
+            $registro["horario"] = $datos["horario"];
+            $registro["hora_ini"] = $datos["hora_ini"];
+            $registro["hora_fin"] = $datos["hora_fin"];
+            $registro["indefinido"] = $datos["indefinido"];
+        }
+
+        $producto->update($registro);
 
         // cargar imagen
         if (isset($datos["imagen"]) && !is_string($datos["imagen"])) {
@@ -169,7 +195,7 @@ class ProductoService
         }
 
         // registrar accion
-        $this->historialAccionService->registrarAccion($this->modulo, "MODIFICACIÓN", "ACTUALIZÓ UNA PRODUCTO", $old_producto, $producto->withoutRelations());
+        $this->historialAccionService->registrarAccion($this->modulo, "MODIFICACIÓN", "ACTUALIZÓ UN PRODUCTO", $old_producto, $producto->withoutRelations());
 
         return $producto;
     }
@@ -183,13 +209,34 @@ class ProductoService
      */
     public function cargarImagen(Producto $producto, UploadedFile $imagen): void
     {
-        if ($producto->imagen) {
-            \File::delete(public_path("imgs/productos/" . $producto->imagen));
+        $directorio = public_path('imgs/productos');
+
+        $nombre = $producto->id . '_' . Str::uuid();
+
+        $nuevoArchivo = $this->cargarArchivoService->cargarArchivo(
+            $imagen,
+            $directorio,
+            $nombre
+        );
+
+        if (!$nuevoArchivo) {
+            throw new RuntimeException(
+                'No se pudo guardar el archivo.'
+            );
         }
 
-        $nombre = $producto->id . time();
-        $producto->imagen = $this->cargarArchivoService->cargarArchivo($imagen, public_path("imgs/productos"), $nombre);
+        $archivoAnterior = $producto->imagen;
+
+        // Actualizar la referencia en la base de datos.
+        $producto->imagen = $nuevoArchivo;
         $producto->save();
+
+        // Eliminar el archivo anterior después de guardar el nuevo.
+        if ($archivoAnterior && $archivoAnterior !== $nuevoArchivo) {
+            File::delete(
+                $directorio . DIRECTORY_SEPARATOR . $archivoAnterior
+            );
+        }
     }
 
     /**
@@ -225,7 +272,7 @@ class ProductoService
         $producto->delete();
 
         // registrar accion
-        $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ UNA PRODUCTO", $old_producto, $producto);
+        $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ UN PRODUCTO", $old_producto, $producto);
 
         return true;
     }

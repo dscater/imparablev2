@@ -19,6 +19,8 @@ class Cliente extends Model
         "fecha_nac",
         "dir",
         "fono",
+        "nom_ref",
+        "parentesco_ref",
         "fono_ref",
         "correo",
         "foto",
@@ -27,21 +29,29 @@ class Cliente extends Model
         "status",
     ];
 
-    protected $appends = ["fecha_registro_t", "full_ci", "full_name"];
+    protected $appends = ["url_foto", "fecha_registro_t", "full_ci", "full_name"];
 
     public function getFullNameAttribute()
     {
-        return $this->nombre;
+        return $this->nombre . ' ' . $this->paterno . ' ' . $this->materno;
     }
 
     public function getFullCiAttribute()
     {
-        return $this->nro_documento . ($this->complemento ? '-' . $this->complemento : '');
+        return $this->ci . ' ' . $this->ci_exp;
     }
 
     public function getFechaRegistroTAttribute()
     {
         return date("d/m/Y", strtotime($this->fecha_registro));
+    }
+
+    public function getUrlFotoAttribute()
+    {
+        if ($this->foto) {
+            return asset("imgs/clientes/" . $this->foto);
+        }
+        return asset("imgs/clientes/default.png");
     }
 
     public function scopeBuscarNombre($query, $texto)
