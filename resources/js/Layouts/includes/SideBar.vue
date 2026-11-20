@@ -600,6 +600,15 @@ onUnmounted(() => {
                     <ItemMenu
                         v-if="
                             permisos == '*' ||
+                            permisos.includes('promocions.index')
+                        "
+                        :label="'Promociones y Descuentos'"
+                        :ruta="'promocions.index'"
+                        :icon="'fa fa-tags'"
+                    ></ItemMenu>
+                    <ItemMenu
+                        v-if="
+                            permisos == '*' ||
                             permisos.includes('metodo_pagos.index')
                         "
                         :label="'Métodos de Pago'"

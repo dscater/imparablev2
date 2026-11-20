@@ -293,15 +293,11 @@ class VentaController extends Controller
     public function create(): ResponseInertia
     {
         $sucursals = $this->sucursal_service->listado(1);
-        $categorias = $this->categoria_service->listado();
-        $marcas = $this->marca_service->listado();
         $tipo_ventas = $this->tipo_venta_service->listado();
         $metodo_pagos = $this->metodo_pago_service->listado();
 
         return Inertia::render("Admin/Ventas/Create", [
             "sucursals" => $sucursals,
-            "categorias" => $categorias,
-            "marcas" => $marcas,
             "tipo_ventas" => $tipo_ventas,
             "metodo_pagos" => $metodo_pagos,
         ]);
@@ -401,16 +397,12 @@ class VentaController extends Controller
         $venta = $venta->load(["venta_detalles.producto", "cliente", "sucursal:id,nombre", "sucursal:id,nombre", "tipo_documento:id,nombre"]);
 
         $sucursals = $this->sucursal_service->listado(1);
-        $categorias = $this->categoria_service->listado();
-        $marcas = $this->marca_service->listado();
         $tipo_ventas = $this->tipo_venta_service->listado();
         $metodo_pagos = $this->metodo_pago_service->listado();
 
         return Inertia::render("Admin/Ventas/Edit", [
             "venta" => $venta,
             "sucursals" => $sucursals,
-            "categorias" => $categorias,
-            "marcas" => $marcas,
             "tipo_ventas" => $tipo_ventas,
             "metodo_pagos" => $metodo_pagos,
         ]);

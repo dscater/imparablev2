@@ -623,55 +623,23 @@ onMounted(() => {
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-4 col-md-4 col-sm-6 mt-2">
-                                <el-select
-                                    v-model="categoria_id"
-                                    no-data-text="Sin Datos"
-                                    no-match-text="Sin Resultados"
-                                    filterable
-                                    @change="detectarCambioSelect"
-                                >
-                                    <el-option
-                                        value="todos"
-                                        label="Todas las categorías"
-                                    />
-                                    <el-option
-                                        v-for="item in categorias"
-                                        :key="item.id"
-                                        :value="item.id"
-                                        :label="item.nombre"
-                                    ></el-option>
-                                </el-select>
-                            </div>
-                            <div class="col-lg-4 col-md-4 col-sm-6 mt-2">
-                                <el-select
-                                    v-model="marca_id"
-                                    no-data-text="Sin Datos"
-                                    no-match-text="Sin Resultados"
-                                    filterable
-                                    @change="detectarCambioSelect"
-                                >
-                                    <el-option
-                                        value="todos"
-                                        label="Todas las marcas"
-                                    />
-                                    <el-option
-                                        v-for="item in marcas"
-                                        :key="item.id"
-                                        :value="item.id"
-                                        :label="item.nombre"
-                                    ></el-option>
-                                </el-select>
-                            </div>
-                            <div class="col-lg-4 col-md-4 col-sm-6 mt-2">
-                                <el-input
-                                    type="text"
-                                    placeholder="Código o Nombre del Producto"
-                                    v-model="nombreProducto"
-                                    @keyup="filtrarNombres"
-                                    @clear="cargarProductos"
-                                    clearable
-                                ></el-input>
+                            <div class="col-12 mt-2">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-box"></i>
+                                    </span>
+                                    <div class="form-control p-0 border-0">
+                                        <el-input
+                                            type="text"
+                                            class=""
+                                            placeholder="Código o Nombre del Producto"
+                                            v-model="nombreProducto"
+                                            @keyup="filtrarNombres"
+                                            @clear="cargarProductos"
+                                            clearable
+                                        ></el-input>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -15,12 +15,17 @@ return new class extends Migration
             $table->id();
             $table->string("nombre");
             $table->text("descripcion");
-            $table->string("tipo"); // POR FECHAS, INDEFINIDO, POR INSCRIPCIONES
-            $table->date("fecha_ini")->nullable(); // por fechas
-            $table->date("fecha_fin")->nullable(); // por fechas
-            $table->integer("inscripciones")->nullable(); // por inscripciones
-            $table->date("fecha_regitro");
+            $table->string("tipo"); //TODOS, PRODUCTO, SERVICIO, PLAN
+            $table->boolean("indefinido"); // 0: fecha inicio y fin, 1: solo fecha inicio
+            $table->date("fecha_ini")->nullable();
+            $table->date("fecha_fin")->nullable();
+            $table->integer("cantidad")->nullable();
+            $table->string("porcentaje_monto"); // PORCENTAJE, MONTO
+            $table->double("porcentaje", 8, 2)->nullable();
+            $table->decimal("monto", 24, 2)->nullable();
+            $table->date("fecha_registro");
             $table->unsignedBigInteger("user_id");
+            $table->integer("estado")->default(1); // 0: INACTIVO, 1: ACTIVO
             $table->timestamps();
 
             $table->foreign("user_id")->references("id")->on("users");

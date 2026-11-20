@@ -59,6 +59,7 @@ use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProductoSucursalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProformaController;
+use App\Http\Controllers\PromocionController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RoleController;
@@ -195,6 +196,13 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     Route::get("metodo_pagos/paginado", [MetodoPagoController::class, 'paginado'])->name("metodo_pagos.paginado");
     Route::get("metodo_pagos/listado", [MetodoPagoController::class, 'listado'])->name("metodo_pagos.listado");
     Route::resource("metodo_pagos", MetodoPagoController::class)->only(
+        ["index", "store", "edit", "show", "update", "destroy"]
+    );
+
+    // PROMOCIONES
+    Route::get("promocions/paginado", [PromocionController::class, 'paginado'])->name("promocions.paginado");
+    Route::get("promocions/listado", [PromocionController::class, 'listado'])->name("promocions.listado");
+    Route::resource("promocions", PromocionController::class)->only(
         ["index", "store", "edit", "show", "update", "destroy"]
     );
 
