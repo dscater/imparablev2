@@ -15,6 +15,7 @@ use App\Services\CategoriaService;
 use App\Services\MarcaService;
 use App\Services\ProveedorService;
 use App\Services\MetodoPagoService;
+use App\Services\TipoProductoService;
 use App\Services\TipoVentaService;
 use App\Services\VentaCobroService;
 use App\Services\VentaService;
@@ -39,6 +40,7 @@ class VentaController extends Controller
         private SucursalService $sucursal_service,
         private CategoriaService $categoria_service,
         private MarcaService $marca_service,
+        private TipoProductoService $tipo_producto_service,
         private TipoVentaService $tipo_venta_service,
         private MetodoPagoService $metodo_pago_service
     ) {}
@@ -295,10 +297,12 @@ class VentaController extends Controller
         $sucursals = $this->sucursal_service->listado(1);
         $tipo_ventas = $this->tipo_venta_service->listado();
         $metodo_pagos = $this->metodo_pago_service->listado();
+        $tipo_productos = $this->tipo_producto_service->listado();
 
         return Inertia::render("Admin/Ventas/Create", [
             "sucursals" => $sucursals,
             "tipo_ventas" => $tipo_ventas,
+            "tipo_productos" => $tipo_productos,
             "metodo_pagos" => $metodo_pagos,
         ]);
     }
@@ -399,11 +403,13 @@ class VentaController extends Controller
         $sucursals = $this->sucursal_service->listado(1);
         $tipo_ventas = $this->tipo_venta_service->listado();
         $metodo_pagos = $this->metodo_pago_service->listado();
+        $tipo_productos = $this->tipo_producto_service->listado();
 
         return Inertia::render("Admin/Ventas/Edit", [
             "venta" => $venta,
             "sucursals" => $sucursals,
             "tipo_ventas" => $tipo_ventas,
+            "tipo_productos" => $tipo_productos,
             "metodo_pagos" => $metodo_pagos,
         ]);
     }

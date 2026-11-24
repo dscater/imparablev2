@@ -158,6 +158,59 @@ onMounted(() => {});
                             </li>
                         </ul>
                     </div>
+                    <div class="col-md-6 mt-2">
+                        <label class="">Descripción del Método de Pago</label>
+                        <el-input
+                            type="text"
+                            :class="{
+                                'parsley-error': form.errors?.descripcion,
+                            }"
+                            v-model="form.descripcion"
+                            autosize
+                        ></el-input>
+                        <ul
+                            v-if="form.errors?.descripcion"
+                            class="d-block text-danger list-unstyled"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.descripcion }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 mt-2">
+                        <label class=""
+                            >Icono del Método de Pago
+                            <a
+                                href="https://fontawesome.com/v5/search?ic=free-collection"
+                                target="_blank"
+                                >Fontawesome</a
+                            ></label
+                        >
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                class="form-control"
+                                v-model="form.icon"
+                                autosize
+                            />
+                            <span class="input-group-text"
+                                ><i
+                                    :class="[
+                                        form.icon ? form.icon : 'fa fa-minus',
+                                    ]"
+                                ></i
+                            ></span>
+                        </div>
+                        <span class="text-xs">Ej.: fa fa-qrcode</span>
+                        <ul
+                            v-if="form.errors?.icon"
+                            class="d-block text-danger list-unstyled"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.icon }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </form>
         </template>

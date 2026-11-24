@@ -9,19 +9,13 @@ class Venta extends Model
     protected $fillable = [
         "codigo_venta",
         "sucursal_id",
-        "almacen_id",
         "cliente_id",
-        "tipo_documento_id",
         "nit_ci",
         "tipo_venta", //CRÉDITO, AL CONTADO
-        "tipo_pago", // EFECTIVO, QR, EFECTIVO-QR
         "subtotal",
         "descuento",
         "porcentaje_descuento",
         "total",
-        "cancelado_efectivo",
-        "cancelado_qr",
-        "total_cancelado",
         "saldo",
         "fecha",
         "hora",
@@ -45,11 +39,6 @@ class Venta extends Model
     public function sucursal()
     {
         return $this->belongsTo(Sucursal::class, "sucursal_id");
-    }
-
-    public function almacen()
-    {
-        return $this->belongsTo(Almacen::class, "almacen_id");
     }
 
     public function cliente()

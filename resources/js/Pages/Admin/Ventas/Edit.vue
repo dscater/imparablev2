@@ -26,7 +26,11 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    tipo_pagos: {
+    metodo_pagos: {
+        type: Array,
+        default: () => [],
+    },
+    tipo_productos: {
         type: Array,
         default: () => [],
     },
@@ -73,7 +77,8 @@ onBeforeMount(() => {
                     :categorias="categorias"
                     :marcas="marcas"
                     :tipo_ventas="tipo_ventas"
-                    :tipo_pagos="tipo_pagos"
+                    :metodo_pagos="metodo_pagos"
+                    :tipo_productos="tipo_productos"
                     @envio-formulario="limpiarVenta"
                 ></Formulario>
             </div>

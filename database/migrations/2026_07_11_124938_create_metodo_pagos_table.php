@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('metodo_pagos', function (Blueprint $table) {
             $table->id();
             $table->string("nombre")->unique();
+            $table->string("descripcion", 300)->nullable();
+            $table->string("icon")->nullable();
             $table->timestamps();
         });
     }

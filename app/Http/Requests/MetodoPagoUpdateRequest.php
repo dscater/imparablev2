@@ -24,13 +24,19 @@ class MetodoPagoUpdateRequest extends FormRequest
     {
         return [
             "nombre" => "required|unique:metodo_pagos,nombre," . $this->metodo_pago->id,
+            "descripcion" => "nullable|string",
+            "icon" => "nullable|string",
         ];
     }
 
     public function messages()
     {
         return [
-            "nombre.required" => "Debes completar este campo"
+            "nombre.required" => "Debes completar este campo",
+            "descripcion.required" => "Debes completar este campo",
+            "descripcion.string" => "Debes ingresar un texto valido",
+            "icon.required" => "Debes completar este campo",
+            "icon.string" => "Debes ingresar un texto valido",
         ];
     }
 }

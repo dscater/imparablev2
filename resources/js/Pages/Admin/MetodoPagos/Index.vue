@@ -25,6 +25,16 @@ const headers = [
         sortable: true,
     },
     {
+        label: "DESCRIPCIÓN",
+        key: "descripcion",
+        sortable: true,
+    },
+    {
+        label: "ICONO",
+        key: "icon",
+        sortable: true,
+    },
+    {
         label: "ACCIÓN",
         key: "accion",
         fixed: "right",
@@ -189,31 +199,10 @@ function tablaConError() {
                             @ready="tablaPreparada"
                             @load-error="tablaConError"
                         >
-                            <template #ventas="{ item }">
-                                <span
-                                    class="badge text-xs"
-                                    :class="[
-                                        item.ventas == 1
-                                            ? 'bgActivo'
-                                            : 'bgPrecargado',
-                                    ]"
-                                    >{{
-                                        item.ventas == 1 ? "VENTAS" : "ALMACÉN"
-                                    }}</span
-                                >
-                            </template>
-                            <template #activo="{ item }">
-                                <span
-                                    class="badge text-xs"
-                                    :class="[
-                                        item.activo == 1
-                                            ? 'bgActivo'
-                                            : 'bgInactivo',
-                                    ]"
-                                    >{{
-                                        item.activo == 1 ? "ACTIVO" : "INACTIVO"
-                                    }}</span
-                                >
+                            <template #icon="{ item }">
+                                <span class="fs-5"
+                                    ><i :class="item.icon"></i
+                                ></span>
                             </template>
                             <template #accion="{ item }">
                                 <template

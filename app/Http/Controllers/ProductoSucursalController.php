@@ -6,7 +6,6 @@ use App\Http\Requests\ProductoSucursalStoreRequest;
 use App\Http\Requests\ProductoSucursalUpdateRequest;
 use App\Models\ProductoSucursal;
 use App\Models\User;
-use App\Services\AlmacenService;
 use App\Services\CategoriaService;
 use App\Services\MarcaService;
 use App\Services\ProductoSucursalService;
@@ -27,7 +26,7 @@ class ProductoSucursalController extends Controller
 {
     public function __construct(
         private ProductoSucursalService $producto_sucursalService,
-        private AlmacenService $almacen_service,
+        private SucursalService $sucursal_service,
         private CategoriaService $categoria_service,
         private MarcaService $marca_service,
 
@@ -40,12 +39,12 @@ class ProductoSucursalController extends Controller
      */
     public function index(): ResponseInertia
     {
-        $almacens = $this->almacen_service->listado(1);
+        $sucursals = $this->sucursal_service->listado(1);
         $categorias = $this->categoria_service->listado();
         $marcas = $this->marca_service->listado();
 
         return Inertia::render("Admin/ProductoSucursals/Index", [
-            "almacens" => $almacens,
+            "sucursals" => $sucursals,
             "categorias" => $categorias,
             "marcas" => $marcas,
         ]);
@@ -60,7 +59,7 @@ class ProductoSucursalController extends Controller
     {
         return response()->JSON([
             "producto_sucursals" => $this->producto_sucursalService->listado(
-                $request->input("almacen_id", ""),
+                $request->input("sucursal_id", ""),
                 $request->input("categoria_id", ""),
                 $request->input("marca_id", ""),
                 $request->input("nombreProducto", "")
@@ -74,7 +73,7 @@ class ProductoSucursalController extends Controller
         $page = (int)($request->input("page", 1));
         $search = (string)$request->input("search", "");
 
-        $almacen_id = $request->input("almacen_id", "");
+        $sucursal_id = $request->input("sucursal_id", "");
         $categoria_id = $request->input("categoria_id", "");
         $marca_id = $request->input("marca_id", "");
         $nombreProducto = $request->input("nombreProducto", "");
@@ -99,7 +98,7 @@ class ProductoSucursalController extends Controller
             $page,
             $search,
             $columnsSerachLike,
-            $almacen_id,
+            $sucursal_id,
             $categoria_id,
             $marca_id,
             $nombreProducto,
@@ -198,7 +197,7 @@ class ProductoSucursalController extends Controller
     public function cargaProductoSucursals(Request $request)
     {
         $request->validate([
-            "almacen_id" => "required",
+            "sucursal_id" => "required",
             "archivo" => [
                 "required",
                 "file",
@@ -206,7 +205,7 @@ class ProductoSucursalController extends Controller
                 "max:8192",
             ],
         ], [
-            "almacen_id.required" => "Debes seleccionar un almacén",
+            "sucursal_id.required" => "Debes seleccionar un almacén",
             "archivo.required" => "Debe seleccionar un archivo.",
             "archivo.file" => "El archivo seleccionado no es válido.",
             "archivo.mimes" => "El archivo debe ser de tipo Excel (.xlsx o .xls).",
@@ -216,7 +215,7 @@ class ProductoSucursalController extends Controller
         try {
             // crear el Producto
             $datos["archivo"] = $request->file("archivo");
-            $datos["almacen_id"] = $request->input("almacen_id", "");
+            $datos["sucursal_id"] = $request->input("sucursal_id", "");
             $this->producto_sucursalService->cargaProductoSucursals($datos);
             DB::commit();
             return redirect()->route("producto_sucursals.index")->with("bien", "Registro realizado");

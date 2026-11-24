@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Almacen;
 use App\Models\Categoria;
 use App\Models\Marca;
 use App\Services\HistorialAccionService;
@@ -22,7 +21,7 @@ use Illuminate\Validation\ValidationException;
 
 class ProductoSucursalService
 {
-    private $modulo = "CATEGORIAS";
+    private $modulo = "PRODUCTOS SUCURSAL";
 
     public function __construct(
         private  CargarArchivoService $cargarArchivoService,
@@ -31,7 +30,7 @@ class ProductoSucursalService
     ) {}
 
     public function listado(
-        $almacen_id = "",
+        $sucursal_id = "",
         $categoria_id = "",
         $marca_id = "",
         $nombreProducto = "",
@@ -42,10 +41,10 @@ class ProductoSucursalService
             DB::raw('COALESCE(SUM(producto_sucursals.stock_actual),0) as stock_total')
 
         )->with(["categoria:id,nombre", "marca:id,nombre"])
-            ->leftJoin('producto_sucursals', function ($join) use ($almacen_id) {
+            ->leftJoin('producto_sucursals', function ($join) use ($sucursal_id) {
                 $join->on('productos.id', '=', 'producto_sucursals.producto_id');
-                if (!empty($almacen_id) && $almacen_id != 'todos') {
-                    $join->where('producto_sucursals.almacen_id', $almacen_id);
+                if (!empty($sucursal_id) && $sucursal_id != 'todos') {
+                    $join->where('producto_sucursals.sucursal_id', $sucursal_id);
                 }
 
                 if (Auth::user()->tipo != 'ADMINISTRACIÓN') {
@@ -81,7 +80,7 @@ class ProductoSucursalService
      * @param integer $length
      * @param integer $page
      * @param string $search
-     * @param integer|null $almacen_id
+     * @param integer|null $sucursal_id
      * @param integer|null $categoria_id
      * @param integer|null $marca_id
      * @param string|null $nombreProducto
@@ -94,7 +93,7 @@ class ProductoSucursalService
         int $page,
         string $search,
         array $columnsSerachLike,
-        $almacen_id = "",
+        $sucursal_id = "",
         $categoria_id = "",
         $marca_id = "",
         $nombreProducto = "",
@@ -106,10 +105,10 @@ class ProductoSucursalService
             DB::raw('COALESCE(SUM(producto_sucursals.stock_actual),0) as stock_total')
 
         )->with(["categoria:id,nombre", "marca:id,nombre"])
-            ->leftJoin('producto_sucursals', function ($join) use ($almacen_id) {
+            ->leftJoin('producto_sucursals', function ($join) use ($sucursal_id) {
                 $join->on('productos.id', '=', 'producto_sucursals.producto_id');
-                if (!empty($almacen_id) && $almacen_id != 'todos') {
-                    $join->where('producto_sucursals.almacen_id', $almacen_id);
+                if (!empty($sucursal_id) && $sucursal_id != 'todos') {
+                    $join->where('producto_sucursals.sucursal_id', $sucursal_id);
                 }
 
                 if (Auth::user()->tipo != 'ADMINISTRACIÓN') {
@@ -220,10 +219,10 @@ class ProductoSucursalService
     public function cargaProductoSucursals($datos)
     {
         $fecha_actual = date("Y-m-d");
-        $almacen_id = $datos["almacen_id"];
+        $sucursal_id = $datos["sucursal_id"];
 
-        $almacen = Almacen::findOrFail($almacen_id);
-        $sucursal = Sucursal::findOrFail($almacen->sucursal_id);
+        $sucursal = Sucursal::findOrFail($sucursal_id);
+        $sucursal = Sucursal::findOrFail($sucursal->sucursal_id);
 
         $archivo = $datos["archivo"];
 
@@ -638,7 +637,7 @@ class ProductoSucursalService
             "sucursal_id",
             $sucursal->id
         )
-            ->where("almacen_id", $almacen_id)
+            ->where("sucursal_id", $sucursal_id)
             ->whereIn(
                 "producto_id",
                 $productos->pluck("id")
@@ -700,7 +699,7 @@ class ProductoSucursalService
 
 
             $registro_producto = Producto::findOrFail($producto->id);
-            $registro = $this->kardex_producto_service->registrarMovimiento($almacen->sucursal_id, $almacen->id, "CARGA MASIVA", "INGRESO", NULL, $registro_producto, $stock, $registro_producto->precio_compra, "INCREMENTO DE STOCK", "", 0);
+            $registro = $this->kardex_producto_service->registrarMovimiento($sucursal->sucursal_id, $sucursal->id, "CARGA MASIVA", "INGRESO", NULL, $registro_producto, $stock, $registro_producto->precio_compra, "INCREMENTO DE STOCK", "", 0);
 
             $productoSucursal[$producto->id] = $registro;
         }

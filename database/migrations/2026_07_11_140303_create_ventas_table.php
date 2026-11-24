@@ -18,7 +18,6 @@ return new class extends Migration
             $table->unsignedBigInteger("cliente_id");
             $table->string("nit_ci")->nullable();
             $table->string("tipo_venta"); //CRÉDITO, AL CONTADO
-            $table->unsignedBigInteger("metodo_pago_id");
             $table->decimal("subtotal", 24, 2);
             $table->decimal("descuento", 24, 2);
             $table->double("porcentaje_descuento", 8, 2);
@@ -33,7 +32,6 @@ return new class extends Migration
 
             $table->foreign("sucursal_id")->on("sucursals")->references("id");
             $table->foreign("cliente_id")->on("clientes")->references("id");
-            $table->foreign("metodo_pago_id")->on("metodo_pagos")->references("id");
             $table->foreign("user_id")->on("users")->references("id");
         });
     }

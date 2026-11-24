@@ -38,6 +38,64 @@ table .bg-principal,
     background-color: var(--bg6);
 }
 
+.bg-app {
+    background-color: var(--bg6) !important;
+}
+
+.bg-subtotal {
+    background-color: var(--bgSubtotalLight) !important;
+    color: var(--bgSubtotal) !important;
+}
+
+.bg-descuento {
+    background-color: var(--bgDescuentoLight) !important;
+    color: var(--bgDescuento) !important;
+}
+
+.bg-total {
+    background-color: var(--bgTotalLight) !important;
+    color: var(--bgTotal) !important;
+}
+
+.bg-saldo {
+    background-color: var(--bgSaldoLight) !important;
+    color: var(--bgSaldo) !important;
+}
+
+.text-subtotal {
+    color: var(--bgSubtotal) !important;
+}
+
+.text-descuento {
+    color: var(--bgDescuento) !important;
+}
+
+.text-total {
+    color: var(--bgTotal) !important;
+}
+
+.text-saldo {
+    color: var(--bgSaldo) !important;
+}
+
+.sale-summary-sticky {
+    position: sticky;
+    top: 1rem;
+}
+
+.product-list-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.product-row {
+    transition: background-color 0.15s ease;
+}
+
+.product-row:hover {
+    background-color: var(--bg6);
+}
+
 .bg-item {
     background-color: var(--bg1) !important;
 }

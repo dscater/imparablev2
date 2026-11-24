@@ -3,34 +3,59 @@
     --bg2: #005f8d;
     --bg3: #222324;
     --bg4: #e1f5fe;
-    --bg5: #5b6b79;
-    --bg6: #f3f3f3;
+    --bg5: #64748b;
+    --bg6: #f1f5f9;
+
     --bgWhite: #ffffff;
+    --bgWhiteSoft: #fdfdfd;
+
     --bg2t: rgba(0, 94, 141, 0.822);
     --bgVerificado: rgb(243, 253, 150);
     --bgVerificado2: rgb(251, 255, 218);
+
     --bgDarkPrincipal: #1d1f21;
     --bgGrayLight: #e7eaee;
     --bgDarkGray: rgb(161, 161, 161);
     --bgDarkGrayP: #555555;
+
     --bgSuccess: #179168;
     --bgSuccess2: #cdf7e9;
     --bgSuccessH: #ccffe7;
+
     --bgDanger: #c00404;
     --bgDanger2: #b90000;
     --bgDanger3: #ffebeb;
-    --bgWhite: #fdfdfd;
+
     --bgYellow: yellow;
     --bgPrecargado: #f59e0b;
     --bgNuevo: #22c55e;
+
+    --bgBlueLight: #409eff;
+    --bgBlue: #2563eb;
     --bgPrimary: #136ace;
     --bgPrimary2: #d9e9fc;
+
     --bgInfo: #13c8ce;
     --bgInfo2: #e3feff;
+
     --bgWarning: #ceb213;
     --bgWarning2: #fcf4cc;
+
     --bgActivo: #13ce66;
     --bgActivo2: #d3fae5;
+
     --bgInactivo: #ff4949;
     --bgInactivo2: #ffe3e3;
+
+    --bgSubtotal: #2563eb;
+    --bgSubtotalLight: #dbeafe;
+
+    --bgDescuento: #ea580c;
+    --bgDescuentoLight: #ffedd5;
+
+    --bgTotal: #179168;
+    --bgTotalLight: #cdf7e9;
+
+    --bgSaldo: #dc2626;
+    --bgSaldoLight: #fee2e2;
 }

@@ -5,6 +5,8 @@ export const useMetodoPagos = () => {
     const initialState = {
         id: 0,
         nombre: "",
+        descripcion: "",
+        icon: "",
         _method: "POST",
     };
 

@@ -84,6 +84,8 @@ class MetodoPagoService
     {
         $metodo_pago = MetodoPago::create([
             "nombre" => mb_strtoupper($datos["nombre"]),
+            "descripcion" => mb_strtoupper($datos["descripcion"]),
+            "icon" => $datos["icon"] ?? 'fa fa-minus',
         ]);
 
         // registrar accion
@@ -105,6 +107,8 @@ class MetodoPagoService
 
         $metodo_pago->update([
             "nombre" => mb_strtoupper($datos["nombre"]),
+            "descripcion" => mb_strtoupper($datos["descripcion"]),
+            "icon" => $datos["icon"] ?? 'fa fa-minus',
         ]);
 
         // registrar accion
