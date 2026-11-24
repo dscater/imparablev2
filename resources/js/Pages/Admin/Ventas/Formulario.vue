@@ -594,7 +594,7 @@ onMounted(() => {
         <div class="container-fluid py-3 bg-light">
             <div class="row g-3">
                 <!-- CATALOGO -->
-                <div class="col-12 col-md-7">
+                <div class="col-12 col-xl-7">
                     <div class="card h-100 border-0 shadow-sm">
                         <div
                             class="card-header text-white border-0 px-3 py-3"
@@ -673,10 +673,10 @@ onMounted(() => {
 
                         <div
                             v-if="sucursal_id"
-                            class="card-body bg-light border-bottom"
+                            class="card-body bg-light border-bottom py-2 px-3 catalog-search-body"
                         >
                             <div
-                                class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"
+                                class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1"
                             >
                                 <div>
                                     <div class="fw-bold text-dark">
@@ -722,7 +722,10 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div v-else class="px-3 py-2 bg-light border-bottom">
+                        <div
+                            v-else
+                            class="px-3 py-1 bg-light border-bottom catalog-search-empty"
+                        >
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Selecciona una sucursal para buscar productos.
@@ -780,6 +783,12 @@ onMounted(() => {
                                     v-for="item in listProductoSucursals"
                                     :key="item.id"
                                     class="list-group-item px-3 py-3 product-row"
+                                    :class="{
+                                        'catalog-stock-insufficient':
+                                            item.tipo == 'PRODUCTO' &&
+                                            Number(item.stock_total || 0) <
+                                                Number(item.cantidad || 1),
+                                    }"
                                 >
                                     <div class="row g-2 align-items-center">
                                         <div class="col-12 col-lg">
@@ -829,6 +838,26 @@ onMounted(() => {
                                                         >1</strong
                                                     >
                                                 </span>
+                                                <span
+                                                    v-if="
+                                                        item.tipo ==
+                                                            'PRODUCTO' &&
+                                                        Number(
+                                                            item.stock_total ||
+                                                                0,
+                                                        ) <
+                                                            Number(
+                                                                item.cantidad ||
+                                                                    1,
+                                                            )
+                                                    "
+                                                    class="stock-warning"
+                                                >
+                                                    <i
+                                                        class="fas fa-exclamation-triangle me-1"
+                                                    ></i>
+                                                    Stock insuficiente
+                                                </span>
                                             </div>
                                         </div>
                                         <div class="col-6 col-sm-4 col-lg-auto">
@@ -842,7 +871,7 @@ onMounted(() => {
                                         <div class="col-6 col-sm-4 col-lg-auto">
                                             <label
                                                 class="form-label text-muted small mb-1"
-                                                >Cantidad</label
+                                                >Cant.</label
                                             >
                                             <input
                                                 type="number"
@@ -852,17 +881,20 @@ onMounted(() => {
                                             />
                                         </div>
                                         <div
-                                            class="col-12 col-sm-4 col-lg-auto"
+                                            class="col-12 col-sm-4 col-lg-auto d-flex align-items-end justify-content-lg-end"
                                         >
                                             <button
                                                 type="button"
-                                                class="btn btn-primary btn-sm w-100"
+                                                class="btn btn-primary btn-sm catalog-add-button"
+                                                title="Agregar producto"
                                                 @click.prevent="
                                                     agregarProductoVenta(item)
                                                 "
                                             >
-                                                <i class="fas fa-plus me-1"></i
-                                                >Agregar
+                                                <i class="fas fa-plus"></i>
+                                                <span class="catalog-add-label"
+                                                    >Agregar</span
+                                                >
                                             </button>
                                         </div>
                                     </div>
@@ -889,7 +921,7 @@ onMounted(() => {
                 </div>
 
                 <!-- RESUMEN -->
-                <div class="col-12 col-md-5">
+                <div class="col-12 col-xl-5">
                     <div class="card border-0 shadow-sm">
                         <div
                             class="card-header text-white border-0 px-3 py-3"
@@ -933,7 +965,7 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="card-body border-bottom pb-2">
+                        <div class="card-body border-bottom">
                             <div class="section-heading section-heading-info">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="section-heading-icon"
@@ -951,7 +983,7 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="row g-2">
+                            <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label small fw-bold"
                                         >Fecha</label
@@ -974,7 +1006,7 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="mt-1">
+                            <div class="mt-3">
                                 <label class="form-label small fw-bold"
                                     >Cliente</label
                                 >
@@ -983,7 +1015,6 @@ onMounted(() => {
                                         <el-select
                                             v-model="form.cliente_id"
                                             class="w-100"
-                                            size="large"
                                             no-data-text="Sin datos"
                                             no-match-text="Sin resultados"
                                             loading-text="Buscando..."
@@ -1025,7 +1056,7 @@ onMounted(() => {
 
                             <div
                                 v-if="listClienteProductos.length > 0"
-                                class="alert alert-primary d-flex align-items-center justify-content-between gap-2 mt-1 mb-0 py-2"
+                                class="alert alert-primary d-flex align-items-center justify-content-between gap-2 mt-3 mb-0 py-2"
                             >
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="fas fa-boxes"></i>
@@ -1101,7 +1132,7 @@ onMounted(() => {
 
                             <div
                                 v-if="form.venta_detalles.length > 0"
-                                class="list-group list-group-flush"
+                                class="concept-list"
                             >
                                 <div
                                     v-for="(item, index) in form.venta_detalles"
@@ -1253,7 +1284,7 @@ onMounted(() => {
                                         <div class="col-4 col-sm-3 col-lg-2">
                                             <label
                                                 class="form-label text-muted small mb-1"
-                                                >Cantidad</label
+                                                >Cant.</label
                                             >
                                             <input
                                                 type="number"
@@ -1313,12 +1344,19 @@ onMounted(() => {
                                         <div class="col-8 col-sm-4 col-lg-2">
                                             <label
                                                 class="form-label text-muted small mb-1"
-                                                >Subtotal</label
+                                                >Total</label
                                             >
                                             <div
                                                 class="form-control form-control-sm text-end fw-bold subtotal-box"
                                             >
-                                                Bs. {{ item.total_uni }}
+                                                Bs.
+                                                {{
+                                                    Number(
+                                                        item.total ||
+                                                            item.total_uni ||
+                                                            0,
+                                                    ).toFixed(2)
+                                                }}
                                             </div>
                                         </div>
 
@@ -1335,6 +1373,130 @@ onMounted(() => {
                                             </button>
                                         </div>
                                     </div>
+
+                                    <div class="concept-financial-summary">
+                                        <div>
+                                            <span>Desc. concepto</span>
+                                            <strong class="text-discount"
+                                                >-Bs.
+                                                {{
+                                                    (
+                                                        Number(
+                                                            item.descuento_uni ||
+                                                                0,
+                                                        ) *
+                                                        Number(
+                                                            item.cantidad || 0,
+                                                        )
+                                                    ).toFixed(2)
+                                                }}</strong
+                                            >
+                                        </div>
+                                        <div>
+                                            <span>Precio final</span>
+                                            <strong class="text-total"
+                                                >Bs.
+                                                {{
+                                                    Number(
+                                                        item.precio_final ||
+                                                            item.precio_venta ||
+                                                            0,
+                                                    ).toFixed(2)
+                                                }}</strong
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <!-- PROMOCIONES / DESCUENTOS: EJEMPLO VISUAL -->
+                                    <!-- FUTURO: reemplazar estos ejemplos por item.promociones e item.descuentos -->
+                                    <details class="discount-details mt-2">
+                                        <summary
+                                            class="d-flex align-items-center justify-content-between gap-2"
+                                        >
+                                            <span
+                                                class="d-flex align-items-center gap-2 text-danger small fw-semibold"
+                                            >
+                                                <i class="fas fa-tags"></i>
+                                                Promociones y descuentos
+                                            </span>
+                                            <span
+                                                class="d-flex align-items-center gap-2"
+                                            >
+                                                <span
+                                                    class="badge discount-count-badge"
+                                                    >3 aplicados</span
+                                                >
+                                                <i
+                                                    class="fas fa-chevron-down text-muted details-arrow"
+                                                ></i>
+                                            </span>
+                                        </summary>
+
+                                        <div class="concept-details-body">
+                                            <div
+                                                class="discount-item discount-item-promotion"
+                                            >
+                                                <span
+                                                    ><i
+                                                        class="fas fa-tag me-2"
+                                                    ></i
+                                                    >Promoción Black
+                                                    Friday</span
+                                                >
+                                                <strong>-20%</strong>
+                                            </div>
+
+                                            <div
+                                                class="discount-item discount-item-promotion"
+                                            >
+                                                <span
+                                                    ><i
+                                                        class="fas fa-tag me-2"
+                                                    ></i
+                                                    >Promoción cliente
+                                                    frecuente</span
+                                                >
+                                                <strong>-Bs. 5.00</strong>
+                                            </div>
+
+                                            <div
+                                                class="discount-item discount-item-manual"
+                                            >
+                                                <span
+                                                    ><i
+                                                        class="fas fa-hand-pointer me-2"
+                                                    ></i
+                                                    >Descuento
+                                                    independiente</span
+                                                >
+                                                <div
+                                                    class="input-group input-group-sm discount-manual-input"
+                                                >
+                                                    <span
+                                                        class="input-group-text"
+                                                        >Bs.</span
+                                                    >
+                                                    <!-- FUTURO: conectar con descuento_uni -->
+                                                    <input
+                                                        type="number"
+                                                        class="form-control text-end"
+                                                        min="0"
+                                                        step="0.01"
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <!-- FUTURO: conectar con agregarPromocion -->
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-danger mt-2 compact-action-btn"
+                                            >
+                                                <i class="fas fa-plus me-1"></i>
+                                                Agregar promoción
+                                            </button>
+                                        </div>
+                                    </details>
 
                                     <!-- PLAN: BLOQUE PLEGABLE VISUAL -->
                                     <div
@@ -1357,7 +1519,9 @@ onMounted(() => {
                                                         class="badge bg-success-subtle text-success"
                                                     >
                                                         0 /
-                                                        {{ item.cantidad }}
+                                                        {{
+                                                            item.cantidad
+                                                        }}
                                                         cupos </span
                                                     ><i
                                                         class="fas fa-chevron-down text-muted details-arrow"
@@ -1378,7 +1542,7 @@ onMounted(() => {
                                                     <!-- FUTURO: conectar con agregarAsignacionPlan -->
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm btn-outline-success"
+                                                        class="btn btn-sm btn-outline-success compact-action-btn"
                                                     >
                                                         <i
                                                             class="fas fa-user-plus me-1"
@@ -1394,7 +1558,7 @@ onMounted(() => {
                                                         <!-- FUTURO: abrir selector de cliente o modal de asignación -->
                                                         <button
                                                             type="button"
-                                                            class="btn btn-sm btn-outline-success w-100 text-start"
+                                                            class="btn btn-sm btn-outline-success w-100 text-start compact-action-btn"
                                                         >
                                                             <i
                                                                 class="fas fa-user-plus me-2"
@@ -1572,10 +1736,37 @@ onMounted(() => {
                                 ></i>
                             </summary>
                             <div class="px-3 py-3">
+                                <div class="discount-total-row mb-3">
+                                    <span>
+                                        <i class="fas fa-tags me-2"></i>
+                                        Descuentos de conceptos
+                                    </span>
+                                    <strong class="text-discount">
+                                        -Bs.
+                                        {{
+                                            form.venta_detalles
+                                                .reduce(
+                                                    (total, item) =>
+                                                        total +
+                                                        Number(
+                                                            item.descuento_uni ||
+                                                                0,
+                                                        ) *
+                                                            Number(
+                                                                item.cantidad ||
+                                                                    0,
+                                                            ),
+                                                    0,
+                                                )
+                                                .toFixed(2)
+                                        }}
+                                    </strong>
+                                </div>
+
                                 <label
                                     for="descuento"
                                     class="form-label small fw-bold"
-                                    >Aplicar descuento</label
+                                    >Descuento final de venta</label
                                 >
                                 <div class="input-group">
                                     <span class="input-group-text">Bs.</span>
@@ -1591,8 +1782,8 @@ onMounted(() => {
                                     />
                                 </div>
                                 <small class="text-muted d-block mt-1"
-                                    >El descuento se aplicará al salir del
-                                    campo.</small
+                                    >Este descuento se aplica después de los
+                                    descuentos propios de cada concepto.</small
                                 >
                             </div>
                         </details>
@@ -1802,7 +1993,7 @@ onMounted(() => {
     </form>
 </template>
 
-<style scoped>
+<style>
 .min-width-0 {
     min-width: 0;
 }
@@ -1979,14 +2170,71 @@ onMounted(() => {
     transition: transform 0.2s ease;
 }
 
+.discount-details summary {
+    color: var(--bgDescuento);
+}
+
+.discount-details .concept-details-body {
+    border: 1px solid rgba(234, 88, 12, 0.2);
+    background-color: var(--bgDescuentoLight);
+}
+
+.discount-count-badge {
+    color: var(--bgDescuento);
+    background-color: var(--bgWhite);
+}
+
+.discount-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(234, 88, 12, 0.15);
+    color: var(--bgDarkPrincipal);
+    font-size: 0.72rem;
+}
+
+.discount-item:last-of-type {
+    border-bottom: 0;
+}
+
+.discount-item strong {
+    color: var(--bgDescuento);
+    white-space: nowrap;
+}
+
+.discount-item-promotion i {
+    color: var(--bgDescuento);
+}
+
+.discount-item-manual i {
+    color: var(--bgDanger);
+}
+
 details[open] .section-arrow,
 details[open] .details-arrow {
     transform: rotate(180deg);
 }
 
+.concept-list {
+    padding: 0.45rem;
+    background-color: var(--bgDarkPrincipal);
+}
+
 .concept-row {
-    border-bottom: 1px solid var(--bgGrayLight) !important;
-    transition: background-color 0.15s ease;
+    margin-bottom: 0.45rem;
+    border: 1px solid var(--bgGrayLight) !important;
+    border-left: 4px solid transparent !important;
+    border-radius: 0.55rem;
+    background-color: var(--bgWhite);
+    transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.concept-row:last-child {
+    margin-bottom: 0;
 }
 
 .concept-row:last-child {
@@ -2131,6 +2379,10 @@ details[open] .details-arrow {
 }
 
 @media (max-width: 767.98px) {
+    .concept-list {
+        padding: 0.25rem;
+    }
+
     .catalog-quantity {
         width: 100%;
     }
@@ -2144,5 +2396,505 @@ details[open] .details-arrow {
         padding-right: 0.75rem;
         padding-left: 0.75rem;
     }
+}
+/* =====================================================
+   AJUSTES FINALES DE CONCEPTOS Y DESCUENTOS
+===================================================== */
+
+.concept-list,
+.list-group.list-group-flush {
+    background-color: var(--bgGrayLight) !important;
+}
+
+.concept-row,
+.list-group-item.concept-row {
+    color: var(--bgDarkPrincipal) !important;
+    background-color: var(--bgWhite) !important;
+}
+
+.concept-row:hover,
+.list-group-item.concept-row:hover {
+    color: var(--bgDarkPrincipal) !important;
+    background-color: var(--bgWhiteSoft) !important;
+}
+
+.discount-details summary {
+    color: var(--bgDescuento);
+}
+
+.discount-details .concept-details-body {
+    padding: 0.65rem;
+    border: 1px solid rgba(234, 88, 12, 0.2);
+    border-radius: 0.4rem;
+    background-color: var(--bgDescuentoLight);
+}
+
+.discount-count-badge {
+    color: var(--bgDescuento);
+    background-color: var(--bgWhite);
+}
+
+.discount-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(234, 88, 12, 0.15);
+    color: var(--bgDarkPrincipal);
+    font-size: 0.72rem;
+}
+
+.discount-item:last-of-type {
+    border-bottom: 0;
+}
+
+.discount-item strong {
+    color: var(--bgDescuento);
+    white-space: nowrap;
+}
+
+.discount-item-promotion i {
+    color: var(--bgDescuento);
+}
+
+.discount-item-manual i {
+    color: var(--bgDanger);
+}
+
+.discount-manual-input {
+    width: 125px;
+    flex-shrink: 0;
+}
+
+.discount-manual-input .input-group-text {
+    color: var(--bgDescuento);
+    background-color: var(--bgDescuentoLight);
+    border-color: rgba(234, 88, 12, 0.25);
+}
+
+@media (max-width: 575.98px) {
+    .discount-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .discount-manual-input {
+        width: 100%;
+    }
+}
+/* =====================================================
+   AJUSTE FINAL: CONCEPTOS COMPACTOS Y RESALTADOS
+===================================================== */
+
+.concept-list {
+    padding: 0.45rem !important;
+    background: linear-gradient(180deg, #e8edf3 0%, #dfe6ee 100%) !important;
+}
+
+.concept-row {
+    margin-bottom: 0.45rem !important;
+    padding: 0.65rem 0.7rem !important;
+    color: #263238 !important;
+    background-color: #ffffff !important;
+    border-color: #cfd8e3 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.concept-row:hover {
+    z-index: 2;
+    transform: translateY(-2px);
+    color: #263238 !important;
+    background-color: #f8fbff !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.concept-row strong,
+.concept-row .text-dark {
+    color: #263238 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.2;
+}
+
+.concept-row .text-muted,
+.concept-row small,
+.concept-meta {
+    font-size: 0.63rem !important;
+}
+
+.concept-badge {
+    padding: 0.18rem 0.38rem !important;
+    font-size: 0.56rem !important;
+}
+
+.concept-row .form-label {
+    margin-bottom: 0.15rem !important;
+    font-size: 0.61rem !important;
+}
+
+.concept-row .form-control,
+.concept-row .input-group-text {
+    font-size: 0.7rem !important;
+}
+
+.concept-details summary {
+    font-size: 0.64rem !important;
+}
+
+.discount-count-badge {
+    padding: 0.18rem 0.38rem !important;
+    font-size: 0.56rem !important;
+}
+
+.discount-item {
+    font-size: 0.63rem !important;
+}
+
+.discount-item strong {
+    font-size: 0.63rem !important;
+}
+
+.discount-manual-input {
+    width: 112px;
+}
+
+.discount-manual-input .input-group-text,
+.discount-manual-input .form-control {
+    font-size: 0.64rem !important;
+}
+
+@media (max-width: 767.98px) {
+    .concept-list {
+        padding: 0.25rem !important;
+    }
+
+    .concept-row {
+        padding: 0.58rem !important;
+    }
+
+    .concept-row strong,
+    .concept-row .text-dark {
+        font-size: 0.74rem !important;
+    }
+}
+/* =====================================================
+   AJUSTE FINAL: PROMOCIONES Y ACCIONES COMPACTAS
+===================================================== */
+
+.discount-details summary {
+    padding: 0.05rem 0;
+    font-size: 0.68rem;
+}
+
+.discount-details summary > span:first-child {
+    font-size: 0.68rem;
+}
+
+.discount-count-badge {
+    padding: 0.18rem 0.42rem;
+    font-size: 0.58rem;
+}
+
+.discount-item {
+    padding: 0.42rem 0;
+    font-size: 0.72rem;
+}
+
+.discount-item strong {
+    font-size: 0.7rem;
+}
+
+.discount-manual-input {
+    width: 112px;
+}
+
+.compact-action-btn {
+    padding: 0.22rem 0.48rem !important;
+    font-size: 0.64rem !important;
+    line-height: 1.2 !important;
+}
+
+.plan-assignment-body .compact-action-btn,
+.discount-details .compact-action-btn {
+    border-radius: 0.3rem;
+}
+
+.plan-assignment-body small {
+    font-size: 0.64rem;
+}
+
+.plan-assignment-body .form-control,
+.plan-assignment-body .btn {
+    font-size: 0.64rem;
+}
+.concept-financial-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 0.45rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed #d9dee5;
+    color: var(--bg5);
+    font-size: 0.64rem;
+}
+
+.concept-financial-summary > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.concept-financial-summary strong {
+    font-size: 0.68rem;
+}
+
+.discount-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid rgba(234, 88, 12, 0.18);
+    border-radius: 0.4rem;
+    color: var(--bg5);
+    background-color: var(--bgDescuentoLight);
+    font-size: 0.68rem;
+}
+
+.discount-total-row strong {
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .concept-financial-summary {
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+}
+/* =====================================================
+   AJUSTE FINAL: TIPOS DE VENTA, PAGOS Y POPOVER
+===================================================== */
+
+.sale-type-option {
+    padding: 0.45rem 0.55rem !important;
+}
+
+.sale-type-option .fw-bold {
+    font-size: 0.68rem !important;
+    line-height: 1.15;
+}
+
+.sale-type-option small {
+    display: block;
+    font-size: 0.58rem !important;
+    line-height: 1.15;
+}
+
+.sale-type-option > .d-flex i {
+    font-size: 0.72rem;
+}
+
+.payment-option {
+    padding: 0.45rem 0.55rem !important;
+}
+
+.payment-option .fw-bold {
+    font-size: 0.68rem !important;
+    line-height: 1.15;
+}
+
+.payment-option small {
+    font-size: 0.58rem !important;
+    line-height: 1.15;
+}
+
+.payment-option .payment-icon {
+    width: 27px;
+    height: 27px;
+    min-width: 27px;
+    font-size: 0.72rem;
+}
+
+.payment-option > .d-flex > .fa-check-circle {
+    font-size: 0.75rem;
+}
+
+.discount-details summary {
+    font-size: 0.78rem !important;
+}
+
+.discount-details summary > span:first-child {
+    font-size: 0.78rem !important;
+}
+
+.discount-count-badge {
+    padding: 0.22rem 0.48rem !important;
+    font-size: 0.68rem !important;
+}
+
+.payment-summary-badge {
+    cursor: help;
+}
+/* =====================================================
+   AJUSTE FINAL: CATALOGO COMPACTO Y RESPONSIVE
+===================================================== */
+
+.product-row {
+    padding: 0.6rem 0.75rem !important;
+    color: var(--bgDarkPrincipal);
+    transition:
+        background-color 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.product-row:hover {
+    background-color: #f8fbff;
+    box-shadow: inset 3px 0 0 var(--bgPrimary);
+}
+
+.product-row .fw-bold {
+    font-size: 0.78rem !important;
+    line-height: 1.2;
+}
+
+.product-row .text-muted,
+.product-row small,
+.product-row .form-label {
+    font-size: 0.64rem !important;
+}
+
+.product-row strong {
+    font-size: 0.72rem;
+}
+
+.product-row .btn {
+    padding: 0.28rem 0.55rem;
+    font-size: 0.65rem;
+}
+
+.product-row .form-control,
+.product-row .input-group-text {
+    font-size: 0.7rem;
+}
+
+.catalog-quantity {
+    min-width: 66px;
+}
+
+@media (max-width: 991.98px) {
+    .product-row {
+        padding: 0.55rem 0.65rem !important;
+    }
+
+    .product-row .row {
+        row-gap: 0.45rem !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .product-row .col-6,
+    .product-row .col-12 {
+        min-width: 0;
+    }
+
+    .product-row .fw-bold {
+        font-size: 0.75rem !important;
+    }
+
+    .product-row .text-truncate {
+        max-width: 100%;
+    }
+
+    .catalog-add-button {
+        width: 100%;
+        height: 30px;
+    }
+
+    .catalog-add-label {
+        display: inline;
+        margin-left: 0.35rem;
+    }
+
+    .card-body.bg-light.border-bottom {
+        padding-top: 0.45rem !important;
+        padding-bottom: 0.45rem !important;
+    }
+}
+.catalog-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    padding: 0 !important;
+    border-radius: 0.35rem;
+}
+
+.catalog-add-label {
+    display: none;
+}
+
+@media (max-width: 575.98px) {
+    .catalog-add-button {
+        width: 100%;
+        height: 30px;
+    }
+
+    .catalog-add-label {
+        display: inline;
+        margin-left: 0.35rem;
+    }
+}
+.catalog-search-body,
+.catalog-search-empty {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: stretch;
+}
+
+.catalog-search-body .input-group {
+    min-height: 34px;
+}
+
+.catalog-search-body .form-control,
+.catalog-search-body .input-group-text,
+.catalog-search-body .btn {
+    min-height: 34px;
+}
+
+@media (max-width: 575.98px) {
+    .catalog-search-body {
+        padding-top: 0.45rem !important;
+        padding-bottom: 0.45rem !important;
+    }
+}
+.catalog-stock-insufficient {
+    background-color: var(--bgStockInsufficient, #fff1f2) !important;
+    border-left: 3px solid var(--textStockInsufficient, #b42318) !important;
+    border-color: var(--borderStockInsufficient, #fecdd3) !important;
+}
+
+.catalog-stock-insufficient:hover {
+    background-color: #ffe4e6 !important;
+    box-shadow: inset 3px 0 0 var(--textStockInsufficient, #b42318);
+}
+
+.catalog-stock-insufficient .product-row,
+.catalog-stock-insufficient .fw-bold {
+    color: #7f1d1d !important;
+}
+
+.stock-warning {
+    display: inline-flex;
+    align-items: center;
+    color: var(--textStockInsufficient, #b42318);
+    font-size: 0.62rem;
+    font-weight: 700;
 }
 </style>
