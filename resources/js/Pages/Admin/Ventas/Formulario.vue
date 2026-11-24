@@ -8,6 +8,8 @@ import FormularioCliente from "../Clientes/FormularioCliente.vue";
 import { useClientes } from "@/composables/clientes/useClientes";
 import MiPaginacion from "@/Components/MiPaginacion.vue";
 import ListaPorCliente from "../ClienteProductos/ListaPorCliente.vue";
+import { ElPopover } from "element-plus";
+import "element-plus/es/components/popover/style/css";
 
 const props = defineProps({
     form: {
@@ -591,58 +593,53 @@ onMounted(() => {
 
         <div class="container-fluid py-3 bg-light">
             <div class="row g-3">
-                <!-- =====================================================
-                     CATÁLOGO DE PRODUCTOS
-                ====================================================== -->
-                <div class="col-12 col-xl-7">
-                    <div class="card border-0 shadow-sm">
-                        <!-- ENCABEZADO -->
-                        <div class="card-header bg-white border-bottom p-3">
+                <!-- CATALOGO -->
+                <div class="col-12 col-md-7">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div
+                            class="card-header text-white border-0 px-3 py-3"
+                            style="
+                                background: linear-gradient(
+                                    135deg,
+                                    var(--bg1),
+                                    var(--bg2)
+                                );
+                            "
+                        >
                             <div class="row g-3 align-items-end">
-                                <!-- TÍTULO -->
                                 <div class="col-12 col-md-5">
                                     <div
                                         class="d-flex align-items-center gap-2"
                                     >
                                         <div
-                                            class="d-flex align-items-center justify-content-center rounded-3 text-primary"
-                                            style="
-                                                width: 42px;
-                                                height: 42px;
-                                                background-color: var(
-                                                    --bgPrimary2
-                                                );
-                                            "
+                                            class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 bg-white text-primary"
+                                            style="width: 42px; height: 42px"
                                         >
                                             <i class="fas fa-store"></i>
                                         </div>
-
                                         <div>
-                                            <div class="fw-bold">
+                                            <div class="fw-semibold text-white">
                                                 Nueva venta
                                             </div>
-
-                                            <small class="text-muted">
-                                                Selecciona los productos para
-                                                agregar
-                                            </small>
+                                            <small class="text-white-50"
+                                                >Selecciona los productos para
+                                                agregar</small
+                                            >
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- SUCURSAL -->
                                 <div class="col-12 col-md-7">
                                     <label
-                                        class="form-label small fw-bold mb-1"
+                                        class="form-label small fw-semibold text-white mb-1"
+                                        >Sucursal</label
                                     >
-                                        Sucursal
-                                    </label>
-
                                     <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-building"></i>
-                                        </span>
-
+                                        <span class="input-group-text bg-white"
+                                            ><i
+                                                class="fas fa-building text-primary"
+                                            ></i
+                                        ></span>
                                         <div class="form-control p-0 border-0">
                                             <el-select
                                                 v-model="sucursal_id"
@@ -662,10 +659,9 @@ onMounted(() => {
                                             </el-select>
                                         </div>
                                     </div>
-
                                     <ul
                                         v-if="form.errors?.sucursal_id"
-                                        class="text-danger list-unstyled mt-1 mb-0"
+                                        class="text-warning list-unstyled mt-1 mb-0"
                                     >
                                         <li class="small">
                                             {{ form.errors.sucursal_id }}
@@ -675,38 +671,35 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <!-- BUSCADOR -->
-                        <div class="card-body bg-light border-bottom">
+                        <div
+                            v-if="sucursal_id"
+                            class="card-body bg-light border-bottom"
+                        >
                             <div
                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"
                             >
                                 <div>
                                     <div class="fw-bold text-dark">
-                                        <i class="fas fa-box-open me-2"></i>
-                                        Productos
+                                        <i class="fas fa-box-open me-2"></i
+                                        >Productos
                                     </div>
-
-                                    <small class="text-muted">
-                                        Busca por código o nombre
-                                    </small>
+                                    <small class="text-muted"
+                                        >Busca por código o nombre</small
+                                    >
                                 </div>
-
                                 <button
                                     type="button"
                                     class="btn btn-outline-secondary btn-sm"
                                     @click.prevent="cargarProductos"
                                 >
-                                    <i class="fas fa-sync me-1"></i>
-                                    Actualizar
+                                    <i class="fas fa-sync me-1"></i>Actualizar
                                 </button>
                             </div>
 
-                            <!-- INPUT NORMAL, SIN EL-INPUT -->
                             <div class="input-group">
-                                <span class="input-group-text bg-white">
-                                    <i class="fas fa-search"></i>
-                                </span>
-
+                                <span class="input-group-text bg-white"
+                                    ><i class="fas fa-search"></i
+                                ></span>
                                 <input
                                     type="text"
                                     class="form-control"
@@ -714,7 +707,6 @@ onMounted(() => {
                                     placeholder="Código o nombre del producto"
                                     @keyup="filtrarNombres"
                                 />
-
                                 <button
                                     v-if="nombreProducto"
                                     type="button"
@@ -730,9 +722,14 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <!-- LISTADO DE PRODUCTOS -->
+                        <div v-else class="px-3 py-2 bg-light border-bottom">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Selecciona una sucursal para buscar productos.
+                            </small>
+                        </div>
+
                         <div class="card-body p-0">
-                            <!-- SIN SUCURSAL -->
                             <div
                                 v-if="!sucursal_id"
                                 class="text-center text-muted py-5 px-3"
@@ -740,18 +737,15 @@ onMounted(() => {
                                 <i
                                     class="fas fa-building fa-2x mb-3 text-secondary"
                                 ></i>
-
                                 <div class="fw-bold">
                                     Selecciona una sucursal
                                 </div>
-
-                                <small>
-                                    Primero selecciona una sucursal para ver sus
-                                    productos.
-                                </small>
+                                <small
+                                    >Primero selecciona una sucursal para ver
+                                    sus productos.</small
+                                >
                             </div>
 
-                            <!-- CARGANDO -->
                             <div
                                 v-else-if="loadingLista"
                                 class="text-center text-muted py-5 px-3"
@@ -759,11 +753,9 @@ onMounted(() => {
                                 <i
                                     class="fas fa-spinner fa-spin fa-2x mb-3 text-primary"
                                 ></i>
-
                                 <div>Cargando productos...</div>
                             </div>
 
-                            <!-- SIN PRODUCTOS -->
                             <div
                                 v-else-if="
                                     !listProductoSucursals ||
@@ -774,25 +766,22 @@ onMounted(() => {
                                 <i
                                     class="fas fa-box-open fa-2x mb-3 text-secondary"
                                 ></i>
-
                                 <div class="fw-bold">
                                     No hay productos disponibles
                                 </div>
-
-                                <small>
-                                    Intenta actualizar o cambiar la búsqueda.
-                                </small>
+                                <small
+                                    >Intenta actualizar o cambiar la
+                                    búsqueda.</small
+                                >
                             </div>
 
-                            <!-- PRODUCTOS -->
                             <div v-else class="list-group list-group-flush">
                                 <div
                                     v-for="item in listProductoSucursals"
                                     :key="item.id"
-                                    class="list-group-item px-3 py-3 product-hover"
+                                    class="list-group-item px-3 py-3 product-row"
                                 >
                                     <div class="row g-2 align-items-center">
-                                        <!-- INFORMACIÓN DEL PRODUCTO -->
                                         <div class="col-12 col-lg">
                                             <div
                                                 class="fw-bold text-dark text-truncate"
@@ -800,23 +789,20 @@ onMounted(() => {
                                             >
                                                 {{ item.nombre }}
                                             </div>
-
                                             <div
-                                                class="d-flex flex-wrap align-items-center gap-3 mt-1 text-muted small"
+                                                class="d-flex flex-wrap gap-3 mt-1 text-muted small"
                                             >
-                                                <span>
-                                                    <i
+                                                <span
+                                                    ><i
                                                         class="fas fa-barcode me-1"
-                                                    ></i>
-                                                    {{ item.codigo }}
-                                                </span>
-
-                                                <span>
-                                                    <i
+                                                    ></i
+                                                    >{{ item.codigo }}</span
+                                                >
+                                                <span
+                                                    ><i
                                                         class="fas fa-cubes me-1"
-                                                    ></i>
-                                                    Stock:
-
+                                                    ></i
+                                                    >Stock:
                                                     <strong
                                                         v-if="
                                                             item.tipo ==
@@ -833,49 +819,41 @@ onMounted(() => {
                                                                 item.stock_total >
                                                                 item.stock_min,
                                                         }"
+                                                        >{{
+                                                            item.stock_total
+                                                        }}</strong
                                                     >
-                                                        {{ item.stock_total }}
-                                                    </strong>
-
                                                     <strong
                                                         v-else
                                                         class="text-success"
+                                                        >1</strong
                                                     >
-                                                        1
-                                                    </strong>
                                                 </span>
                                             </div>
                                         </div>
-
-                                        <!-- PRECIO -->
-                                        <div class="col-6 col-sm-4 col-lg-2">
+                                        <div class="col-6 col-sm-4 col-lg-auto">
                                             <div class="text-muted small">
                                                 Precio
                                             </div>
-
-                                            <strong class="text-dark">
-                                                Bs. {{ item.precio }}
-                                            </strong>
+                                            <strong
+                                                >Bs. {{ item.precio }}</strong
+                                            >
                                         </div>
-
-                                        <!-- CANTIDAD -->
-                                        <div class="col-6 col-sm-4 col-lg-2">
+                                        <div class="col-6 col-sm-4 col-lg-auto">
                                             <label
                                                 class="form-label text-muted small mb-1"
+                                                >Cantidad</label
                                             >
-                                                Cantidad
-                                            </label>
-
                                             <input
                                                 type="number"
-                                                class="form-control form-control-sm text-center"
+                                                class="form-control form-control-sm text-center catalog-quantity"
                                                 v-model="item.cantidad"
                                                 min="1"
                                             />
                                         </div>
-
-                                        <!-- AGREGAR -->
-                                        <div class="col-12 col-sm-4 col-lg-2">
+                                        <div
+                                            class="col-12 col-sm-4 col-lg-auto"
+                                        >
                                             <button
                                                 type="button"
                                                 class="btn btn-primary btn-sm w-100"
@@ -883,23 +861,22 @@ onMounted(() => {
                                                     agregarProductoVenta(item)
                                                 "
                                             >
-                                                <i class="fas fa-plus me-1"></i>
-                                                Agregar
+                                                <i class="fas fa-plus me-1"></i
+                                                >Agregar
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- PAGINACIÓN -->
+
                         <div
                             v-if="sucursal_id"
                             class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2"
                         >
-                            <small class="text-muted">
-                                Total registros: {{ total_registros }}
-                            </small>
-
+                            <small class="text-muted"
+                                >Total registros: {{ total_registros }}</small
+                            >
                             <MiPaginacion
                                 :pagination-class="'mb-0'"
                                 :total-data="total_registros"
@@ -911,12 +888,9 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- =====================================================
-                     RESUMEN DE VENTA
-                ====================================================== -->
-                <div class="col-12 col-xl-5">
-                    <div class="card border-0 shadow-sm sale-summary-card">
-                        <!-- CABECERA DEL RESUMEN -->
+                <!-- RESUMEN -->
+                <div class="col-12 col-md-5">
+                    <div class="card border-0 shadow-sm">
                         <div
                             class="card-header text-white border-0 px-3 py-3"
                             style="
@@ -934,75 +908,64 @@ onMounted(() => {
                                     class="d-flex align-items-center gap-2 min-width-0"
                                 >
                                     <div
-                                        class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
-                                        style="
-                                            width: 42px;
-                                            height: 42px;
-                                            color: var(--bgSuccess);
-                                            background-color: var(--bgWhite);
-                                        "
+                                        class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 bg-white text-success"
+                                        style="width: 42px; height: 42px"
                                     >
                                         <i class="fas fa-shopping-cart"></i>
                                     </div>
-
                                     <div class="min-width-0">
                                         <h5
                                             class="mb-1 fw-semibold text-white text-truncate"
                                         >
                                             Resumen de venta
                                         </h5>
-
                                         <small
                                             class="text-white-50 d-block text-truncate"
                                         >
-                                            <span v-if="form.id != 0">
-                                                Código:
-                                                {{ form.codigo_venta }}
-                                            </span>
-
-                                            <span v-else> Nueva venta </span>
+                                            <span v-if="form.id != 0"
+                                                >Código:
+                                                {{ form.codigo_venta }}</span
+                                            >
+                                            <span v-else>Nueva venta</span>
                                         </small>
                                     </div>
                                 </div>
-
-                                <span
-                                    class="badge rounded-pill px-3 py-2 flex-shrink-0"
-                                    style="
-                                        color: var(--bgSuccess);
-                                        background-color: var(--bgWhite);
-                                    "
-                                >
-                                    {{ form.venta_detalles.length }}
-                                    <span class="fw-normal"> items </span>
-                                </span>
                             </div>
                         </div>
 
-                        <!-- DATOS BÁSICOS -->
-                        <div class="card-body border-bottom py-2">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <i class="fas fa-info-circle text-primary"></i>
-                                <strong> Datos básicos </strong>
+                        <div class="card-body border-bottom pb-2">
+                            <div class="section-heading section-heading-info">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="section-heading-icon"
+                                        ><i class="fas fa-info-circle"></i
+                                    ></span>
+                                    <div>
+                                        <strong class="d-block"
+                                            >Datos básicos</strong
+                                        >
+                                        <small
+                                            >Información general de la
+                                            venta</small
+                                        >
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold">
-                                        Fecha
-                                    </label>
-
+                                    <label class="form-label small fw-bold"
+                                        >Fecha</label
+                                    >
                                     <input
                                         type="date"
                                         class="form-control form-control-sm"
                                         v-model="form.fecha"
                                     />
                                 </div>
-
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold">
-                                        Hora
-                                    </label>
-
+                                    <label class="form-label small fw-bold"
+                                        >Hora</label
+                                    >
                                     <input
                                         type="time"
                                         class="form-control form-control-sm"
@@ -1011,17 +974,16 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <!-- CLIENTE -->
                             <div class="mt-1">
-                                <label class="form-label small fw-bold">
-                                    Cliente
-                                </label>
-
+                                <label class="form-label small fw-bold"
+                                    >Cliente</label
+                                >
                                 <div class="input-group">
                                     <div class="form-control p-0 border-0">
                                         <el-select
                                             v-model="form.cliente_id"
                                             class="w-100"
+                                            size="large"
                                             no-data-text="Sin datos"
                                             no-match-text="Sin resultados"
                                             loading-text="Buscando..."
@@ -1038,14 +1000,10 @@ onMounted(() => {
                                                 v-for="item in listClientes"
                                                 :key="item.id"
                                                 :value="item.id"
-                                                :label="`${item.nombre} - ${
-                                                    item.tipo_documento
-                                                        ?.nombre ?? ''
-                                                }: ${item.nro_documento}`"
+                                                :label="`${item.nombre} - ${item.tipo_documento?.nombre ?? ''}: ${item.nro_documento}`"
                                             />
                                         </el-select>
                                     </div>
-
                                     <button
                                         type="button"
                                         class="btn btn-primary"
@@ -1055,7 +1013,6 @@ onMounted(() => {
                                         <i class="fas fa-user-plus"></i>
                                     </button>
                                 </div>
-
                                 <ul
                                     v-if="form.errors?.cliente_id"
                                     class="text-danger list-unstyled mb-0 mt-1"
@@ -1066,26 +1023,24 @@ onMounted(() => {
                                 </ul>
                             </div>
 
-                            <!-- PRODUCTOS ASIGNADOS -->
                             <div
                                 v-if="listClienteProductos.length > 0"
-                                class="alert alert-primary d-flex align-items-center justify-content-between gap-2 mt-3 mb-0 py-2"
+                                class="alert alert-primary d-flex align-items-center justify-content-between gap-2 mt-1 mb-0 py-2"
                             >
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="fas fa-boxes"></i>
-
                                     <div>
-                                        <strong class="d-block small">
-                                            Productos asignados
-                                        </strong>
-
-                                        <small>
-                                            {{ listClienteProductos.length }}
-                                            productos
-                                        </small>
+                                        <strong class="d-block small"
+                                            >Productos asignados</strong
+                                        >
+                                        <small
+                                            >{{
+                                                listClienteProductos.length
+                                            }}
+                                            productos</small
+                                        >
                                     </div>
                                 </div>
-
                                 <div class="d-flex gap-1">
                                     <button
                                         type="button"
@@ -1097,7 +1052,6 @@ onMounted(() => {
                                     >
                                         <i class="fas fa-eye"></i>
                                     </button>
-
                                     <button
                                         type="button"
                                         class="btn btn-sm btn-light"
@@ -1109,7 +1063,6 @@ onMounted(() => {
                                         <i class="fas fa-sync"></i>
                                     </button>
                                 </div>
-
                                 <ListaPorCliente
                                     v-if="muestra_cliente_productos"
                                     :muestra_formulario="
@@ -1123,86 +1076,197 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <!-- PRODUCTOS AGREGADOS -->
-                        <div class="card-body border-bottom">
+                        <!-- CONCEPTOS AGREGADOS -->
+                        <div class="card-body p-0">
                             <div
-                                class="d-flex align-items-center justify-content-between mb-3"
+                                class="section-heading section-heading-primary"
                             >
                                 <div class="d-flex align-items-center gap-2">
-                                    <i
-                                        class="fas fa-shopping-basket text-primary"
-                                    ></i>
-
-                                    <strong> Productos agregados </strong>
+                                    <span class="section-heading-icon"
+                                        ><i class="fas fa-shopping-basket"></i
+                                    ></span>
+                                    <div>
+                                        <strong class="d-block"
+                                            >Conceptos agregados</strong
+                                        ><small
+                                            >Productos, servicios y
+                                            planes</small
+                                        >
+                                    </div>
                                 </div>
-
-                                <span
-                                    class="badge bg-primary-subtle text-primary rounded-pill"
-                                >
-                                    {{ form.venta_detalles.length }}
-                                </span>
+                                <span class="badge section-heading-badge">{{
+                                    form.venta_detalles.length
+                                }}</span>
                             </div>
 
                             <div
                                 v-if="form.venta_detalles.length > 0"
-                                class="sale-products-list"
+                                class="list-group list-group-flush"
                             >
                                 <div
                                     v-for="(item, index) in form.venta_detalles"
                                     :key="index"
-                                    class="border rounded p-2 bg-light mb-2"
+                                    class="list-group-item px-3 py-3 concept-row"
+                                    :class="{
+                                        'concept-row-product':
+                                            item.producto.tipo === 'PRODUCTO',
+                                        'concept-row-service':
+                                            item.producto.tipo === 'SERVICIO',
+                                        'concept-row-plan':
+                                            item.producto.tipo === 'PLAN',
+                                    }"
                                 >
-                                    <div
-                                        class="d-flex align-items-center justify-content-between gap-2 mb-2"
-                                    >
-                                        <div
-                                            class="d-flex align-items-center gap-2 min-width-0"
-                                        >
-                                            <span
-                                                class="badge bg-primary rounded"
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-12 col-lg">
+                                            <div
+                                                class="d-flex align-items-center gap-2 min-width-0"
                                             >
-                                                {{ index + 1 }}
-                                            </span>
-
-                                            <strong
-                                                class="small text-truncate"
-                                                :title="item.producto.nombre"
-                                            >
-                                                {{ item.producto.nombre }}
-                                            </strong>
+                                                <span
+                                                    class="concept-icon d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                                    :class="{
+                                                        'concept-icon-product':
+                                                            item.producto
+                                                                .tipo ===
+                                                            'PRODUCTO',
+                                                        'concept-icon-service':
+                                                            item.producto
+                                                                .tipo ===
+                                                            'SERVICIO',
+                                                        'concept-icon-plan':
+                                                            item.producto
+                                                                .tipo ===
+                                                            'PLAN',
+                                                    }"
+                                                >
+                                                    <i
+                                                        :class="{
+                                                            'fas fa-box':
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'PRODUCTO',
+                                                            'fas fa-concierge-bell':
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'SERVICIO',
+                                                            'fas fa-id-card':
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'PLAN',
+                                                        }"
+                                                    ></i>
+                                                </span>
+                                                <div class="min-width-0">
+                                                    <div
+                                                        class="d-flex flex-wrap align-items-center gap-2"
+                                                    >
+                                                        <strong
+                                                            class="text-dark text-truncate"
+                                                            :title="
+                                                                item.producto
+                                                                    .nombre
+                                                            "
+                                                            >{{
+                                                                item.producto
+                                                                    .nombre
+                                                            }}</strong
+                                                        >
+                                                        <span
+                                                            class="badge rounded-pill concept-badge"
+                                                            :class="{
+                                                                'concept-badge-product':
+                                                                    item
+                                                                        .producto
+                                                                        .tipo ===
+                                                                    'PRODUCTO',
+                                                                'concept-badge-service':
+                                                                    item
+                                                                        .producto
+                                                                        .tipo ===
+                                                                    'SERVICIO',
+                                                                'concept-badge-plan':
+                                                                    item
+                                                                        .producto
+                                                                        .tipo ===
+                                                                    'PLAN',
+                                                            }"
+                                                            >{{
+                                                                item.producto
+                                                                    .tipo ||
+                                                                "PRODUCTO"
+                                                            }}</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="d-flex flex-wrap gap-3 mt-1 text-muted small"
+                                                    >
+                                                        <span
+                                                            ><i
+                                                                class="fas fa-barcode me-1"
+                                                            ></i
+                                                            >{{
+                                                                item.producto
+                                                                    .codigo
+                                                            }}</span
+                                                        >
+                                                        <span
+                                                            v-if="
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'PRODUCTO'
+                                                            "
+                                                            ><i
+                                                                class="fas fa-cubes me-1"
+                                                            ></i
+                                                            >Stock:
+                                                            {{
+                                                                item.producto
+                                                                    .stock_total
+                                                            }}</span
+                                                        >
+                                                        <span
+                                                            v-if="
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'SERVICIO'
+                                                            "
+                                                            ><i
+                                                                class="fas fa-clock me-1"
+                                                            ></i
+                                                            >Servicio</span
+                                                        >
+                                                        <span
+                                                            v-if="
+                                                                item.producto
+                                                                    .tipo ===
+                                                                'PLAN'
+                                                            "
+                                                            ><i
+                                                                class="fas fa-calendar me-1"
+                                                            ></i
+                                                            >Plan</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-danger border-0"
-                                            title="Quitar producto"
-                                            @click="quitarFila(item, index)"
-                                        >
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-
-                                    <div class="row g-2 align-items-end">
-                                        <!-- CANTIDAD -->
-                                        <div class="col-4">
+                                        <div class="col-4 col-sm-3 col-lg-2">
                                             <label
-                                                class="form-label small text-muted mb-1"
+                                                class="form-label text-muted small mb-1"
+                                                >Cantidad</label
                                             >
-                                                Cantidad
-                                            </label>
-
                                             <input
                                                 type="number"
-                                                min="0"
+                                                min="1"
                                                 class="form-control form-control-sm text-center fw-bold"
-                                                v-model="item.cantidad"
-                                                @change="
+                                                v-model.number="item.cantidad"
+                                                @input="
                                                     detectarCambioFila(
                                                         item,
                                                         index,
                                                     )
                                                 "
-                                                @keyup="
+                                                @change="
                                                     detectarCambioFila(
                                                         item,
                                                         index,
@@ -1211,30 +1275,25 @@ onMounted(() => {
                                             />
                                         </div>
 
-                                        <!-- PRECIO MODIFICABLE -->
-                                        <div class="col-4">
+                                        <div class="col-8 col-sm-3 col-lg-2">
                                             <label
-                                                class="form-label small text-muted mb-1"
+                                                class="form-label text-muted small mb-1"
+                                                >Precio</label
                                             >
-                                                Precio
-                                            </label>
-
                                             <div
                                                 class="input-group input-group-sm"
                                             >
-                                                <span class="input-group-text">
-                                                    Bs.
-                                                </span>
-
+                                                <span class="input-group-text"
+                                                    >Bs.</span
+                                                >
                                                 <input
                                                     type="number"
+                                                    min="0"
+                                                    step="0.01"
                                                     class="form-control text-end"
                                                     v-model.number="
                                                         item.precio_venta
                                                     "
-                                                    min="0"
-                                                    step="0.01"
-                                                    placeholder="0.00"
                                                     @input="
                                                         detectarCambioFila(
                                                             item,
@@ -1251,52 +1310,188 @@ onMounted(() => {
                                             </div>
                                         </div>
 
-                                        <!-- SUBTOTAL -->
-                                        <div class="col-4">
+                                        <div class="col-8 col-sm-4 col-lg-2">
                                             <label
-                                                class="form-label small text-primary mb-1"
+                                                class="form-label text-muted small mb-1"
+                                                >Subtotal</label
                                             >
-                                                Subtotal
-                                            </label>
-
                                             <div
                                                 class="form-control form-control-sm text-end fw-bold subtotal-box"
                                             >
                                                 Bs. {{ item.total_uni }}
                                             </div>
                                         </div>
+
+                                        <div
+                                            class="col-4 col-sm-2 col-lg-auto text-end"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-danger border-0"
+                                                title="Quitar concepto"
+                                                @click="quitarFila(item, index)"
+                                            >
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- PLAN: BLOQUE PLEGABLE VISUAL -->
+                                    <div
+                                        v-if="item.producto.tipo === 'PLAN'"
+                                        class="mt-2"
+                                    >
+                                        <details class="plan-assignment">
+                                            <summary
+                                                class="d-flex align-items-center justify-content-between gap-2"
+                                            >
+                                                <span
+                                                    class="d-flex align-items-center gap-2 text-success small fw-semibold"
+                                                    ><i class="fas fa-users"></i
+                                                    >Beneficiarios del
+                                                    plan</span
+                                                >
+                                                <span
+                                                    class="d-flex align-items-center gap-2"
+                                                    ><span
+                                                        class="badge bg-success-subtle text-success"
+                                                    >
+                                                        0 /
+                                                        {{ item.cantidad }}
+                                                        cupos </span
+                                                    ><i
+                                                        class="fas fa-chevron-down text-muted details-arrow"
+                                                    ></i
+                                                ></span>
+                                            </summary>
+                                            <div
+                                                class="plan-assignment-body mt-2 p-2 rounded"
+                                            >
+                                                <div
+                                                    class="d-flex justify-content-between align-items-center gap-2 mb-2"
+                                                >
+                                                    <small class="text-muted"
+                                                        >Asigna los cupos a uno
+                                                        o varios
+                                                        clientes.</small
+                                                    >
+                                                    <!-- FUTURO: conectar con agregarAsignacionPlan -->
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-success"
+                                                    >
+                                                        <i
+                                                            class="fas fa-user-plus me-1"
+                                                        ></i
+                                                        >Agregar
+                                                    </button>
+                                                </div>
+                                                <!-- FUTURO: reemplazar por las asignaciones reales -->
+                                                <div
+                                                    class="row g-2 align-items-center"
+                                                >
+                                                    <div class="col-8">
+                                                        <!-- FUTURO: abrir selector de cliente o modal de asignación -->
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-outline-success w-100 text-start"
+                                                        >
+                                                            <i
+                                                                class="fas fa-user-plus me-2"
+                                                            ></i>
+                                                            Seleccionar cliente
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <input
+                                                            type="number"
+                                                            class="form-control form-control-sm text-center"
+                                                            min="1"
+                                                            value="1"
+                                                        />
+                                                    </div>
+                                                    <div class="col-1 text-end">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-outline-danger border-0"
+                                                        >
+                                                            <i
+                                                                class="fas fa-times"
+                                                            ></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </div>
+
+                                    <!-- SERVICIO: BLOQUE PLEGABLE VISUAL -->
+                                    <div
+                                        v-if="item.producto.tipo === 'SERVICIO'"
+                                        class="mt-2"
+                                    >
+                                        <details class="service-info">
+                                            <summary
+                                                class="d-flex align-items-center gap-2 text-info small fw-semibold"
+                                            >
+                                                <i
+                                                    class="fas fa-info-circle"
+                                                ></i
+                                                >Configurar servicio<i
+                                                    class="fas fa-chevron-down text-muted details-arrow ms-auto"
+                                                ></i>
+                                            </summary>
+                                            <div
+                                                class="service-info-body mt-2 p-2 rounded small text-muted"
+                                            >
+                                                <!-- FUTURO: agregar fecha, horario o duración -->
+                                                Aquí se podrán configurar la
+                                                fecha, duración y horario.
+                                            </div>
+                                        </details>
                                     </div>
                                 </div>
                             </div>
 
                             <div v-else class="text-center text-muted py-4">
                                 <i
-                                    class="fas fa-box-open fa-2x mb-2 text-secondary"
+                                    class="fas fa-shopping-basket fa-2x mb-2 text-secondary"
                                 ></i>
-
                                 <div class="small">
-                                    Aún no hay productos agregados
+                                    Aún no hay conceptos agregados
                                 </div>
                             </div>
                         </div>
 
                         <!-- TIPO DE VENTA -->
-                        <details class="border-bottom">
+                        <details class="section-details">
                             <summary
-                                class="d-flex align-items-center gap-2 p-3 fw-bold small"
+                                class="section-summary section-summary-primary"
                             >
+                                <span class="section-summary-icon"
+                                    ><i class="fas fa-file-invoice-dollar"></i
+                                ></span>
+                                <span class="flex-grow-1"
+                                    ><strong class="d-block"
+                                        >Tipo de venta</strong
+                                    ><small
+                                        >Define cómo se registrará la
+                                        venta</small
+                                    ></span
+                                >
+                                <span class="badge section-summary-value">
+                                    {{
+                                        tipo_ventas.find(
+                                            (item) =>
+                                                item.value === form.tipo_venta,
+                                        )?.label || "Sin seleccionar"
+                                    }}
+                                </span>
                                 <i
-                                    class="fas fa-file-invoice-dollar text-primary"
-                                ></i>
-
-                                <span class="flex-grow-1"> Tipo de venta </span>
-
-                                <i
-                                    class="fas fa-chevron-down text-muted details-arrow"
+                                    class="fas fa-chevron-down section-arrow"
                                 ></i>
                             </summary>
-
-                            <div class="px-3 pb-3">
+                            <div class="px-3 py-3">
                                 <el-radio-group
                                     v-model="form.tipo_venta"
                                     class="row g-2 w-100"
@@ -1325,7 +1520,6 @@ onMounted(() => {
                                                     :class="item.icon"
                                                     class="text-primary"
                                                 ></i>
-
                                                 <i
                                                     v-if="
                                                         form.tipo_venta ===
@@ -1333,24 +1527,19 @@ onMounted(() => {
                                                     "
                                                     class="fas fa-check-circle text-primary"
                                                 ></i>
-
                                                 <i
                                                     v-else
                                                     class="far fa-circle text-muted"
                                                 ></i>
                                             </div>
-
                                             <div class="fw-bold small mt-2">
                                                 {{ item.label }}
                                             </div>
-
-                                            <small class="text-muted">
-                                                {{
-                                                    item.value === "contado"
-                                                        ? "Pago inmediato"
-                                                        : "Pago pendiente o en cuotas"
-                                                }}
-                                            </small>
+                                            <small class="text-muted">{{
+                                                item.value === "contado"
+                                                    ? "Pago inmediato"
+                                                    : "Pago pendiente o en cuotas"
+                                            }}</small>
                                         </div>
                                     </div>
                                 </el-radio-group>
@@ -1358,35 +1547,38 @@ onMounted(() => {
                         </details>
 
                         <!-- DESCUENTO -->
-                        <details class="border-bottom">
+                        <details class="section-details">
                             <summary
-                                class="d-flex align-items-center gap-2 p-3 fw-bold small"
+                                class="section-summary section-summary-discount"
                             >
-                                <i class="fas fa-tag text-discount"></i>
-
-                                <span class="flex-grow-1"> Descuento </span>
-
-                                <span class="badge discount-badge">
-                                    Bs.
-                                    {{ Number(form.descuento || 0).toFixed(2) }}
-                                </span>
-
+                                <span class="section-summary-icon"
+                                    ><i class="fas fa-tag"></i
+                                ></span>
+                                <span class="flex-grow-1"
+                                    ><strong class="d-block">Descuento</strong
+                                    ><small
+                                        >Ajusta el importe final de la
+                                        venta</small
+                                    ></span
+                                >
+                                <span class="badge section-summary-value"
+                                    >Bs.
+                                    {{
+                                        Number(form.descuento || 0).toFixed(2)
+                                    }}</span
+                                >
                                 <i
-                                    class="fas fa-chevron-down text-muted details-arrow"
+                                    class="fas fa-chevron-down section-arrow"
                                 ></i>
                             </summary>
-
-                            <div class="px-3 pb-3">
+                            <div class="px-3 py-3">
                                 <label
                                     for="descuento"
                                     class="form-label small fw-bold"
+                                    >Aplicar descuento</label
                                 >
-                                    Aplicar descuento
-                                </label>
-
                                 <div class="input-group">
-                                    <span class="input-group-text"> Bs. </span>
-
+                                    <span class="input-group-text">Bs.</span>
                                     <input
                                         id="descuento"
                                         type="number"
@@ -1398,40 +1590,90 @@ onMounted(() => {
                                         @change="aplicarDescuentosTotal"
                                     />
                                 </div>
-
-                                <small class="text-muted d-block mt-1">
-                                    El descuento se aplicará al salir del campo.
-                                </small>
+                                <small class="text-muted d-block mt-1"
+                                    >El descuento se aplicará al salir del
+                                    campo.</small
+                                >
                             </div>
                         </details>
 
                         <!-- MÉTODOS DE PAGO -->
-                        <details class="border-bottom">
+                        <details class="section-details">
                             <summary
-                                class="d-flex align-items-center gap-2 p-3 fw-bold small"
+                                class="section-summary section-summary-success"
                             >
-                                <i class="fas fa-credit-card text-primary"></i>
-
-                                <span class="flex-grow-1">
-                                    Métodos de pago
-                                </span>
-
-                                <span
-                                    class="badge bg-primary-subtle text-primary"
+                                <span class="section-summary-icon"
+                                    ><i class="fas fa-credit-card"></i
+                                ></span>
+                                <span class="flex-grow-1"
+                                    ><strong class="d-block"
+                                        >Métodos de pago</strong
+                                    ><small
+                                        >Selecciona cómo se realizará el
+                                        pago</small
+                                    ></span
                                 >
-                                    {{
-                                        metodo_pagos.filter(
-                                            (item) => item.seleccionado,
-                                        ).length
-                                    }}
-                                </span>
+                                <el-popover
+                                    placement="top"
+                                    width="260"
+                                    trigger="hover"
+                                >
+                                    <div class="payment-popover">
+                                        <div class="fw-bold small mb-2">
+                                            Métodos asignados
+                                        </div>
 
+                                        <div
+                                            v-if="
+                                                metodo_pagos.filter(
+                                                    (item) => item.seleccionado,
+                                                ).length === 0
+                                            "
+                                            class="text-muted small"
+                                        >
+                                            No hay métodos seleccionados.
+                                        </div>
+
+                                        <div v-else>
+                                            <div
+                                                v-for="metodo in metodo_pagos.filter(
+                                                    (item) => item.seleccionado,
+                                                )"
+                                                :key="metodo.id"
+                                                class="d-flex justify-content-between align-items-center gap-2 py-1 border-bottom"
+                                            >
+                                                <span
+                                                    class="small text-truncate"
+                                                    >{{ metodo.nombre }}</span
+                                                >
+                                                <strong
+                                                    class="small text-nowrap"
+                                                    >Bs.
+                                                    {{
+                                                        metodo.monto || "0.00"
+                                                    }}</strong
+                                                >
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <template #reference>
+                                        <span
+                                            class="badge section-summary-value payment-summary-badge"
+                                        >
+                                            {{
+                                                metodo_pagos.filter(
+                                                    (item) => item.seleccionado,
+                                                ).length
+                                            }}
+                                        </span>
+                                    </template>
+                                </el-popover>
                                 <i
-                                    class="fas fa-chevron-down text-muted details-arrow"
+                                    class="fas fa-chevron-down section-arrow"
                                 ></i>
                             </summary>
-
-                            <div class="px-3 pb-3">
+                            <div class="px-3 py-3">
                                 <div
                                     v-for="metodo_pago in metodo_pagos"
                                     :key="metodo_pago.id"
@@ -1448,33 +1690,25 @@ onMounted(() => {
                                     <div
                                         class="d-flex align-items-center gap-2"
                                     >
-                                        <el-checkbox
-                                            v-model="metodo_pago.seleccionado"
-                                            @click.stop
-                                        />
-
                                         <div class="payment-icon">
                                             <i :class="metodo_pago.icon"></i>
                                         </div>
-
                                         <div class="flex-grow-1 min-width-0">
                                             <div class="fw-bold small">
                                                 {{ metodo_pago.nombre }}
                                             </div>
-
                                             <small
                                                 class="text-muted text-truncate d-block"
+                                                >{{
+                                                    metodo_pago.descripcion
+                                                }}</small
                                             >
-                                                {{ metodo_pago.descripcion }}
-                                            </small>
                                         </div>
-
                                         <i
                                             v-if="metodo_pago.seleccionado"
                                             class="fas fa-check-circle text-primary"
                                         ></i>
                                     </div>
-
                                     <div
                                         v-if="metodo_pago.seleccionado"
                                         class="mt-2"
@@ -1486,7 +1720,7 @@ onMounted(() => {
                                             min="0"
                                             placeholder="Monto a pagar"
                                         >
-                                            <template #prepend> Bs. </template>
+                                            <template #prepend>Bs.</template>
                                         </el-input>
                                     </div>
                                 </div>
@@ -1498,61 +1732,54 @@ onMounted(() => {
                             <div
                                 class="d-flex justify-content-between mb-2 small"
                             >
-                                <span class="text-muted">
-                                    <i class="fas fa-calculator me-2"></i>
-                                    Subtotal
-                                </span>
-
-                                <strong>
-                                    Bs.
-                                    {{ subTotalVenta.toFixed(2) }}
-                                </strong>
+                                <span class="text-muted"
+                                    ><i class="fas fa-calculator me-2"></i
+                                    >Subtotal</span
+                                >
+                                <strong
+                                    >Bs. {{ subTotalVenta.toFixed(2) }}</strong
+                                >
                             </div>
-
                             <div
                                 class="d-flex justify-content-between mb-2 small"
                             >
-                                <span class="text-muted">
-                                    <i class="fas fa-tag me-2"></i>
-                                    Descuento
-                                </span>
-
-                                <strong class="text-discount">
-                                    Bs.
-                                    {{ Number(form.descuento || 0).toFixed(2) }}
-                                </strong>
+                                <span class="text-muted"
+                                    ><i class="fas fa-tag me-2"></i
+                                    >Descuento</span
+                                >
+                                <strong class="text-discount"
+                                    >Bs.
+                                    {{
+                                        Number(form.descuento || 0).toFixed(2)
+                                    }}</strong
+                                >
                             </div>
-
                             <hr />
-
                             <div
                                 class="d-flex justify-content-between align-items-center"
                             >
-                                <span class="fw-bold text-total">
-                                    <i class="fas fa-shopping-cart me-2"></i>
-                                    Total
-                                </span>
-
-                                <strong class="fs-4 text-total">
-                                    Bs. {{ totalVenta.toFixed(2) }}
-                                </strong>
+                                <span class="fw-bold text-total"
+                                    ><i class="fas fa-shopping-cart me-2"></i
+                                    >Total</span
+                                >
+                                <strong class="fs-4 text-total"
+                                    >Bs. {{ totalVenta.toFixed(2) }}</strong
+                                >
                             </div>
-
                             <div
                                 class="d-flex justify-content-between mt-2 small"
                             >
-                                <span class="text-balance">
-                                    <i class="fas fa-wallet me-2"></i>
-                                    Saldo pendiente
-                                </span>
-
-                                <strong class="text-balance">
-                                    Bs. {{ saldoVenta.toFixed(2) }}
-                                </strong>
+                                <span class="text-balance"
+                                    ><i class="fas fa-wallet me-2"></i>Saldo
+                                    pendiente</span
+                                >
+                                <strong class="text-balance"
+                                    >Bs. {{ saldoVenta.toFixed(2) }}</strong
+                                >
                             </div>
                         </div>
 
-                        <!-- BOTONES -->
+                        <!-- ACCIONES -->
                         <div class="card-footer bg-white p-3">
                             <button
                                 type="button"
@@ -1561,7 +1788,6 @@ onMounted(() => {
                                 @click.prevent="enviarFormulario"
                                 v-html="textBtn"
                             ></button>
-
                             <button
                                 type="button"
                                 class="btn btn-light w-100 mt-2"
@@ -1577,64 +1803,294 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* =====================================================
-   VARIABLES
-   Se asume que variables.css ya está cargado globalmente.
-===================================================== */
+.min-width-0 {
+    min-width: 0;
+}
+.catalog-quantity {
+    width: 75px;
+}
 
-.product-hover {
-    border-left: 3px solid transparent !important;
+.product-row {
     transition:
         background-color 0.15s ease,
         border-left-color 0.15s ease;
 }
 
-.product-hover:hover {
-    border-left-color: var(--bgBlue) !important;
-    background-color: var(--bg6) !important;
+.product-row:hover {
+    background-color: var(--bg6);
+    border-left: 3px solid var(--bgBlue);
 }
 
-.product-hover:last-child {
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--bgGrayLight);
+    border-left: 4px solid transparent;
+}
+
+.section-heading-primary {
+    background-color: var(--bgPrimary2);
+    border-left-color: var(--bgPrimary);
+}
+
+.section-heading-info {
+    margin: -1rem -1rem 0;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    background-color: var(--bgInfo2);
+    border-left-color: var(--bgInfo);
+}
+
+.section-heading-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: var(--bgWhite);
+}
+
+.section-heading-primary .section-heading-icon {
+    color: var(--bgPrimary);
+}
+.section-heading-info .section-heading-icon {
+    color: var(--bgInfo);
+}
+
+.section-heading strong {
+    color: var(--bgDarkPrincipal);
+    font-size: 0.86rem;
+}
+
+.section-heading small {
+    display: block;
+    margin-top: 2px;
+    color: var(--bg5);
+    font-size: 0.7rem;
+}
+
+.section-heading-badge {
+    color: var(--bgPrimary);
+    background-color: var(--bgWhite);
+}
+
+.section-details {
+    border-bottom: 1px solid var(--bgGrayLight);
+}
+
+.section-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 58px;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.section-summary::-webkit-details-marker {
+    display: none;
+}
+
+.section-summary strong {
+    color: var(--bgDarkPrincipal);
+    font-size: 0.82rem;
+}
+
+.section-summary small {
+    display: block;
+    margin-top: 2px;
+    color: var(--bg5);
+    font-size: 0.7rem;
+}
+
+.section-summary-primary {
+    background-color: rgba(217, 233, 252, 0.45);
+    border-left: 4px solid var(--bgPrimary);
+}
+
+.section-summary-discount {
+    background-color: rgba(255, 237, 213, 0.45);
+    border-left: 4px solid var(--bgDescuento);
+}
+
+.section-summary-success {
+    background-color: rgba(205, 247, 233, 0.45);
+    border-left: 4px solid var(--bgSuccess);
+}
+
+.section-summary-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.section-summary-primary .section-summary-icon {
+    color: var(--bgPrimary);
+    background-color: var(--bgPrimary2);
+}
+.section-summary-discount .section-summary-icon {
+    color: var(--bgDescuento);
+    background-color: var(--bgDescuentoLight);
+}
+.section-summary-success .section-summary-icon {
+    color: var(--bgSuccess);
+    background-color: var(--bgSuccess2);
+}
+
+.section-summary-value {
+    color: var(--bg5);
+    background-color: var(--bgWhite);
+    font-size: 0.7rem;
+}
+
+.payment-summary-badge {
+    cursor: pointer;
+}
+
+.payment-popover {
+    max-width: 230px;
+}
+
+.payment-popover .border-bottom:last-child {
     border-bottom: 0 !important;
 }
-.product-quantity {
-    width: 75px;
+
+.payment-popover {
+    max-width: 230px;
 }
 
-.sale-summary-card {
-    position: sticky;
-    top: 1rem;
+.payment-popover .border-bottom:last-child {
+    border-bottom: 0 !important;
 }
 
-.sale-header {
-    background: linear-gradient(135deg, var(--bgSuccess), #20a77b);
+.section-arrow,
+.details-arrow {
+    color: var(--bg5);
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
 }
 
-.sale-header-icon {
-    width: 42px;
-    height: 42px;
-    color: var(--bgWhite);
-    background-color: rgba(255, 255, 255, 0.18);
+details[open] .section-arrow,
+details[open] .details-arrow {
+    transform: rotate(180deg);
 }
 
-.sale-type-option,
+.concept-row {
+    border-bottom: 1px solid var(--bgGrayLight) !important;
+    transition: background-color 0.15s ease;
+}
+
+.concept-row:last-child {
+    border-bottom: 0 !important;
+}
+.concept-row:hover {
+    background-color: rgba(241, 245, 249, 0.45);
+}
+
+.concept-row-product {
+    border-left: 4px solid var(--bgPrimary) !important;
+}
+
+.concept-row-service {
+    border-left: 4px solid var(--bgInfo) !important;
+}
+
+.concept-row-plan {
+    border-left: 4px solid var(--bgSuccess) !important;
+}
+
+.concept-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+}
+
+.concept-icon-product {
+    color: var(--bgPrimary);
+    background-color: var(--bgPrimary2);
+}
+.concept-icon-service {
+    color: var(--bgInfo);
+    background-color: var(--bgInfo2);
+}
+.concept-icon-plan {
+    color: var(--bgSuccess);
+    background-color: var(--bgSuccess2);
+}
+
+.concept-badge-product {
+    color: var(--bgPrimary);
+    background-color: var(--bgPrimary2);
+}
+.concept-badge-service {
+    color: var(--bgInfo);
+    background-color: var(--bgInfo2);
+}
+.concept-badge-plan {
+    color: var(--bgSuccess);
+    background-color: var(--bgSuccess2);
+}
+
+.subtotal-box {
+    color: var(--bgSubtotal);
+    background-color: var(--bgSubtotalLight);
+    border-color: var(--bgSubtotalLight);
+}
+
+.plan-assignment,
+.service-info {
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--bgGrayLight);
+}
+
+.plan-assignment summary,
+.service-info summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.plan-assignment summary::-webkit-details-marker,
+.service-info summary::-webkit-details-marker {
+    display: none;
+}
+
+.plan-assignment-body {
+    background-color: var(--bgSuccess2);
+    border: 1px solid rgba(23, 145, 104, 0.2);
+}
+
+.service-info-body {
+    background-color: var(--bgInfo2);
+    border: 1px solid rgba(19, 200, 206, 0.2);
+}
+
 .payment-option {
     cursor: pointer;
     transition:
+        background-color 0.15s ease,
         border-color 0.15s ease,
-        background-color 0.15s ease;
+        box-shadow 0.15s ease;
 }
 
-.sale-type-option:hover,
 .payment-option:hover {
     border-color: var(--bgBlueLight) !important;
     background-color: var(--bgPrimary2);
 }
 
-.sale-type-selected,
-.payment-selected {
+.payment-selected,
+.sale-type-selected {
     border-color: var(--bgBlue) !important;
     background-color: var(--bgPrimary2);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
 }
 
 .payment-icon {
@@ -1649,82 +2105,44 @@ onMounted(() => {
     background-color: var(--bgPrimary2);
 }
 
-.subtotal-box {
-    border-color: var(--bgSubtotalLight) !important;
-    color: var(--bgSubtotal) !important;
-    background-color: var(--bgSubtotalLight) !important;
-}
-
-.discount-badge {
-    color: var(--bgDescuento) !important;
-    background-color: var(--bgDescuentoLight) !important;
+.payment-option .el-input-group__prepend {
+    color: var(--bgBlue) !important;
+    background-color: var(--bgPrimary2) !important;
+    border-color: var(--bgBlueLight) !important;
+    font-weight: 600;
 }
 
 .text-discount {
     color: var(--bgDescuento) !important;
 }
-
 .text-total {
     color: var(--bgTotal) !important;
 }
-
 .text-balance {
     color: var(--bgSaldo) !important;
-}
-
-details > summary {
-    cursor: pointer;
-    list-style: none;
-}
-
-details > summary::-webkit-details-marker {
-    display: none;
-}
-
-.details-arrow {
-    transition: transform 0.2s ease;
-}
-
-details[open] .details-arrow {
-    transform: rotate(180deg);
 }
 
 .el-select {
     width: 100%;
 }
-
 .el-select .el-input__wrapper,
 .el-input .el-input__wrapper {
     box-shadow: none !important;
 }
 
-.min-width-0 {
-    min-width: 0;
-}
-
-@media (max-width: 575.98px) {
-    .card-header h5 {
-        font-size: 1rem;
-    }
-
-    .card-header small {
-        font-size: 0.72rem;
-    }
-}
-@media (max-width: 1199.98px) {
-    .sale-summary-card {
-        position: static;
-    }
-}
-
 @media (max-width: 767.98px) {
-    .product-quantity {
+    .catalog-quantity {
         width: 100%;
     }
-
-    .sale-header-icon {
-        width: 36px;
-        height: 36px;
+    .concept-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    .section-heading,
+    .section-summary {
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
     }
 }
 </style>
