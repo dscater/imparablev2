@@ -368,6 +368,7 @@ details[open] .details-arrow {
 
 .text-discount {
     color: var(--bgDescuento) !important;
+    font-size: 0.65rem !important;
 }
 .text-total {
     color: var(--bgTotal) !important;
@@ -522,7 +523,7 @@ details[open] .details-arrow {
 .concept-row strong,
 .concept-row .text-dark {
     color: #263238 !important;
-    font-size: 0.78rem !important;
+    font-size: 0.78rem;
     line-height: 1.2;
 }
 

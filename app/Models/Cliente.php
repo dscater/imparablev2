@@ -33,7 +33,7 @@ class Cliente extends Model
 
     public function getFullNameAttribute()
     {
-        return $this->nombre . ' ' . $this->paterno . ' ' . $this->materno;
+        return $this->nombre . ' ' . $this->paterno . ($this->materno ? ' ' . $this->materno : '');
     }
 
     public function getFullCiAttribute()

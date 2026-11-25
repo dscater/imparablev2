@@ -21,7 +21,10 @@ return new class extends Migration
             $table->double("porcen_du", 8, 2); // porcentaje descuento unitario
             $table->decimal("descuento_total", 24, 2); // descuento obtenido desde el descuento TOTAL de la venta
             $table->double("porcen_dt", 8, 2); // porcentaje descuento total
-            $table->decimal("precio_final", 24, 2); // precio final obtenido despues de los descuentos
+            $table->decimal("descuento_promocion", 24, 2)->default(0); // descuento obtenido desde el descuento TOTAL de la venta
+            $table->double("porcen_promocion", 8, 2)->default(0); // porcentaje descuento total
+            $table->decimal("precio_final", 24, 2);  // precio final (precio con descuentos) obtenido despues de los descuentos
+            $table->decimal("total_sd", 24, 2); // total sin descuento = cantidad * precio | para calcular ingreso bruto
             $table->decimal("total", 24, 2); // total registrado = cantidad * precio_final | para calcular ingreso bruto
             $table->decimal("total_uni", 24, 2); // total por fila sin tomar en cuenta descuento del total para mostrar = cantidad * (precio - descuento_uni)
             $table->integer("status")->default(1);

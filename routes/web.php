@@ -253,14 +253,6 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
         ["index", "create", "store", "edit", "show", "update", "destroy"]
     );
 
-    // CLIENTE-PRODUCTOS
-    Route::get("cliente_productos/paginado", [ClienteProductoController::class, 'paginado'])->name("cliente_productos.paginado");
-    Route::get("cliente_productos/listado", [ClienteProductoController::class, 'listado'])->name("cliente_productos.listado");
-    Route::get("cliente_productos/{cliente}", [ClienteProductoController::class, 'index'])->name("cliente_productos.index");
-    Route::resource("cliente_productos", ClienteProductoController::class)->only(
-        ["store", "edit", "show", "update", "destroy"]
-    );
-
     // TIPO DE INGRESOS
     Route::get("tipo_ingresos/paginado", [TipoIngresoController::class, 'paginado'])->name("tipo_ingresos.paginado");
     Route::get("tipo_ingresos/listado", [TipoIngresoController::class, 'listado'])->name("tipo_ingresos.listado");

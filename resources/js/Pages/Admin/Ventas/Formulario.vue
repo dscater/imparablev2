@@ -6,6 +6,7 @@ import { router } from "@inertiajs/vue3";
 import { watch, ref, computed, onMounted, nextTick } from "vue";
 import FormularioCliente from "../Clientes/FormularioCliente.vue";
 import { useClientes } from "@/composables/clientes/useClientes";
+import { useDate } from "@/composables/useDate.js";
 import MiPaginacion from "@/Components/MiPaginacion.vue";
 import ListaPorCliente from "../ClienteProductos/ListaPorCliente.vue";
 import { ElPopover } from "element-plus";
@@ -368,16 +369,14 @@ const agregarProductoVenta = async (item) => {
             // no existe
 
             // buscar promociones
-            const resp_promocion = await axios.get(
-                route("promocions.getPromocionProducto"),
-                {
-                    params: {
-                        producto_id: item.id,
-                        cantidad: cantidad,
-                    },
-                },
+            const detalle_promocions = await obtenerPromocionesProducto(
+                item.id,
+                cantidad,
             );
-            const detalle_promocions = resp_promocion.data;
+            const inscripcions = await verificaInscripcionesPlan(
+                item,
+                cantidad,
+            );
 
             form.venta_detalles.push({
                 id: 0,
@@ -389,35 +388,42 @@ const agregarProductoVenta = async (item) => {
                 precio: precio,
                 descuento_uni: 0,
                 porcen_du: 0,
+                descuento_promocion: 0,
+                porcen_promocion: 0,
+                tm_descuento_uni: 0,
+                tp_descuento_uni: 0,
                 descuento_total: 0,
                 porcen_dt: 0,
                 precio_final: precio,
+                total_sd: subtotal.toFixed(2),
                 total: subtotal.toFixed(2),
                 total_uni: subtotal.toFixed(2),
                 detalle_promocions: detalle_promocions,
+                inscripcions: inscripcions,
             });
+            calcularDescuentosYTotalesFila(form.venta_detalles.length - 1);
         } else {
             // existe
             const cantidadFila = form.venta_detalles[indexExiste].cantidad;
             const nuevaCantidad =
                 parseFloat(cantidad) + parseFloat(cantidadFila);
-            const total_uni =
-                nuevaCantidad *
-                (precio -
-                    parseFloat(form.venta_detalles[indexExiste].descuento_uni));
-            const total =
-                nuevaCantidad *
-                (precio -
-                    (parseFloat(
-                        form.venta_detalles[indexExiste].descuento_uni,
-                    ) +
-                        parseFloat(
-                            form.venta_detalles[indexExiste].descuento_total,
-                        )));
+            // buscar promociones
+            const detalle_promocions = await obtenerPromocionesProducto(
+                item.id,
+                nuevaCantidad,
+            );
+            const inscripcions = await verificaInscripcionesPlan(
+                item,
+                nuevaCantidad,
+            );
 
             form.venta_detalles[indexExiste].cantidad = nuevaCantidad;
-            form.venta_detalles[indexExiste].total = total.toFixed(2);
-            form.venta_detalles[indexExiste].total_uni = total_uni.toFixed(2);
+
+            form.venta_detalles[indexExiste].detalle_promocions =
+                detalle_promocions;
+            form.venta_detalles[indexExiste].inscripcions = inscripcions;
+
+            calcularDescuentosYTotalesFila(indexExiste);
         }
         // console.log(item);
         item.cantidad = 1;
@@ -435,6 +441,123 @@ const agregarProductoVenta = async (item) => {
     }
 };
 
+const verificaInscripcionesPlan = (producto, cantidad) => {
+    let inscripciones = [];
+    if (producto.tipo == "PLAN") {
+        for (let i = 1; i <= cantidad; i++) {
+            inscripciones.push({
+                id: 0,
+                sucursal_id: "",
+                user_cliente_id: "",
+                cliente_id: "",
+                producto_id: producto.id,
+                venta_detalle_id: "",
+                declaracion_jurada: "",
+                fecha_inicio: useDate().getFechaActual(),
+                estado: "",
+                fecha_pausa: "",
+                dias_pausa: "",
+                justificacion_pausa: "",
+                dias_restantes: "",
+                fecha_fin: "",
+            });
+        }
+    }
+
+    return inscripciones;
+};
+
+const obtenerPromocionesProducto = async (producto_id, cantidad) => {
+    try {
+        const resp_promocion = await axios.get(
+            route("promocions.getPromocionProducto"),
+            {
+                params: {
+                    producto_id: producto_id,
+                    cantidad: cantidad,
+                },
+            },
+        );
+        // console.log("promociones");
+        // console.log(resp_promocion.data);
+        return resp_promocion.data;
+    } catch (e) {
+        console.log(e);
+        toast.error(
+            "Ocurrió un error al intentar obtener promociones del producto. Intente mas tarde",
+        );
+    }
+};
+
+const calcularDescuentosYTotalesFila = (index) => {
+    const producto = form.venta_detalles[index].producto;
+    if (!producto) {
+        toast.error(
+            "Ocurrió un error al intentar calcular los datos. Intente nuevamente por favor",
+            {
+                autoClose: 200,
+            },
+        );
+    }
+
+    const cant = parseFloat(form.venta_detalles[index].cantidad);
+    const precio = parseFloat(form.venta_detalles[index].precio);
+    const descuento_uni = parseFloat(form.venta_detalles[index].descuento_uni);
+    const descuento_total = parseFloat(
+        form.venta_detalles[index].descuento_total,
+    );
+    let precio_final = precio - descuento_uni;
+    const porcen_du = parseFloat(100 - (precio_final * 100) / precio).toFixed(
+        2,
+    );
+
+    let total_sd = cant * precio;
+    let total_uni = cant * precio_final;
+    let total =
+        cant *
+        (precio - (parseFloat(descuento_uni) + parseFloat(descuento_total)));
+
+    let total_descuento_promocion = 0;
+    let porcen_promocion = 0;
+    if (form.venta_detalles[index].detalle_promocions.length > 0) {
+        form.venta_detalles[index].detalle_promocions.forEach((elem) => {
+            if (elem.porcentaje_monto == "PORCENTAJE") {
+                total_descuento_promocion += Math.round(
+                    (elem.porcentaje * precio) / 100,
+                    2,
+                );
+            } else {
+                total_descuento_promocion += parseFloat(elem.monto);
+            }
+        });
+
+        precio_final = precio - descuento_uni - total_descuento_promocion;
+        const precio_cp = precio - total_descuento_promocion;
+        porcen_promocion = parseFloat(100 - (precio_cp * 100) / precio).toFixed(
+            2,
+        );
+
+        total_uni = cant * precio_final;
+        total =
+            cant *
+            (precio -
+                (parseFloat(descuento_uni) +
+                    parseFloat(descuento_total) +
+                    parseFloat(total_descuento_promocion)));
+    }
+    form.venta_detalles[index].porcen_du = porcen_du;
+    form.venta_detalles[index].descuento_promocion = total_descuento_promocion;
+    form.venta_detalles[index].porcen_promocion = porcen_promocion;
+    form.venta_detalles[index].tm_descuento_uni =
+        total_descuento_promocion + descuento_uni;
+    form.venta_detalles[index].tp_descuento_uni = porcen_promocion + porcen_du;
+    form.venta_detalles[index].precio_final = precio_final;
+    form.venta_detalles[index].descuento_uni = descuento_uni;
+    form.venta_detalles[index].total_sd = total_sd;
+    form.venta_detalles[index].total_uni = total_uni;
+    form.venta_detalles[index].total = total;
+};
+
 const aplicarDescuentosTotal = () => {
     const descuento = Number(form.descuento ?? 0);
     form.venta_detalles.map((elem) => {
@@ -448,21 +571,20 @@ const aplicarDescuentosTotal = () => {
         porcentaje = parseFloat(porcentaje);
         form.porcentaje_descuento = porcentaje;
         form.venta_detalles.map((elem) => {
-            const con_descuento = elem.precio - elem.descuento_uni;
+            const precio_final = elem.precio_final;
             elem.porcen_dt = porcentaje;
-            elem.descuento_total = con_descuento * (porcentaje / 100);
-            elem.total_uni = elem.cantidad * con_descuento;
-            elem.total_uni = parseFloat(elem.total_uni).toFixed(2);
+            elem.descuento_total = elem.precio * (porcentaje / 100);
+            elem.total = elem.cantidad * (precio_final - elem.descuento_total);
+            elem.total = parseFloat(elem.total).toFixed(2);
 
             // TOTAL PARA CALCULAR GANANCIA BRUTA
-            elem.precio_final = con_descuento - elem.descuento_total;
             console.log(elem.precio_final);
-            elem.total = elem.cantidad * elem.precio_final;
+            console.log(elem.descuento_total);
         });
     }
 };
 
-const detectarCambioFila = (item, index) => {
+const detectarCambioFila = async (item, index) => {
     const cant = Number(item.cantidad);
     const precio = Number(item.precio);
     const descuento_uni = Number(item.descuento_uni ?? 0);
@@ -470,12 +592,21 @@ const detectarCambioFila = (item, index) => {
     if (!cant || !precio) {
         return;
     }
-    const total_uni = cant * (precio - parseFloat(descuento_uni));
-    const total =
-        cant *
-        (precio - (parseFloat(descuento_uni) + parseFloat(descuento_total)));
-    form.venta_detalles[index].total_uni = total_uni.toFixed(2);
-    form.venta_detalles[index].total = total.toFixed(2);
+
+    // inscripciones
+    form.venta_detalles[index].inscripcions = await verificaInscripcionesPlan(
+        item.producto,
+        cant,
+    );
+
+    // promociones
+    form.venta_detalles[index].detalle_promocions =
+        await obtenerPromocionesProducto(item.producto_id, cant);
+
+    // descuentos
+    calcularDescuentosYTotalesFila(index);
+
+    // stock
     recalcularStockActualCambioDetalle(item.producto_id, cant, index);
 };
 
@@ -514,6 +645,7 @@ const recalcularStockActualCambioDetalle = (
     );
     // console.log("itemsucursal origen");
     // console.log(item_sucursal_origen);
+    if (!item_sucursal_origen) return;
     if (index !== null) {
         if (
             item_sucursal_origen.tipo == "PRODUCTO" &&
@@ -525,6 +657,7 @@ const recalcularStockActualCambioDetalle = (
             return;
         }
     }
+
     item_sucursal_origen.stock_total =
         Number(item_sucursal_origen.stock_aux) - Number(cantidad);
 };
@@ -1064,13 +1197,12 @@ onMounted(() => {
                                             :remote-method="buscarClientes"
                                             :loading="cargandoClientes"
                                             :reserve-keyword="true"
-                                            @change="buscarClienteProductos()"
                                         >
                                             <el-option
                                                 v-for="item in listClientes"
                                                 :key="item.id"
                                                 :value="item.id"
-                                                :label="`${item.nombre} - ${item.tipo_documento?.nombre ?? ''}: ${item.nro_documento}`"
+                                                :label="`${item.full_name} - ${item.full_ci}`"
                                             />
                                         </el-select>
                                     </div>
@@ -1093,7 +1225,7 @@ onMounted(() => {
                                 </ul>
                             </div>
 
-                            <div
+                            <!-- <div
                                 v-if="listClienteProductos.length > 0"
                                 class="alert alert-primary d-flex align-items-center justify-content-between gap-2 mt-3 mb-0 py-2"
                             >
@@ -1143,7 +1275,7 @@ onMounted(() => {
                                         muestra_cliente_productos = false
                                     "
                                 />
-                            </div>
+                            </div> -->
                         </div>
 
                         <!-- CONCEPTOS AGREGADOS -->
@@ -1370,7 +1502,6 @@ onMounted(() => {
                                                 "
                                             />
                                         </div>
-
                                         <div class="col-8 col-sm-4 col-lg-2">
                                             <label
                                                 class="form-label text-muted small mb-1"
@@ -1382,9 +1513,7 @@ onMounted(() => {
                                                 Bs.
                                                 {{
                                                     Number(
-                                                        item.total ||
-                                                            item.total_uni ||
-                                                            0,
+                                                        item.total_sd || 0,
                                                     ).toFixed(2)
                                                 }}
                                             </div>
@@ -1407,28 +1536,28 @@ onMounted(() => {
                                     <div class="concept-financial-summary">
                                         <div>
                                             <span>Desc. concepto</span>
-                                            <strong class="text-discount"
+                                            <strong
+                                                class="text-discount fw-bold"
                                                 >-Bs.
                                                 {{
-                                                    (
-                                                        Number(
-                                                            item.descuento_uni ||
-                                                                0,
-                                                        ) *
-                                                        Number(
-                                                            item.cantidad || 0,
-                                                        )
+                                                    Number(
+                                                        item.tm_descuento_uni,
                                                     ).toFixed(2)
-                                                }}</strong
+                                                }}
+                                                ({{
+                                                    Number(
+                                                        item.tp_descuento_uni,
+                                                    ) || 0
+                                                }}%)</strong
                                             >
                                         </div>
                                         <div>
-                                            <span>Precio final</span>
+                                            <span>Precio finalsasdasd</span>
                                             <strong class="text-total"
                                                 >Bs.
                                                 {{
                                                     Number(
-                                                        item.precio_final ||
+                                                        item.total_uni ||
                                                             item.precio_venta ||
                                                             0,
                                                     ).toFixed(2)
@@ -1524,18 +1653,30 @@ onMounted(() => {
                                                         min="0"
                                                         step="0.01"
                                                         placeholder="0.00"
+                                                        @keyup="
+                                                            detectarCambioFila(
+                                                                item,
+                                                                index,
+                                                            )
+                                                        "
+                                                        @change="
+                                                            detectarCambioFila(
+                                                                item,
+                                                                index,
+                                                            )
+                                                        "
                                                     />
                                                 </div>
                                             </div>
 
                                             <!-- FUTURO: conectar con agregarPromocion -->
-                                            <button
+                                            <!-- <button
                                                 type="button"
                                                 class="btn btn-sm btn-outline-danger mt-2 compact-action-btn"
                                             >
                                                 <i class="fas fa-sync me-1"></i>
                                                 Buscar promociones
-                                            </button>
+                                            </button> -->
                                         </div>
                                     </details>
 
@@ -1568,18 +1709,13 @@ onMounted(() => {
                                                 ></span>
                                             </summary>
                                             <div
-                                                class="plan-assignment-body mt-2 p-2 rounded"
+                                                class="plan-assignment-body mt-2 p-2 pt-0 rounded"
                                             >
                                                 <div
-                                                    class="d-flex justify-content-between align-items-center gap-2 mb-2"
+                                                    class="d-flex justify-content-between align-items-center gap-2 mb-1"
                                                 >
-                                                    <small class="text-muted"
-                                                        >Asigna los cupos a uno
-                                                        o varios
-                                                        clientes.</small
-                                                    >
                                                     <!-- FUTURO: conectar con agregarAsignacionPlan -->
-                                                    <button
+                                                    <!-- <button
                                                         type="button"
                                                         class="btn btn-sm btn-outline-success compact-action-btn"
                                                     >
@@ -1587,41 +1723,83 @@ onMounted(() => {
                                                             class="fas fa-user-plus me-1"
                                                         ></i
                                                         >Agregar
-                                                    </button>
+                                                    </button> -->
                                                 </div>
                                                 <!-- FUTURO: reemplazar por las asignaciones reales -->
                                                 <div
                                                     class="row g-2 align-items-center"
+                                                    v-for="(
+                                                        item_inscripcion,
+                                                        index_inscripcion
+                                                    ) in item.inscripcions"
                                                 >
-                                                    <div class="col-8">
-                                                        <!-- FUTURO: abrir selector de cliente o modal de asignación -->
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-sm btn-outline-success w-100 text-start compact-action-btn"
-                                                        >
-                                                            <i
-                                                                class="fas fa-user-plus me-2"
+                                                    <div class="col-7">
+                                                        <!-- abrir selector de cliente o modal de asignación -->
+                                                        <label
+                                                            data-v-c9b569fb=""
+                                                            class="form-label text-muted small mb-1"
+                                                            ><i
+                                                                class="fa fa-user"
                                                             ></i>
-                                                            Seleccionar cliente
-                                                        </button>
+                                                            Beneficiario
+                                                            {{
+                                                                index_inscripcion +
+                                                                1
+                                                            }}
+                                                        </label>
+                                                        <el-select
+                                                            v-model="
+                                                                item_inscripcion.cliente_id
+                                                            "
+                                                            class="w-100"
+                                                            size="small"
+                                                            no-data-text="Sin datos"
+                                                            no-match-text="Sin resultados"
+                                                            loading-text="Buscando..."
+                                                            placeholder="Seleccionar cliente"
+                                                            filterable
+                                                            remote
+                                                            clearable
+                                                            :remote-method="
+                                                                buscarClientes
+                                                            "
+                                                            :loading="
+                                                                cargandoClientes
+                                                            "
+                                                            :reserve-keyword="
+                                                                true
+                                                            "
+                                                            @change="
+                                                                detectarCambioFila(
+                                                                    item,
+                                                                    index,
+                                                                )
+                                                            "
+                                                        >
+                                                            <el-option
+                                                                v-for="item in listClientes"
+                                                                :key="item.id"
+                                                                :value="item.id"
+                                                                :label="`${item.full_name} - ${item.full_ci}`"
+                                                            />
+                                                        </el-select>
                                                     </div>
-                                                    <div class="col-3">
+                                                    <div class="col-5">
+                                                        <label
+                                                            data-v-c9b569fb=""
+                                                            class="form-label text-muted small mb-1"
+                                                            ><i
+                                                                class="fa fa-calendar-alt"
+                                                            ></i>
+                                                            Inicio</label
+                                                        >
                                                         <input
-                                                            type="number"
+                                                            type="date"
                                                             class="form-control form-control-sm text-center"
-                                                            min="1"
-                                                            value="1"
+                                                            v-model="
+                                                                item_inscripcion.fecha_inicio
+                                                            "
                                                         />
-                                                    </div>
-                                                    <div class="col-1 text-end">
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-sm btn-outline-danger border-0"
-                                                        >
-                                                            <i
-                                                                class="fas fa-times"
-                                                            ></i>
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1774,8 +1952,8 @@ onMounted(() => {
                                     class="fas fa-chevron-down section-arrow"
                                 ></i>
                             </summary>
-                            <div class="px-3 py-3">
-                                <div class="discount-total-row mb-3">
+                            <div class="px-3 py-2">
+                                <div class="discount-total-row mb-0">
                                     <span>
                                         <i class="fas fa-tags me-2"></i>
                                         Descuentos de conceptos
@@ -1820,7 +1998,7 @@ onMounted(() => {
                                         @change="aplicarDescuentosTotal"
                                     />
                                 </div>
-                                <small class="text-muted d-block mt-1"
+                                <small class="text-muted d-block mt-1 text-xs"
                                     >Este descuento se aplica después de los
                                     descuentos propios de cada concepto.</small
                                 >

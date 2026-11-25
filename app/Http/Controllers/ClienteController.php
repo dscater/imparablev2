@@ -57,16 +57,20 @@ class ClienteController extends Controller
             ->select([
                 'id',
                 'nombre',
-                'tipo_documento_id',
-                'nro_documento',
+                'paterno',
+                'materno',
+                'ci',
+                'ci_exp',
             ])
             ->with('tipo_documento:id,nombre')
             ->where('status', 1)
             ->where(function ($query) use ($busqueda) {
                 $query->where('nombre', 'like', "%{$busqueda}%")
-                    ->orWhere('nro_documento', 'like', "%{$busqueda}%");
+                    ->orWhere('paterno', 'like', "%{$busqueda}%")
+                    ->orWhere('materno', 'like', "%{$busqueda}%")
+                    ->orWhere('ci', 'like', "%{$busqueda}%");
             })
-            ->orderBy('nombre')
+            ->orderBy('paterno')
             ->limit(20)
             ->get();
     }

@@ -24,7 +24,7 @@ class VentaStoreRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            "almacen_id" => "required",
+            "sucursal_id" => "required",
             "cliente_id" => "required",
             "tipo_venta" => "required",
             "tipo_documento_id" => "nullable",
@@ -49,7 +49,7 @@ class VentaStoreRequest extends FormRequest
     public function messages()
     {
         return [
-            "almacen_id.required" => "Debes indicar el almacén",
+            "sucursal_id.required" => "Debes indicar el almacén",
             "cliente_id.required" => "Debes seleccionar el cliente",
             "tipo_venta.required" => "Debes seleccionar el tipo de venta",
             "tipo_documento_id.required" => "Debes seleccionar el tipo de documento",

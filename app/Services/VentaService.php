@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Almacen;
+use App\Models\Sucursal;
 use App\Models\Cliente;
 use App\Models\MovimientoCaja;
 use App\Models\Producto;
@@ -35,7 +35,6 @@ class VentaService
     {
         $ventas = Venta::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
             "cliente.tipo_documento",
             "user:id,nombre,paterno,materno",
         ])
@@ -68,7 +67,7 @@ class VentaService
     {
         $ventas = Venta::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
+            "sucursal:id,nombre",
             "cliente.tipo_documento",
             "user:id,nombre,paterno,materno",
         ])
@@ -119,7 +118,7 @@ class VentaService
     {
         $ventas = Venta::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
+            "sucursal:id,nombre",
             "cliente.tipo_documento",
             "user:id,nombre,paterno,materno",
         ])
@@ -169,7 +168,7 @@ class VentaService
      */
     public function crear(array $datos): Venta
     {
-        $almacen = Almacen::findOrFail($datos["almacen_id"]);
+        $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
         $cliente = Cliente::findOrFail($datos["cliente_id"]);
 
         $tipo_pago = '';
@@ -200,8 +199,8 @@ class VentaService
         }
 
         $venta = Venta::create([
-            "sucursal_id" => $almacen->sucursal_id,
-            "almacen_id" => $almacen->id,
+            "sucursal_id" => $sucursal->sucursal_id,
+            "sucursal_id" => $sucursal->id,
             "cliente_id" => $cliente->id,
             "tipo_documento_id" => $cliente->tipo_documento_id,
             "nit_ci" => $cliente->full_ci,
@@ -243,7 +242,7 @@ class VentaService
 
 
             // VERIFICAR STOCK
-            $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->almacen_id, $producto->id, $item["cantidad"]);
+            $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->sucursal_id, $producto->id, $item["cantidad"]);
 
             if (!$verifica_stock[0]) {
                 throw new Exception("Stock insuficiente para el producto $producto->nombre. Disponible: $verifica_stock[1]");
@@ -252,7 +251,7 @@ class VentaService
             // REGISTRAR EGRESO STOCK
             $this->kardex_producto_service->registrarMovimiento(
                 $venta->sucursal_id,
-                $venta->almacen_id,
+                $venta->sucursal_id,
                 "VENTA DE PRODUCTO",
                 "EGRESO",
                 NULL,
@@ -269,7 +268,7 @@ class VentaService
         if ((float)$total_cancelado > 0) {
             $movimiento_caja = [
                 "sucursal_id" => $venta->sucursal_id,
-                "almacen_id" => $venta->almacen_id,
+                "sucursal_id" => $venta->sucursal_id,
                 "tipo" => "VENTA",
                 "modulo" => "Venta",
                 "registro_id" => $venta->id,
@@ -302,7 +301,7 @@ class VentaService
         $old_venta = clone $venta;
         $old_venta = $old_venta->loadMissing(["venta_detalles"]);
 
-        $almacen = Almacen::findOrFail($datos["almacen_id"]);
+        $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
         $cliente = Cliente::findOrFail($datos["cliente_id"]);
 
         $tipo_pago = '';
@@ -341,8 +340,8 @@ class VentaService
         }
 
         $venta->update([
-            "sucursal_id" => $almacen->sucursal_id,
-            "almacen_id" => $almacen->id,
+            "sucursal_id" => $sucursal->sucursal_id,
+            "sucursal_id" => $sucursal->id,
             "cliente_id" => $cliente->id,
             "tipo_documento_id" => $cliente->tipo_documento_id,
             "nit_ci" => $cliente->full_ci,
@@ -378,7 +377,7 @@ class VentaService
                 // CREAR
                 $venta_detalle = VentaDetalle::create($datos_venta_detalle);
                 // VERIFICAR STOCK
-                $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->almacen_id, $producto->id, $item["cantidad"]);
+                $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->sucursal_id, $producto->id, $item["cantidad"]);
 
                 if (!$verifica_stock[0]) {
                     throw new Exception("Stock insuficiente para el producto $producto->nombre. Disponible: $verifica_stock[1]");
@@ -387,7 +386,7 @@ class VentaService
                 // REGISTRAR EGRESO STOCK
                 $this->kardex_producto_service->registrarMovimiento(
                     $venta->sucursal_id,
-                    $venta->almacen_id,
+                    $venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "EGRESO",
                     NULL,
@@ -403,7 +402,7 @@ class VentaService
                 // REGISTRAR INGRESO STOCK POR MODIFICACIÓN $old_venta
                 $this->kardex_producto_service->registrarMovimiento(
                     $old_venta->sucursal_id,
-                    $old_venta->almacen_id,
+                    $old_venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "INGRESO",
                     NULL,
@@ -420,7 +419,7 @@ class VentaService
                 // REGISTRAR EGRESO STOCK
                 $this->kardex_producto_service->registrarMovimiento(
                     $venta->sucursal_id,
-                    $venta->almacen_id,
+                    $venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "EGRESO",
                     NULL,
@@ -441,7 +440,7 @@ class VentaService
                 // REGISTRAR INGRESO STOCK POR ELIMINACIÓN
                 $this->kardex_producto_service->registrarMovimiento(
                     $old_venta->sucursal_id,
-                    $old_venta->almacen_id,
+                    $old_venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "INGRESO",
                     NULL,
@@ -459,7 +458,7 @@ class VentaService
 
         // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
         $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-            ->where("almacen_id", $old_venta->almacen_id)
+            ->where("sucursal_id", $old_venta->sucursal_id)
             ->where("tipo", "VENTA")
             ->where("modulo", "Venta")
             ->where("registro_id", $venta->id)
@@ -474,7 +473,7 @@ class VentaService
         if ((float)$total_cancelado > 0) {
             $movimiento_caja = [
                 "sucursal_id" => $venta->sucursal_id,
-                "almacen_id" => $venta->almacen_id,
+                "sucursal_id" => $venta->sucursal_id,
                 "tipo" => "VENTA",
                 "modulo" => "Venta",
                 "registro_id" => $venta->id,
@@ -505,7 +504,7 @@ class VentaService
             foreach ($cobros as $item) {
                 // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
                 $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-                    ->where("almacen_id", $old_venta->almacen_id)
+                    ->where("sucursal_id", $old_venta->sucursal_id)
                     ->where("tipo", "COBRO POR VENTA DE PRODUCTOS")
                     ->where("modulo", "VentaCobro")
                     ->where("registro_id", $item->id)
@@ -521,7 +520,7 @@ class VentaService
             // REGISTRAR EGRESO STOCK POR ELIMINACIÓN
             $this->kardex_producto_service->registrarMovimiento(
                 $old_venta->sucursal_id,
-                $old_venta->almacen_id,
+                $old_venta->sucursal_id,
                 "VENTA DE PRODUCTO",
                 "EGRESO",
                 NULL,
@@ -538,7 +537,7 @@ class VentaService
 
         // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
         $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-            ->where("almacen_id", $old_venta->almacen_id)
+            ->where("sucursal_id", $old_venta->sucursal_id)
             ->where("tipo", "VENTA")
             ->where("modulo", "Venta")
             ->where("registro_id", $venta->id)
@@ -578,7 +577,7 @@ class VentaService
             // REGISTRAR INGRESO STOCK POR ELIMINACIÓN
             $this->kardex_producto_service->registrarMovimiento(
                 $old_venta->sucursal_id,
-                $old_venta->almacen_id,
+                $old_venta->sucursal_id,
                 "VENTA DE PRODUCTO",
                 "INGRESO",
                 NULL,
@@ -595,7 +594,7 @@ class VentaService
 
         // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
         $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-            ->where("almacen_id", $old_venta->almacen_id)
+            ->where("sucursal_id", $old_venta->sucursal_id)
             ->where("tipo", "VENTA")
             ->where("modulo", "Venta")
             ->where("registro_id", $venta->id)
@@ -625,7 +624,7 @@ class VentaService
             foreach ($cobros as $item) {
                 // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
                 $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-                    ->where("almacen_id", $old_venta->almacen_id)
+                    ->where("sucursal_id", $old_venta->sucursal_id)
                     ->where("tipo", "COBRO POR VENTA DE PRODUCTOS")
                     ->where("modulo", "VentaCobro")
                     ->where("registro_id", $item->id)
@@ -643,7 +642,7 @@ class VentaService
 
         // SI TIENE MOVIMIENTO DE CAJA ELIMINARLO Y REGISTRAR CON LOS NUEVOS DATOS
         $movimiento_caja = MovimientoCaja::where("sucursal_id", $old_venta->sucursal_id)
-            ->where("almacen_id", $old_venta->almacen_id)
+            ->where("sucursal_id", $old_venta->sucursal_id)
             ->where("tipo", "VENTA")
             ->where("modulo", "Venta")
             ->where("registro_id", $venta->id)

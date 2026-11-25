@@ -227,9 +227,9 @@ class PromocionService
 
             // VALIDAR CANTIDAD MÍNIMA.
             // Si cantidad es NULL, no existe restricción de cantidad.
-            Log::debug($promocion->nombre);
-            Log::debug($promocion->cantidad);
-            Log::debug($cantidad_producto);
+            // Log::debug($promocion->nombre);
+            // Log::debug($promocion->cantidad);
+            // Log::debug($cantidad_producto);
             if ($promocion->cantidad !== null) {
                 if ($cantidad_producto < $promocion->cantidad) {
                     continue;
