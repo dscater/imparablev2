@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Categoria;
+use App\Models\IngresoDetalle;
 use App\Models\Marca;
 use App\Services\HistorialAccionService;
 use App\Models\ProductoSucursal;
@@ -214,6 +215,76 @@ class ProductoSucursalService
         $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ UNA CATEGORIA", $old_producto_sucursal, $producto_sucursal);
 
         return true;
+    }
+
+
+
+
+    public function getCantidadLotesProducto($sucursal_id, $producto_id, $cantidad_requerida)
+    {
+        // Obtener los lotes disponibles del producto, ordenados por antigüedad (FIFO).
+        $producto = Producto::find($producto_id);
+        $ingreso_detalles = IngresoDetalle::select([
+            "id",
+            "cantidad_fisica",
+            "disponible"
+        ])
+            ->where("sucursal_id", $sucursal_id)
+            ->where("producto_id", $producto_id)
+            ->where("disponible", ">", 0)
+            ->orderBy("id", "asc")
+            ->get();
+
+        // Calcular el stock total disponible.
+        $total_disponible = $ingreso_detalles->sum("disponible");
+
+        // Validar que exista stock suficiente para atender la cantidad requerida.
+        if ($total_disponible < $cantidad_requerida) {
+
+            $nombre_producto = $producto
+                ? $producto->nombre
+                : "ID {$producto_id}";
+
+            throw new Exception(
+                "Stock insuficiente del producto {$nombre_producto}. Stock actual: {$total_disponible}"
+            );
+        }
+
+        // Inicializar el arreglo de lotes que se utilizarán en la venta.
+        $venta_lotes = [];
+
+        // Cantidad que todavía falta cubrir.
+        $cantidad_pendiente = $cantidad_requerida;
+
+        // Recorrer los lotes disponibles siguiendo el orden FIFO.
+        foreach ($ingreso_detalles as $detalle) {
+
+            // Determinar cuánto se puede utilizar de este lote.
+            $cantidad_usar = min(
+                $detalle->disponible,
+                $cantidad_pendiente
+            );
+
+            // Registrar el lote y la cantidad que se utilizará.
+            $venta_lotes[] = [
+                "id" => 0,
+                "venta_id" => "",
+                "venta_detalle_id" => "",
+                "ingreso_detalle_id" => $detalle->id,
+                "cantidad" => $cantidad_usar
+            ];
+
+            // Descontar la cantidad utilizada de la cantidad pendiente.
+            $cantidad_pendiente -= $cantidad_usar;
+
+            // Si ya se cubrió la cantidad requerida, finalizar el recorrido.
+            if ($cantidad_pendiente <= 0) {
+                break;
+            }
+        }
+
+        // Retornar los lotes que se utilizarán para completar la venta.
+        return ["producto" => $producto, "venta_lotes" => $venta_lotes];
     }
 
     public function cargaProductoSucursals($datos)

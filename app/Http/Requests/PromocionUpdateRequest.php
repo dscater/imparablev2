@@ -26,9 +26,10 @@ class PromocionUpdateRequest extends FormRequest
             "nombre" => "required|unique:promocions,nombre," . $this->promocion->id,
             "descripcion" => "required|string|min:2",
             "tipo" => "required",
+            "condicion" => "required",
             "indefinido" => "required",
             "fecha_ini" => "required",
-            "cantidad" => "nullable|",
+            "cantidad" => "nullable|numeric",
             "porcentaje_monto" => "required",
         ];
 
@@ -54,6 +55,7 @@ class PromocionUpdateRequest extends FormRequest
             "nombre" => "Nombre Promoción/Descuento",
             "descripcion" => "Descripción",
             "tipo" => "Tipo",
+            "condicion" => "Condición",
             "indefinido" => "Indefinido",
             "fecha_ini" => "Fecha Inicio",
             "cantidad" => "Cantidad",

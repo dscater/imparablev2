@@ -18,6 +18,10 @@ return new class extends Migration
             $table->unsignedBigInteger("ingreso_detalle_id");
             $table->double("cantidad", 8, 2);
             $table->timestamps();
+
+            $table->foreign("venta_id")->on("ventas")->references("id");
+            $table->foreign("venta_detalle_id")->on("venta_detalles")->references("id");
+            $table->foreign("ingreso_detalle_id")->on("ingreso_detalles")->references("id");
         });
     }
 

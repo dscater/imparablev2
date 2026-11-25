@@ -186,6 +186,18 @@ class ProductoSucursalController extends Controller
         }
     }
 
+
+    public function getCantidadLotesProducto(Request $request)
+    {
+        return response()->JSON(
+            $this->producto_sucursalService->getCantidadLotesProducto(
+                $request->input("sucursal_id", ""),
+                $request->input("producto_id", ""),
+                $request->input("cantidad", 0)
+            )
+        );
+    }
+
     public function formato()
     {
         return response()->download(

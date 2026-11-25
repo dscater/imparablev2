@@ -8,6 +8,7 @@ export const usePromocions = () => {
         nombre: "",
         descripcion: "",
         tipo: "TODOS",
+        condicion: "NORMAL",
         indefinido: 0,
         fecha_ini: useDate().getFechaActual(),
         fecha_fin: "",

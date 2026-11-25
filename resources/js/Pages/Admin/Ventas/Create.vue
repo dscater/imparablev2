@@ -2,7 +2,7 @@
 import Content from "@/Components/Content.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { useVentas } from "@/composables/ventas/useVentas";
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import Formulario from "./Formulario.vue";
 const { props: props_page } = usePage();
 const props = defineProps({
@@ -33,6 +33,17 @@ const props = defineProps({
 });
 
 const { setVenta, limpiarVenta, form } = useVentas();
+onMounted(() => {
+    document
+        .getElementsByTagName("body")[0]
+        .classList.add("sidebar-mini", "sidebar-collapse");
+});
+
+onUnmounted(() => {
+    document
+        .getElementsByTagName("body")[0]
+        .classList.remove("sidebar-mini", "sidebar-collapse");
+});
 </script>
 <template>
     <Head title="Nueva Venta"></Head>

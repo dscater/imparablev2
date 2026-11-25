@@ -51,6 +51,7 @@ use App\Http\Controllers\IngresoProductoController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ListaExpedidoController;
 use App\Http\Controllers\ListaHorarioController;
+use App\Http\Controllers\ListCondicionController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\MovimientoCajaController;
@@ -134,6 +135,9 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     // LISTA HORARIOS
     Route::get("lista_horarios/listado", [ListaHorarioController::class, 'listado'])->name("lista_horarios.listado");
 
+    // LISTA HORARIOS
+    Route::get("list_condicions/listado", [ListCondicionController::class, 'listado'])->name("list_condicions.listado");
+
     // TIPO VENTA
     Route::get("tipo_ventas/listado", [TipoVentaController::class, 'listado'])->name("tipo_ventas.listado");
 
@@ -200,6 +204,7 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     );
 
     // PROMOCIONES
+    Route::get("promocions/getPromocionProducto", [PromocionController::class, 'getPromocionProducto'])->name("promocions.getPromocionProducto");
     Route::get("promocions/paginado", [PromocionController::class, 'paginado'])->name("promocions.paginado");
     Route::get("promocions/listado", [PromocionController::class, 'listado'])->name("promocions.listado");
     Route::resource("promocions", PromocionController::class)->only(
@@ -371,6 +376,7 @@ Route::middleware(['auth', 'permisoUsuario'])->prefix("admin")->group(function (
     );
 
     // PRODUCTOS SUCURSAL
+    Route::get("producto_sucursals/getCantidadLotesProducto", [ProductoSucursalController::class, 'getCantidadLotesProducto'])->name("producto_sucursals.getCantidadLotesProducto");
     Route::get("producto_sucursals/paginado", [ProductoSucursalController::class, 'paginado'])->name("producto_sucursals.paginado");
     Route::get("producto_sucursals/listado", [ProductoSucursalController::class, 'listado'])->name("producto_sucursals.listado");
     Route::get("producto_sucursals/formato", [ProductoSucursalController::class, 'formato'])->name("producto_sucursals.formato");

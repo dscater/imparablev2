@@ -161,14 +161,12 @@ onMounted(() => {
                             </div>
                             <div class="col-md-6 mt-2">
                                 <label class="required">Código</label>
-                                <el-input
+                                <input
                                     type="text"
-                                    :class="{
-                                        'parsley-error': form.errors?.codigo,
-                                    }"
+                                    class="form-control"
                                     v-model="form.codigo"
                                     autosize
-                                ></el-input>
+                                />
                                 <ul
                                     v-if="form.errors?.codigo"
                                     class="d-block text-danger list-unstyled"
@@ -180,14 +178,12 @@ onMounted(() => {
                             </div>
                             <div class="col-md-6 mt-2">
                                 <label class="required">Nombre</label>
-                                <el-input
+                                <input
                                     type="text"
-                                    :class="{
-                                        'parsley-error': form.errors?.nombre,
-                                    }"
+                                    class="form-control"
                                     v-model="form.nombre"
                                     autosize
-                                ></el-input>
+                                />
                                 <ul
                                     v-if="form.errors?.nombre"
                                     class="d-block text-danger list-unstyled"

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->double("repuesto", 8, 2)->default(0);
             $table->string("observacion", 900)->nullable();
             $table->double("cantidad_fisica", 8, 2)->nullable(); // Cantidad que ingresa al stock
+            $table->double("disponible", 8, 2)->nullable(); // Cantidad disponible del lote
             $table->decimal("costo", 24, 2);
             $table->decimal("subtotal", 24, 2);
             $table->timestamps();

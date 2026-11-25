@@ -310,7 +310,9 @@ const reasignarPreciosPorClienteProductos = () => {
     });
 };
 
+const agregandoProducto = ref(false);
 const agregarProductoVenta = async (item) => {
+    agregandoProducto.value = true;
     const stock_total = Number(item.stock_total);
     let precio = Number(item.precio_venta);
     let cliente_producto_precio = obtenerPrecioClienteProducto(item.id);
@@ -321,40 +323,69 @@ const agregarProductoVenta = async (item) => {
 
     if (item.tipo == "PRODUCTO" && (!stock_total || stock_total < cantidad)) {
         toast.error("Stock insuficiente para agregar el producto");
+        agregandoProducto.value = false;
         return;
     }
     if (!precio || precio <= 0) {
         toast.error("Debe ingresar un precio valido");
+        agregandoProducto.value = false;
         return;
     }
 
     if (!cantidad || cantidad <= 0) {
         toast.error("Debe ingresar una cantidad valido");
+        agregandoProducto.value = false;
         return;
     }
 
-    // if (!tipo_venta_id || tipo_venta_id == "") {
-    //     toast.error("Debe seleccionar un tipo de venta");
-    //     return;
-    // }
-
     try {
-        const resp = await axios.get(route("productos.show", item.id));
-        const producto = resp.data;
+        let resp = null;
+        let producto = null;
+        let venta_lotes = [];
+        if (item.tipo != "PRODUCTO") {
+            resp = await axios.get(route("productos.show", item.id));
+            producto = resp.data;
+        } else {
+            resp = await axios.get(
+                route("producto_sucursals.getCantidadLotesProducto"),
+                {
+                    params: {
+                        sucursal_id: form.sucursal_id,
+                        producto_id: item.id,
+                        cantidad: cantidad,
+                    },
+                },
+            );
+            producto = resp.data.producto;
+            venta_lotes = resp.data.venta_lotes;
+        }
         const subtotal = cantidad * precio;
-
         const indexExiste = form.venta_detalles.findIndex(
             (elem) => elem.producto_id == producto.id,
         );
         // console.log(indexExiste);
         if (indexExiste < 0) {
             // no existe
+
+            // buscar promociones
+            const resp_promocion = await axios.get(
+                route("promocions.getPromocionProducto"),
+                {
+                    params: {
+                        producto_id: item.id,
+                        cantidad: cantidad,
+                    },
+                },
+            );
+            const detalle_promocions = resp_promocion.data;
+
             form.venta_detalles.push({
                 id: 0,
                 venta_id: "",
                 producto: producto,
                 producto_id: producto.id,
                 cantidad: cantidad,
+                venta_lotes: venta_lotes,
                 precio: precio,
                 descuento_uni: 0,
                 porcen_du: 0,
@@ -363,6 +394,7 @@ const agregarProductoVenta = async (item) => {
                 precio_final: precio,
                 total: subtotal.toFixed(2),
                 total_uni: subtotal.toFixed(2),
+                detalle_promocions: detalle_promocions,
             });
         } else {
             // existe
@@ -398,6 +430,8 @@ const agregarProductoVenta = async (item) => {
         toast.error(
             "Ocurrió un error al intentar agregar el producto; intente nuevamente",
         );
+    } finally {
+        agregandoProducto.value = false;
     }
 };
 
@@ -891,6 +925,7 @@ onMounted(() => {
                                                 type="button"
                                                 class="btn btn-primary btn-sm catalog-add-button"
                                                 title="Agregar producto"
+                                                :disabled="agregandoProducto"
                                                 @click.prevent="
                                                     agregarProductoVenta(item)
                                                 "
@@ -1022,7 +1057,7 @@ onMounted(() => {
                                             no-data-text="Sin datos"
                                             no-match-text="Sin resultados"
                                             loading-text="Buscando..."
-                                            placeholder="Buscar cliente"
+                                            placeholder="Sin Nombre"
                                             filterable
                                             remote
                                             clearable
@@ -1313,35 +1348,27 @@ onMounted(() => {
                                         <div class="col-8 col-sm-3 col-lg-2">
                                             <label
                                                 class="form-label text-muted small mb-1"
-                                                >Precio</label
+                                                >Precio Bs.</label
                                             >
-                                            <div
-                                                class="input-group input-group-sm"
-                                                style="min-width: 90px"
-                                            >
-                                                <span class="input-group-text"
-                                                    >Bs.</span
-                                                >
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    class="form-control text-end"
-                                                    v-model.number="item.precio"
-                                                    @input="
-                                                        detectarCambioFila(
-                                                            item,
-                                                            index,
-                                                        )
-                                                    "
-                                                    @change="
-                                                        detectarCambioFila(
-                                                            item,
-                                                            index,
-                                                        )
-                                                    "
-                                                />
-                                            </div>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                class="form-control text-end"
+                                                v-model.number="item.precio"
+                                                @input="
+                                                    detectarCambioFila(
+                                                        item,
+                                                        index,
+                                                    )
+                                                "
+                                                @change="
+                                                    detectarCambioFila(
+                                                        item,
+                                                        index,
+                                                    )
+                                                "
+                                            />
                                         </div>
 
                                         <div class="col-8 col-sm-4 col-lg-2">
@@ -1427,7 +1454,11 @@ onMounted(() => {
                                             >
                                                 <span
                                                     class="badge discount-count-badge"
-                                                    >3 aplicados</span
+                                                    >{{
+                                                        item.detalle_promocions
+                                                            .length
+                                                    }}
+                                                    aplicados</span
                                                 >
                                                 <i
                                                     class="fas fa-chevron-down text-muted details-arrow"
@@ -1438,30 +1469,34 @@ onMounted(() => {
                                         <div class="concept-details-body">
                                             <div
                                                 class="discount-item discount-item-promotion"
+                                                v-for="item_promocion in item.detalle_promocions"
                                             >
                                                 <span
                                                     ><i
                                                         class="fas fa-tag me-2"
                                                     ></i
-                                                    >Promoción Black
-                                                    Friday</span
+                                                    >{{
+                                                        item_promocion.promocion
+                                                            .nombre
+                                                    }}</span
                                                 >
-                                                <strong>-20%</strong>
-                                            </div>
-
-                                            <div
-                                                class="discount-item discount-item-promotion"
-                                            >
-                                                <span
-                                                    ><i
-                                                        class="fas fa-tag me-2"
-                                                    ></i
-                                                    >Promoción cliente
-                                                    frecuente</span
+                                                <strong
+                                                    v-if="
+                                                        item_promocion.porcentaje_monto ==
+                                                        'PORCENTAJE'
+                                                    "
+                                                    >-
+                                                    {{
+                                                        item_promocion.porcentaje
+                                                    }}
+                                                    %</strong
                                                 >
-                                                <strong>-Bs. 5.00</strong>
+                                                <strong v-else
+                                                    >-
+                                                    {{ item_promocion.monto }}
+                                                    Bs.</strong
+                                                >
                                             </div>
-
                                             <div
                                                 class="discount-item discount-item-manual"
                                             >
@@ -1481,6 +1516,9 @@ onMounted(() => {
                                                     >
                                                     <!-- FUTURO: conectar con descuento_uni -->
                                                     <input
+                                                        v-model="
+                                                            item.descuento_uni
+                                                        "
                                                         type="number"
                                                         class="form-control text-end"
                                                         min="0"
@@ -1495,8 +1533,8 @@ onMounted(() => {
                                                 type="button"
                                                 class="btn btn-sm btn-outline-danger mt-2 compact-action-btn"
                                             >
-                                                <i class="fas fa-plus me-1"></i>
-                                                Agregar promoción
+                                                <i class="fas fa-sync me-1"></i>
+                                                Buscar promociones
                                             </button>
                                         </div>
                                     </details>
@@ -1668,7 +1706,7 @@ onMounted(() => {
                                         class="col-12 col-sm-6"
                                     >
                                         <div
-                                            class="border rounded p-2 h-100 sale-type-option"
+                                            class="border rounded p-2 h-100 sale-type-option cursor-pointer"
                                             :class="{
                                                 'sale-type-selected':
                                                     form.tipo_venta ===
@@ -1993,909 +2031,4 @@ onMounted(() => {
         </div>
     </form>
 </template>
-
-<style>
-.min-width-0 {
-    min-width: 0;
-}
-.catalog-quantity {
-    width: 75px;
-}
-
-.product-row {
-    transition:
-        background-color 0.15s ease,
-        border-left-color 0.15s ease;
-}
-
-.product-row:hover {
-    background-color: var(--bg6);
-    border-left: 3px solid var(--bgBlue);
-}
-
-.section-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--bgGrayLight);
-    border-left: 4px solid transparent;
-}
-
-.section-heading-primary {
-    background-color: var(--bgPrimary2);
-    border-left-color: var(--bgPrimary);
-}
-
-.section-heading-info {
-    margin: -1rem -1rem 0;
-    padding-right: 1rem;
-    padding-left: 1rem;
-    background-color: var(--bgInfo2);
-    border-left-color: var(--bgInfo);
-}
-
-.section-heading-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background-color: var(--bgWhite);
-}
-
-.section-heading-primary .section-heading-icon {
-    color: var(--bgPrimary);
-}
-.section-heading-info .section-heading-icon {
-    color: var(--bgInfo);
-}
-
-.section-heading strong {
-    color: var(--bgDarkPrincipal);
-    font-size: 0.86rem;
-}
-
-.section-heading small {
-    display: block;
-    margin-top: 2px;
-    color: var(--bg5);
-    font-size: 0.7rem;
-}
-
-.section-heading-badge {
-    color: var(--bgPrimary);
-    background-color: var(--bgWhite);
-}
-
-.section-details {
-    border-bottom: 1px solid var(--bgGrayLight);
-}
-
-.section-summary {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-height: 58px;
-    padding: 0.7rem 1rem;
-    cursor: pointer;
-    list-style: none;
-}
-
-.section-summary::-webkit-details-marker {
-    display: none;
-}
-
-.section-summary strong {
-    color: var(--bgDarkPrincipal);
-    font-size: 0.82rem;
-}
-
-.section-summary small {
-    display: block;
-    margin-top: 2px;
-    color: var(--bg5);
-    font-size: 0.7rem;
-}
-
-.section-summary-primary {
-    background-color: rgba(217, 233, 252, 0.45);
-    border-left: 4px solid var(--bgPrimary);
-}
-
-.section-summary-discount {
-    background-color: rgba(255, 237, 213, 0.45);
-    border-left: 4px solid var(--bgDescuento);
-}
-
-.section-summary-success {
-    background-color: rgba(205, 247, 233, 0.45);
-    border-left: 4px solid var(--bgSuccess);
-}
-
-.section-summary-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    flex-shrink: 0;
-}
-
-.section-summary-primary .section-summary-icon {
-    color: var(--bgPrimary);
-    background-color: var(--bgPrimary2);
-}
-.section-summary-discount .section-summary-icon {
-    color: var(--bgDescuento);
-    background-color: var(--bgDescuentoLight);
-}
-.section-summary-success .section-summary-icon {
-    color: var(--bgSuccess);
-    background-color: var(--bgSuccess2);
-}
-
-.section-summary-value {
-    color: var(--bg5);
-    background-color: var(--bgWhite);
-    font-size: 0.7rem;
-}
-
-.payment-summary-badge {
-    cursor: pointer;
-}
-
-.payment-popover {
-    max-width: 230px;
-}
-
-.payment-popover .border-bottom:last-child {
-    border-bottom: 0 !important;
-}
-
-.payment-popover {
-    max-width: 230px;
-}
-
-.payment-popover .border-bottom:last-child {
-    border-bottom: 0 !important;
-}
-
-.section-arrow,
-.details-arrow {
-    color: var(--bg5);
-    font-size: 0.7rem;
-    transition: transform 0.2s ease;
-}
-
-.discount-details summary {
-    color: var(--bgDescuento);
-}
-
-.discount-details .concept-details-body {
-    border: 1px solid rgba(234, 88, 12, 0.2);
-    background-color: var(--bgDescuentoLight);
-}
-
-.discount-count-badge {
-    color: var(--bgDescuento);
-    background-color: var(--bgWhite);
-}
-
-.discount-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.4rem 0;
-    border-bottom: 1px solid rgba(234, 88, 12, 0.15);
-    color: var(--bgDarkPrincipal);
-    font-size: 0.72rem;
-}
-
-.discount-item:last-of-type {
-    border-bottom: 0;
-}
-
-.discount-item strong {
-    color: var(--bgDescuento);
-    white-space: nowrap;
-}
-
-.discount-item-promotion i {
-    color: var(--bgDescuento);
-}
-
-.discount-item-manual i {
-    color: var(--bgDanger);
-}
-
-details[open] .section-arrow,
-details[open] .details-arrow {
-    transform: rotate(180deg);
-}
-
-.concept-list {
-    padding: 0.45rem;
-    background-color: var(--bgDarkPrincipal);
-}
-
-.concept-row {
-    margin-bottom: 0.45rem;
-    border: 1px solid var(--bgGrayLight) !important;
-    border-left: 4px solid transparent !important;
-    border-radius: 0.55rem;
-    background-color: var(--bgWhite);
-    transition:
-        background-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.concept-row:last-child {
-    margin-bottom: 0;
-}
-
-.concept-row:last-child {
-    border-bottom: 0 !important;
-}
-.concept-row:hover {
-    background-color: rgba(241, 245, 249, 0.45);
-}
-
-.concept-row-product {
-    border-left: 4px solid var(--bgPrimary) !important;
-}
-
-.concept-row-service {
-    border-left: 4px solid var(--bgInfo) !important;
-}
-
-.concept-row-plan {
-    border-left: 4px solid var(--bgSuccess) !important;
-}
-
-.concept-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 14px;
-}
-
-.concept-icon-product {
-    color: var(--bgPrimary);
-    background-color: var(--bgPrimary2);
-}
-.concept-icon-service {
-    color: var(--bgInfo);
-    background-color: var(--bgInfo2);
-}
-.concept-icon-plan {
-    color: var(--bgSuccess);
-    background-color: var(--bgSuccess2);
-}
-
-.concept-badge-product {
-    color: var(--bgPrimary);
-    background-color: var(--bgPrimary2);
-}
-.concept-badge-service {
-    color: var(--bgInfo);
-    background-color: var(--bgInfo2);
-}
-.concept-badge-plan {
-    color: var(--bgSuccess);
-    background-color: var(--bgSuccess2);
-}
-
-.subtotal-box {
-    color: var(--bgSubtotal);
-    background-color: var(--bgSubtotalLight);
-    border-color: var(--bgSubtotalLight);
-}
-
-.plan-assignment,
-.service-info {
-    padding-top: 0.5rem;
-    border-top: 1px dashed var(--bgGrayLight);
-}
-
-.plan-assignment summary,
-.service-info summary {
-    cursor: pointer;
-    list-style: none;
-}
-
-.plan-assignment summary::-webkit-details-marker,
-.service-info summary::-webkit-details-marker {
-    display: none;
-}
-
-.plan-assignment-body {
-    background-color: var(--bgSuccess2);
-    border: 1px solid rgba(23, 145, 104, 0.2);
-}
-
-.service-info-body {
-    background-color: var(--bgInfo2);
-    border: 1px solid rgba(19, 200, 206, 0.2);
-}
-
-.payment-option {
-    cursor: pointer;
-    transition:
-        background-color 0.15s ease,
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.payment-option:hover {
-    border-color: var(--bgBlueLight) !important;
-    background-color: var(--bgPrimary2);
-}
-
-.payment-selected,
-.sale-type-selected {
-    border-color: var(--bgBlue) !important;
-    background-color: var(--bgPrimary2);
-    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
-}
-
-.payment-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border-radius: 7px;
-    color: var(--bgBlue);
-    background-color: var(--bgPrimary2);
-}
-
-.payment-option .el-input-group__prepend {
-    color: var(--bgBlue) !important;
-    background-color: var(--bgPrimary2) !important;
-    border-color: var(--bgBlueLight) !important;
-    font-weight: 600;
-}
-
-.text-discount {
-    color: var(--bgDescuento) !important;
-}
-.text-total {
-    color: var(--bgTotal) !important;
-}
-.text-balance {
-    color: var(--bgSaldo) !important;
-}
-
-.el-select {
-    width: 100%;
-}
-.el-select .el-input__wrapper,
-.el-input .el-input__wrapper {
-    box-shadow: none !important;
-}
-
-@media (max-width: 767.98px) {
-    .concept-list {
-        padding: 0.25rem;
-    }
-
-    .catalog-quantity {
-        width: 100%;
-    }
-    .concept-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 12px;
-    }
-    .section-heading,
-    .section-summary {
-        padding-right: 0.75rem;
-        padding-left: 0.75rem;
-    }
-}
-/* =====================================================
-   AJUSTES FINALES DE CONCEPTOS Y DESCUENTOS
-===================================================== */
-
-.concept-list,
-.list-group.list-group-flush {
-    background-color: var(--bgGrayLight) !important;
-}
-
-.concept-row,
-.list-group-item.concept-row {
-    color: var(--bgDarkPrincipal) !important;
-    background-color: var(--bgWhite) !important;
-}
-
-.concept-row:hover,
-.list-group-item.concept-row:hover {
-    color: var(--bgDarkPrincipal) !important;
-    background-color: var(--bgWhiteSoft) !important;
-}
-
-.discount-details summary {
-    color: var(--bgDescuento);
-}
-
-.discount-details .concept-details-body {
-    padding: 0.65rem;
-    border: 1px solid rgba(234, 88, 12, 0.2);
-    border-radius: 0.4rem;
-    background-color: var(--bgDescuentoLight);
-}
-
-.discount-count-badge {
-    color: var(--bgDescuento);
-    background-color: var(--bgWhite);
-}
-
-.discount-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.45rem 0;
-    border-bottom: 1px solid rgba(234, 88, 12, 0.15);
-    color: var(--bgDarkPrincipal);
-    font-size: 0.72rem;
-}
-
-.discount-item:last-of-type {
-    border-bottom: 0;
-}
-
-.discount-item strong {
-    color: var(--bgDescuento);
-    white-space: nowrap;
-}
-
-.discount-item-promotion i {
-    color: var(--bgDescuento);
-}
-
-.discount-item-manual i {
-    color: var(--bgDanger);
-}
-
-.discount-manual-input {
-    width: 125px;
-    flex-shrink: 0;
-}
-
-.discount-manual-input .input-group-text {
-    color: var(--bgDescuento);
-    background-color: var(--bgDescuentoLight);
-    border-color: rgba(234, 88, 12, 0.25);
-}
-
-@media (max-width: 575.98px) {
-    .discount-item {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .discount-manual-input {
-        width: 100%;
-    }
-}
-/* =====================================================
-   AJUSTE FINAL: CONCEPTOS COMPACTOS Y RESALTADOS
-===================================================== */
-
-.concept-list {
-    padding: 0.45rem !important;
-    background: linear-gradient(180deg, #e8edf3 0%, #dfe6ee 100%) !important;
-}
-
-.concept-row {
-    margin-bottom: 0.45rem !important;
-    padding: 0.65rem 0.7rem !important;
-    color: #263238 !important;
-    background-color: #ffffff !important;
-    border-color: #cfd8e3 !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-    transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease,
-        background-color 0.18s ease;
-}
-
-.concept-row:hover {
-    z-index: 2;
-    transform: translateY(-2px);
-    color: #263238 !important;
-    background-color: #f8fbff !important;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-}
-
-.concept-row strong,
-.concept-row .text-dark {
-    color: #263238 !important;
-    font-size: 0.78rem !important;
-    line-height: 1.2;
-}
-
-.concept-row .text-muted,
-.concept-row small,
-.concept-meta {
-    font-size: 0.63rem !important;
-}
-
-.concept-badge {
-    padding: 0.18rem 0.38rem !important;
-    font-size: 0.56rem !important;
-}
-
-.concept-row .form-label {
-    margin-bottom: 0.15rem !important;
-    font-size: 0.61rem !important;
-}
-
-.concept-row .form-control,
-.concept-row .input-group-text {
-    font-size: 0.7rem !important;
-}
-
-.concept-details summary {
-    font-size: 0.64rem !important;
-}
-
-.discount-count-badge {
-    padding: 0.18rem 0.38rem !important;
-    font-size: 0.56rem !important;
-}
-
-.discount-item {
-    font-size: 0.63rem !important;
-}
-
-.discount-item strong {
-    font-size: 0.63rem !important;
-}
-
-.discount-manual-input {
-    width: 112px;
-}
-
-.discount-manual-input .input-group-text,
-.discount-manual-input .form-control {
-    font-size: 0.64rem !important;
-}
-
-@media (max-width: 767.98px) {
-    .concept-list {
-        padding: 0.25rem !important;
-    }
-
-    .concept-row {
-        padding: 0.58rem !important;
-    }
-
-    .concept-row strong,
-    .concept-row .text-dark {
-        font-size: 0.74rem !important;
-    }
-}
-/* =====================================================
-   AJUSTE FINAL: PROMOCIONES Y ACCIONES COMPACTAS
-===================================================== */
-
-.discount-details summary {
-    padding: 0.05rem 0;
-    font-size: 0.68rem;
-}
-
-.discount-details summary > span:first-child {
-    font-size: 0.68rem;
-}
-
-.discount-count-badge {
-    padding: 0.18rem 0.42rem;
-    font-size: 0.58rem;
-}
-
-.discount-item {
-    padding: 0.42rem 0;
-    font-size: 0.72rem;
-}
-
-.discount-item strong {
-    font-size: 0.7rem;
-}
-
-.discount-manual-input {
-    width: 112px;
-}
-
-.compact-action-btn {
-    padding: 0.22rem 0.48rem !important;
-    font-size: 0.64rem !important;
-    line-height: 1.2 !important;
-}
-
-.plan-assignment-body .compact-action-btn,
-.discount-details .compact-action-btn {
-    border-radius: 0.3rem;
-}
-
-.plan-assignment-body small {
-    font-size: 0.64rem;
-}
-
-.plan-assignment-body .form-control,
-.plan-assignment-body .btn {
-    font-size: 0.64rem;
-}
-.concept-financial-summary {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 0.45rem;
-    padding-top: 0.4rem;
-    border-top: 1px dashed #d9dee5;
-    color: var(--bg5);
-    font-size: 0.64rem;
-}
-
-.concept-financial-summary > div {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.concept-financial-summary strong {
-    font-size: 0.68rem;
-}
-
-.discount-total-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.6rem 0.7rem;
-    border: 1px solid rgba(234, 88, 12, 0.18);
-    border-radius: 0.4rem;
-    color: var(--bg5);
-    background-color: var(--bgDescuentoLight);
-    font-size: 0.68rem;
-}
-
-.discount-total-row strong {
-    white-space: nowrap;
-}
-
-@media (max-width: 575.98px) {
-    .concept-financial-summary {
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-}
-/* =====================================================
-   AJUSTE FINAL: TIPOS DE VENTA, PAGOS Y POPOVER
-===================================================== */
-
-.sale-type-option {
-    padding: 0.45rem 0.55rem !important;
-}
-
-.sale-type-option .fw-bold {
-    font-size: 0.68rem !important;
-    line-height: 1.15;
-}
-
-.sale-type-option small {
-    display: block;
-    font-size: 0.58rem !important;
-    line-height: 1.15;
-}
-
-.sale-type-option > .d-flex i {
-    font-size: 0.72rem;
-}
-
-.payment-option {
-    padding: 0.45rem 0.55rem !important;
-}
-
-.payment-option .fw-bold {
-    font-size: 0.68rem !important;
-    line-height: 1.15;
-}
-
-.payment-option small {
-    font-size: 0.58rem !important;
-    line-height: 1.15;
-}
-
-.payment-option .payment-icon {
-    width: 27px;
-    height: 27px;
-    min-width: 27px;
-    font-size: 0.72rem;
-}
-
-.payment-option > .d-flex > .fa-check-circle {
-    font-size: 0.75rem;
-}
-
-.discount-details summary {
-    font-size: 0.78rem !important;
-}
-
-.discount-details summary > span:first-child {
-    font-size: 0.78rem !important;
-}
-
-.discount-count-badge {
-    padding: 0.22rem 0.48rem !important;
-    font-size: 0.68rem !important;
-}
-
-.payment-summary-badge {
-    cursor: help;
-}
-/* =====================================================
-   AJUSTE FINAL: CATALOGO COMPACTO Y RESPONSIVE
-===================================================== */
-
-.product-row {
-    padding: 0.6rem 0.75rem !important;
-    color: var(--bgDarkPrincipal);
-    transition:
-        background-color 0.16s ease,
-        box-shadow 0.16s ease;
-}
-
-.product-row:hover {
-    background-color: #f8fbff;
-    box-shadow: inset 3px 0 0 var(--bgPrimary);
-}
-
-.product-row .fw-bold {
-    font-size: 0.78rem !important;
-    line-height: 1.2;
-}
-
-.product-row .text-muted,
-.product-row small,
-.product-row .form-label {
-    font-size: 0.64rem !important;
-}
-
-.product-row strong {
-    font-size: 0.72rem;
-}
-
-.product-row .btn {
-    padding: 0.28rem 0.55rem;
-    font-size: 0.65rem;
-}
-
-.product-row .form-control,
-.product-row .input-group-text {
-    font-size: 0.7rem;
-}
-
-.catalog-quantity {
-    min-width: 66px;
-}
-
-@media (max-width: 991.98px) {
-    .product-row {
-        padding: 0.55rem 0.65rem !important;
-    }
-
-    .product-row .row {
-        row-gap: 0.45rem !important;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .product-row .col-6,
-    .product-row .col-12 {
-        min-width: 0;
-    }
-
-    .product-row .fw-bold {
-        font-size: 0.75rem !important;
-    }
-
-    .product-row .text-truncate {
-        max-width: 100%;
-    }
-
-    .catalog-add-button {
-        width: 100%;
-        height: 30px;
-    }
-
-    .catalog-add-label {
-        display: inline;
-        margin-left: 0.35rem;
-    }
-
-    .card-body.bg-light.border-bottom {
-        padding-top: 0.45rem !important;
-        padding-bottom: 0.45rem !important;
-    }
-}
-.catalog-add-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 30px;
-    padding: 0 !important;
-    border-radius: 0.35rem;
-}
-
-.catalog-add-label {
-    display: none;
-}
-
-@media (max-width: 575.98px) {
-    .catalog-add-button {
-        width: 100%;
-        height: 30px;
-    }
-
-    .catalog-add-label {
-        display: inline;
-        margin-left: 0.35rem;
-    }
-}
-.catalog-search-body,
-.catalog-search-empty {
-    flex: 0 0 auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    align-self: stretch;
-}
-
-.catalog-search-body .input-group {
-    min-height: 34px;
-}
-
-.catalog-search-body .form-control,
-.catalog-search-body .input-group-text,
-.catalog-search-body .btn {
-    min-height: 34px;
-}
-
-@media (max-width: 575.98px) {
-    .catalog-search-body {
-        padding-top: 0.45rem !important;
-        padding-bottom: 0.45rem !important;
-    }
-}
-.catalog-stock-insufficient {
-    background-color: var(--bgStockInsufficient, #fff1f2) !important;
-    border-left: 3px solid var(--textStockInsufficient, #b42318) !important;
-    border-color: var(--borderStockInsufficient, #fecdd3) !important;
-}
-
-.catalog-stock-insufficient:hover {
-    background-color: #ffe4e6 !important;
-    box-shadow: inset 3px 0 0 var(--textStockInsufficient, #b42318);
-}
-
-.catalog-stock-insufficient .product-row,
-.catalog-stock-insufficient .fw-bold {
-    color: #7f1d1d !important;
-}
-
-.stock-warning {
-    display: inline-flex;
-    align-items: center;
-    color: var(--textStockInsufficient, #b42318);
-    font-size: 0.62rem;
-    font-weight: 700;
-}
-</style>
+<style scoped src="@/assets/css/venta.css"></style>

@@ -128,9 +128,19 @@ const cargarTipoProductos = () => {
         ];
     });
 };
+const listCondicions = ref([]);
+const cargarListCondicions = () => {
+    axios.get(route("list_condicions.listado")).then((response) => {
+        listCondicions.value = response.data.list_condicions;
+    });
+};
 
 const tipoSeleccionado = computed(() =>
     listTipoProductos.value.find((item) => item.value === form.tipo),
+);
+
+const condicionSeleccionado = computed(() =>
+    listCondicions.value.find((item) => item.value === form.condicion),
 );
 
 const labelFiltro = computed(() => {
@@ -143,6 +153,7 @@ const labelFiltro = computed(() => {
 
 onMounted(() => {
     cargarTipoProductos();
+    cargarListCondicions();
 });
 </script>
 
@@ -293,6 +304,90 @@ onMounted(() => {
                         >
                             <li class="parsley-required">
                                 {{ form.errors?.tipo }}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-4 mt-2">
+                        <label class="required"
+                            >Condición de la Promoción/Descuento
+                            <el-popover :width="300" trigger="click">
+                                <template #reference>
+                                    <i
+                                        class="fa fa-info-circle cursor-pointer text-primary fs-6"
+                                    ></i>
+                                </template>
+                                <template #default>
+                                    <div
+                                        class="demo-rich-conent"
+                                        style="
+                                            display: flex;
+                                            gap: 16px;
+                                            flex-direction: column;
+                                        "
+                                    >
+                                        Condiciones aplicables
+                                        <div v-for="item in listCondicions">
+                                            <p
+                                                class="demo-rich-content__name"
+                                                style="
+                                                    margin: 0;
+                                                    font-weight: 500;
+                                                "
+                                            >
+                                                <i :class="item.icon"></i>
+                                                {{ item.label }}
+                                            </p>
+                                            <p
+                                                class="demo-rich-content__mention"
+                                                style="
+                                                    margin: 0;
+                                                    font-size: 14px;
+                                                    color: var(--el-color-info);
+                                                "
+                                                v-text="item.detail"
+                                            ></p>
+                                        </div>
+                                    </div>
+                                </template> </el-popover
+                        ></label>
+                        <el-select
+                            type="text"
+                            v-model="form.condicion"
+                            placeholder="- Seleccione -"
+                        >
+                            <template #label="{ label, value }">
+                                <span v-if="condicionSeleccionado"
+                                    ><i :class="condicionSeleccionado.icon"></i>
+                                    {{ condicionSeleccionado.label }}</span
+                                >
+                            </template>
+                            <el-option
+                                v-for="item in listCondicions"
+                                :key="item.value"
+                                :value="item.value"
+                                :label="item.label"
+                            >
+                                <span style="float: left">
+                                    <i
+                                        :class="item.icon"
+                                        style="
+                                            color: var(
+                                                --el-text-color-secondary
+                                            );
+                                            font-size: 13px;
+                                        "
+                                    ></i>
+                                    {{ item.label }}</span
+                                >
+                            </el-option>
+                        </el-select>
+                        <ul
+                            v-if="form.errors?.condicion"
+                            class="d-block text-danger list-unstyled"
+                        >
+                            <li class="parsley-required">
+                                {{ form.errors?.condicion }}
                             </li>
                         </ul>
                     </div>
@@ -474,13 +569,17 @@ onMounted(() => {
                                 </template>
                             </el-popover></label
                         >
-                        <input type="number" class="form-control" />
+                        <input
+                            type="number"
+                            v-model="form.cantidad"
+                            class="form-control"
+                        />
                         <ul
-                            v-if="form.errors?.indefinido"
+                            v-if="form.errors?.cantidad"
                             class="d-block text-danger list-unstyled"
                         >
                             <li class="parsley-required">
-                                {{ form.errors?.indefinido }}
+                                {{ form.errors?.cantidad }}
                             </li>
                         </ul>
                     </div>

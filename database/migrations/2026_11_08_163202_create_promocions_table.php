@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string("nombre");
             $table->text("descripcion");
             $table->string("tipo"); //TODOS, PRODUCTO, SERVICIO, PLAN
+            $table->string("condicion")->default("NORMAL"); // NORMAL, CUMPLEANERO
             $table->boolean("indefinido"); // 0: fecha inicio y fin, 1: solo fecha inicio
             $table->date("fecha_ini")->nullable();
             $table->date("fecha_fin")->nullable();

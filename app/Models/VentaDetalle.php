@@ -30,4 +30,14 @@ class VentaDetalle extends Model
     {
         return $this->belongsTo(Producto::class, 'producto_id');
     }
+
+    public function detalle_promocions()
+    {
+        return $this->hasMany(DetallePromocion::class, 'venta_detalle_id');
+    }
+
+    public function venta_lotes()
+    {
+        return $this->hasMany(VentaLote::class, 'venta_detalle_id');
+    }
 }

@@ -10,6 +10,7 @@ class Promocion extends Model
         "nombre",
         "descripcion",
         "tipo", //TODOS, PRODUCTO, SERVICIO, PLAN
+        "condicion", // NORMAL, CUMPLEANERO
         "indefinido", // 0: fecha inicio y fin, 1: solo fecha inicio
         "fecha_ini",
         "fecha_fin",

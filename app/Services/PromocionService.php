@@ -2,18 +2,21 @@
 
 namespace App\Services;
 
+use App\Models\Cliente;
 use App\Models\IngresoDetalle;
 use App\Models\IngresoProducto;
+use App\Models\Producto;
 use App\Services\HistorialAccionService;
 use App\Models\Promocion;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PromocionService
 {
@@ -91,6 +94,7 @@ class PromocionService
             "nombre" => mb_strtoupper($datos["nombre"]),
             "descripcion" => mb_strtoupper($datos["descripcion"]),
             "tipo" => mb_strtoupper($datos["tipo"]),
+            "condicion" => mb_strtoupper($datos["condicion"]),
             "indefinido" => $datos["indefinido"],
             "fecha_ini" => $datos["fecha_ini"],
             "cantidad" => $datos["cantidad"],
@@ -134,6 +138,7 @@ class PromocionService
             "nombre" => mb_strtoupper($datos["nombre"]),
             "descripcion" => mb_strtoupper($datos["descripcion"]),
             "tipo" => mb_strtoupper($datos["tipo"]),
+            "condicion" => mb_strtoupper($datos["condicion"]),
             "indefinido" => $datos["indefinido"],
             "fecha_ini" => $datos["fecha_ini"],
             "cantidad" => $datos["cantidad"],
@@ -181,5 +186,88 @@ class PromocionService
         $this->historialAccionService->registrarAccion($this->modulo, "ELIMINACIÓN", "ELIMINÓ UNA PROMOCION", $old_promocion, $promocion);
 
         return true;
+    }
+
+    public function getPromocionProducto($producto_id, $cantidad_producto = 1, $cliente_id = null)
+    {
+        // Obtener el producto.
+        $producto = Producto::find($producto_id);
+
+        if (!$producto) {
+            throw new Exception("El producto no existe.");
+        }
+
+        // Obtener la fecha actual.
+        $fecha_actual = Carbon::today();
+
+        // Obtener promociones activas aplicables al tipo de producto.
+        $promociones = Promocion::whereIn("tipo", ["TODOS", $producto->tipo])
+            ->where("estado", 1)
+            ->get();
+
+        // Array donde almacenaremos las promociones válidas.
+        $detalle_promociones = [];
+
+        foreach ($promociones as $promocion) {
+
+            // VALIDAR FECHA DE INICIO.
+            if ($promocion->fecha_ini) {
+                if ($fecha_actual->lt(Carbon::parse($promocion->fecha_ini))) {
+                    continue;
+                }
+            }
+
+            // VALIDAR FECHA DE FINALIZACIÓN.
+            // Si indefinido = 1, no se considera fecha de finalización.
+            if (!$promocion->indefinido && $promocion->fecha_fin) {
+                if ($fecha_actual->gt(Carbon::parse($promocion->fecha_fin))) {
+                    continue;
+                }
+            }
+
+            // VALIDAR CANTIDAD MÍNIMA.
+            // Si cantidad es NULL, no existe restricción de cantidad.
+            Log::debug($promocion->nombre);
+            Log::debug($promocion->cantidad);
+            Log::debug($cantidad_producto);
+            if ($promocion->cantidad !== null) {
+                if ($cantidad_producto < $promocion->cantidad) {
+                    continue;
+                }
+            }
+
+            // VALIDAR CONDICIÓN DE CUMPLEAÑOS.
+            if ($promocion->condicion == "CUMPLEANERO") {
+
+                $cliente = Cliente::find($cliente_id);
+
+                if (!$cliente) {
+                    continue;
+                }
+
+                // Comparar día y mes del cumpleaños con la fecha actual.
+                $fecha_nacimiento = Carbon::parse($cliente->fecha_nac);
+
+                if (
+                    $fecha_nacimiento->format("m-d") !=
+                    $fecha_actual->format("m-d")
+                ) {
+                    continue;
+                }
+            }
+
+            // La promoción cumple todas las condiciones.
+            $detalle_promociones[] = [
+                "id" => 0,
+                "venta_detalle_id" => "",
+                "promocion_id" => $promocion->id,
+                "promocion" => $promocion,
+                "porcentaje_monto" => $promocion->porcentaje_monto,
+                "porcentaje" => $promocion->porcentaje,
+                "monto" => $promocion->monto,
+            ];
+        }
+
+        return $detalle_promociones;
     }
 }

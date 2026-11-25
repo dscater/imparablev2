@@ -147,4 +147,15 @@ class PromocionController extends Controller
             ]);
         }
     }
+
+    public function getPromocionProducto(Request $request)
+    {
+        return response()->JSON(
+            $this->promocionService->getPromocionProducto(
+                $request->input("producto_id"),
+                $request->input("cantidad", 0),
+                $request->input("cliente_id", null),
+            )
+        );
+    }
 }
