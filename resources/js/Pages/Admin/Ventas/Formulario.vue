@@ -478,9 +478,13 @@ const recalcularStockActualCambioDetalle = (
     const item_sucursal_origen = listProductoSucursals.value.find(
         (elem) => elem.id == producto_id,
     );
-
+    // console.log("itemsucursal origen");
+    // console.log(item_sucursal_origen);
     if (index !== null) {
-        if (cantidad > item_sucursal_origen.stock_aux) {
+        if (
+            item_sucursal_origen.tipo == "PRODUCTO" &&
+            cantidad > item_sucursal_origen.stock_aux
+        ) {
             toast.error("Stock insuficiente para la cantidad ingresada");
             form.venta_detalles[index].cantidad =
                 item_sucursal_origen.stock_aux;
@@ -594,7 +598,7 @@ onMounted(() => {
         <div class="container-fluid py-3 bg-light">
             <div class="row g-3">
                 <!-- CATALOGO -->
-                <div class="col-12 col-xl-7">
+                <div class="col-12 col-md-7">
                     <div class="card h-100 border-0 shadow-sm">
                         <div
                             class="card-header text-white border-0 px-3 py-3"
@@ -921,7 +925,7 @@ onMounted(() => {
                 </div>
 
                 <!-- RESUMEN -->
-                <div class="col-12 col-xl-5">
+                <div class="col-12 col-md-5">
                     <div class="card border-0 shadow-sm">
                         <div
                             class="card-header text-white border-0 px-3 py-3"
@@ -965,7 +969,7 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="card-body border-bottom">
+                        <div class="card-body border-bottom pb-2">
                             <div class="section-heading section-heading-info">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="section-heading-icon"
@@ -983,7 +987,7 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="row g-2 mt-2">
+                            <div class="row g-2">
                                 <div class="col-6">
                                     <label class="form-label small fw-bold"
                                         >Fecha</label
@@ -1005,8 +1009,7 @@ onMounted(() => {
                                     />
                                 </div>
                             </div>
-
-                            <div class="mt-3">
+                            <div class="mt-1">
                                 <label class="form-label small fw-bold"
                                     >Cliente</label
                                 >
@@ -1015,6 +1018,7 @@ onMounted(() => {
                                         <el-select
                                             v-model="form.cliente_id"
                                             class="w-100"
+                                            size="large"
                                             no-data-text="Sin datos"
                                             no-match-text="Sin resultados"
                                             loading-text="Buscando..."
@@ -1313,6 +1317,7 @@ onMounted(() => {
                                             >
                                             <div
                                                 class="input-group input-group-sm"
+                                                style="min-width: 90px"
                                             >
                                                 <span class="input-group-text"
                                                     >Bs.</span
@@ -1322,9 +1327,7 @@ onMounted(() => {
                                                     min="0"
                                                     step="0.01"
                                                     class="form-control text-end"
-                                                    v-model.number="
-                                                        item.precio_venta
-                                                    "
+                                                    v-model.number="item.precio"
                                                     @input="
                                                         detectarCambioFila(
                                                             item,
@@ -1519,9 +1522,7 @@ onMounted(() => {
                                                         class="badge bg-success-subtle text-success"
                                                     >
                                                         0 /
-                                                        {{
-                                                            item.cantidad
-                                                        }}
+                                                        {{ item.cantidad }}
                                                         cupos </span
                                                     ><i
                                                         class="fas fa-chevron-down text-muted details-arrow"
