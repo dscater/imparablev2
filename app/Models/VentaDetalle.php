@@ -15,28 +15,19 @@ class VentaDetalle extends Model
         "porcen_du", // porcentaje descuento unitario
         "descuento_promocion", // descuento promocion
         "porcen_promocion", // porcentaje descuento promocion
+        "tm_descuento_uni", // total monto descontado x unidad
+        "tp_descuento_uni", // total porcentaje descontado x unidad
         "descuento_total", // descuento obtenido desde el descuento TOTAL de la venta
         "porcen_dt", // porcentaje descuento total
-        "precio_final", // precio final (precio con descuentos) obtenido despues de los descuentos (precio - descuento_uni)
+        "precio_uni", // precio uni (precio con descuentos) obtenido despues de descuento_uni + descuento_promocion
+        "precio_total", // precio total (precio_uni - descuento_total)
         "total_sd", // total sin descuento = cantidad * precio | para calcular ingreso bruto
-        "total", // total registrado = cantidad * precio_final | para calcular ingreso bruto
-        "total_uni", // total por fila sin tomar en cuenta descuento del total para mostrar = cantidad * precio_final
+        "total_uni", // total por fila sin tomar en cuenta descuento del total para mostrar = cantidad * precio_uni
+        "desc_final_monto", // descuento monto final (tm_descuento_uni + descuenti_total)
+        "desc_final_porcentaje", // descueto porcentaje final (tp_descuento_uni + porcen_dt)
+        "total", // total registrado = cantidad * precio_total | para calcular ingreso bruto
         "status",
     ];
-
-    protected $appends = ["tm_descuento_uni", "tp_descuento_uni"];
-
-    public function getTMDescuentoUniAttribute()
-    {
-        // TOTAL DESCUENTO UNI + PROMOCION
-        return $this->descuento_uni ?? 0 + $this->this->descuento_promocion ?? 0;
-    }
-
-    public function getTPDescuentoUniAttribute()
-    {
-        // PORCENTAJE TOTAL DESCUENTO UNI + PROMOCION
-        return $this->porcen_du ?? 0 + $this->porcen_promocion ?? 0;
-    }
 
     public function venta()
     {

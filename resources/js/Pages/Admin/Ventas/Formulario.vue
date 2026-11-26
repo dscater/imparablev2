@@ -11,6 +11,8 @@ import MiPaginacion from "@/Components/MiPaginacion.vue";
 import ListaPorCliente from "../ClienteProductos/ListaPorCliente.vue";
 import { ElPopover } from "element-plus";
 import "element-plus/es/components/popover/style/css";
+import { ElCheckboxGroup } from "element-plus";
+import "element-plus/es/components/checkbox-group/style/css";
 
 const props = defineProps({
     form: {
@@ -303,8 +305,8 @@ const reasignarPreciosPorClienteProductos = () => {
         elem.total_uni = parseFloat(elem.total_uni).toFixed(2);
 
         // TOTAL PARA CALCULAR GANANCIA BRUTA
-        elem.precio_final = con_descuento - elem.descuento_total;
-        elem.total = elem.cantidad * elem.precio_final;
+        elem.precio_uni = con_descuento - elem.descuento_total;
+        elem.total = elem.cantidad * elem.precio_uni;
     });
     toast.success("Precios reasignados por cliente", {
         autoClose: 220,
@@ -377,7 +379,6 @@ const agregarProductoVenta = async (item) => {
                 item,
                 cantidad,
             );
-
             form.venta_detalles.push({
                 id: 0,
                 venta_id: "",
@@ -388,16 +389,19 @@ const agregarProductoVenta = async (item) => {
                 precio: precio,
                 descuento_uni: 0,
                 porcen_du: 0,
+                descuento_total: 0,
+                porcen_dt: 0,
                 descuento_promocion: 0,
                 porcen_promocion: 0,
                 tm_descuento_uni: 0,
                 tp_descuento_uni: 0,
-                descuento_total: 0,
-                porcen_dt: 0,
-                precio_final: precio,
+                precio_uni: precio,
                 total_sd: subtotal.toFixed(2),
-                total: subtotal.toFixed(2),
                 total_uni: subtotal.toFixed(2),
+                desc_final_monto: 0,
+                desc_final_porcentaje: 0,
+                precio_total: precio,
+                total: subtotal.toFixed(2),
                 detalle_promocions: detalle_promocions,
                 inscripcions: inscripcions,
             });
@@ -411,10 +415,12 @@ const agregarProductoVenta = async (item) => {
             const detalle_promocions = await obtenerPromocionesProducto(
                 item.id,
                 nuevaCantidad,
+                indexExiste,
             );
             const inscripcions = await verificaInscripcionesPlan(
                 item,
                 nuevaCantidad,
+                indexExiste,
             );
 
             form.venta_detalles[indexExiste].cantidad = nuevaCantidad;
@@ -441,40 +447,97 @@ const agregarProductoVenta = async (item) => {
     }
 };
 
-const verificaInscripcionesPlan = (producto, cantidad) => {
+const verificaInscripcionesPlan = (producto, cantidad, index = -1) => {
     let inscripciones = [];
+
+    if (index > -1) {
+        // form.venta_detalles[index].inscripcions.map((elem) => {
+        //     elem.cliente_id = "";
+        //     elem.cliente = "";
+        // });
+        inscripciones = form.venta_detalles[index].inscripcions;
+    }
+
     if (producto.tipo == "PLAN") {
-        for (let i = 1; i <= cantidad; i++) {
-            inscripciones.push({
-                id: 0,
-                sucursal_id: "",
-                user_cliente_id: "",
-                cliente_id: "",
-                producto_id: producto.id,
-                venta_detalle_id: "",
-                declaracion_jurada: "",
-                fecha_inicio: useDate().getFechaActual(),
-                estado: "",
-                fecha_pausa: "",
-                dias_pausa: "",
-                justificacion_pausa: "",
-                dias_restantes: "",
-                fecha_fin: "",
-            });
+        if (index > -1) {
+            const cant_inscripcions_actual =
+                form.venta_detalles[index].inscripcions.length;
+            if (cant_inscripcions_actual < cantidad) {
+                const restante =
+                    cantidad - form.venta_detalles[index].inscripcions.length;
+                for (let i = 1; i <= restante; i++) {
+                    inscripciones.push({
+                        id: 0,
+                        sucursal_id: "",
+                        user_cliente_id: "",
+                        cliente_id: "",
+                        producto_id: producto.id,
+                        venta_detalle_id: "",
+                        declaracion_jurada: "",
+                        fecha_inicio: useDate().getFechaActual(),
+                        estado: "",
+                        fecha_pausa: "",
+                        dias_pausa: "",
+                        justificacion_pausa: "",
+                        dias_restantes: "",
+                        fecha_fin: "",
+                    });
+                }
+            } else if (cant_inscripcions_actual > cantidad) {
+                const restante = form.venta_detalles[index].inscripcions.length;
+                for (let i = restante; i > cantidad; i--) {
+                    console.log("i", i);
+                    inscripciones.splice(i - 1, 1);
+                }
+            }
+        } else {
+            console.log("NO EXISTE", index);
+            for (let i = 1; i <= cantidad; i++) {
+                inscripciones.push({
+                    id: 0,
+                    sucursal_id: "",
+                    user_cliente_id: "",
+                    cliente_id: "",
+                    producto_id: producto.id,
+                    venta_detalle_id: "",
+                    declaracion_jurada: "",
+                    fecha_inicio: useDate().getFechaActual(),
+                    estado: "",
+                    fecha_pausa: "",
+                    dias_pausa: "",
+                    justificacion_pausa: "",
+                    dias_restantes: "",
+                    fecha_fin: "",
+                });
+            }
         }
     }
 
     return inscripciones;
 };
 
-const obtenerPromocionesProducto = async (producto_id, cantidad) => {
+const obtenerPromocionesProducto = async (
+    producto_id,
+    cantidad,
+    index = -1,
+) => {
     try {
+        let cliente_id = "";
+        if (index > -1) {
+            if (form.venta_detalles[index].inscripcions.length == 1) {
+                // SOLO SI HAY UN SOLO CLIENTE
+                cliente_id =
+                    form.venta_detalles[index].inscripcions[0].cliente_id;
+            }
+        }
+
         const resp_promocion = await axios.get(
             route("promocions.getPromocionProducto"),
             {
                 params: {
                     producto_id: producto_id,
                     cantidad: cantidad,
+                    cliente_id: cliente_id,
                 },
             },
         );
@@ -506,13 +569,11 @@ const calcularDescuentosYTotalesFila = (index) => {
     const descuento_total = parseFloat(
         form.venta_detalles[index].descuento_total,
     );
-    let precio_final = precio - descuento_uni;
-    const porcen_du = parseFloat(100 - (precio_final * 100) / precio).toFixed(
-        2,
-    );
+    let precio_uni = precio - descuento_uni;
+    const porcen_du = parseFloat(100 - (precio_uni * 100) / precio).toFixed(2);
 
     let total_sd = cant * precio;
-    let total_uni = cant * precio_final;
+    let total_uni = cant * precio_uni;
     let total =
         cant *
         (precio - (parseFloat(descuento_uni) + parseFloat(descuento_total)));
@@ -531,13 +592,13 @@ const calcularDescuentosYTotalesFila = (index) => {
             }
         });
 
-        precio_final = precio - descuento_uni - total_descuento_promocion;
+        precio_uni = precio - descuento_uni - total_descuento_promocion;
         const precio_cp = precio - total_descuento_promocion;
         porcen_promocion = parseFloat(100 - (precio_cp * 100) / precio).toFixed(
-            2,
+            7,
         );
 
-        total_uni = cant * precio_final;
+        total_uni = cant * precio_uni;
         total =
             cant *
             (precio -
@@ -550,38 +611,44 @@ const calcularDescuentosYTotalesFila = (index) => {
     form.venta_detalles[index].porcen_promocion = porcen_promocion;
     form.venta_detalles[index].tm_descuento_uni =
         total_descuento_promocion + descuento_uni;
-    form.venta_detalles[index].tp_descuento_uni = porcen_promocion + porcen_du;
-    form.venta_detalles[index].precio_final = precio_final;
+    form.venta_detalles[index].tp_descuento_uni =
+        parseFloat(porcen_promocion) + parseFloat(porcen_du);
+    form.venta_detalles[index].precio_uni = precio_uni;
     form.venta_detalles[index].descuento_uni = descuento_uni;
     form.venta_detalles[index].total_sd = total_sd;
     form.venta_detalles[index].total_uni = total_uni;
     form.venta_detalles[index].total = total;
+
+    aplicarDescuentosTotal();
 };
 
 const aplicarDescuentosTotal = () => {
+    let porcentaje = 0;
     const descuento = Number(form.descuento ?? 0);
     form.venta_detalles.map((elem) => {
-        elem.descuento_total = 0;
-        elem.porcen_dt = 0;
-    });
-    if (descuento > 0) {
-        let porcentaje = (form.total * 100) / form.subtotal;
-        porcentaje = 100 - porcentaje;
-        porcentaje = porcentaje.toFixed(2);
-        porcentaje = parseFloat(porcentaje);
+        if (descuento > 0) {
+            porcentaje = (form.total * 100) / form.subtotal;
+            porcentaje = 100 - porcentaje;
+            porcentaje = parseFloat(porcentaje.toFixed(7));
+        }
         form.porcentaje_descuento = porcentaje;
-        form.venta_detalles.map((elem) => {
-            const precio_final = elem.precio_final;
-            elem.porcen_dt = porcentaje;
-            elem.descuento_total = elem.precio * (porcentaje / 100);
-            elem.total = elem.cantidad * (precio_final - elem.descuento_total);
-            elem.total = parseFloat(elem.total).toFixed(2);
-
-            // TOTAL PARA CALCULAR GANANCIA BRUTA
-            console.log(elem.precio_final);
-            console.log(elem.descuento_total);
-        });
-    }
+        elem.porcen_dt = porcentaje;
+        elem.descuento_total = Math.round((porcentaje / 100) * elem.precio, 2);
+        elem.desc_final_monto = Math.round(
+            parseFloat(elem.tm_descuento_uni) +
+                parseFloat(elem.descuento_total),
+            2,
+        );
+        elem.desc_final_porcentaje =
+            parseFloat(elem.tp_descuento_uni) + parseFloat(elem.porcen_dt);
+        elem.precio_total =
+            parseFloat(elem.precio) - parseFloat(elem.desc_final_monto);
+        elem.total = parseFloat(elem.precio_total) * parseFloat(elem.cantidad);
+        elem.total = parseFloat(elem.total).toFixed(2);
+        // TOTAL PARA CALCULAR GANANCIA BRUTA
+        console.log(elem.precio_uni);
+        console.log(elem.descuento_total);
+    });
 };
 
 const detectarCambioFila = async (item, index) => {
@@ -593,15 +660,18 @@ const detectarCambioFila = async (item, index) => {
         return;
     }
 
+    form.venta_detalles[index].detalle_promocions = [];
+
     // inscripciones
     form.venta_detalles[index].inscripcions = await verificaInscripcionesPlan(
         item.producto,
         cant,
+        index,
     );
 
     // promociones
     form.venta_detalles[index].detalle_promocions =
-        await obtenerPromocionesProducto(item.producto_id, cant);
+        await obtenerPromocionesProducto(item.producto_id, cant, index);
 
     // descuentos
     calcularDescuentosYTotalesFila(index);
@@ -662,38 +732,104 @@ const recalcularStockActualCambioDetalle = (
         Number(item_sucursal_origen.stock_aux) - Number(cantidad);
 };
 
+const totalBeneficiariosFila = (index) => {
+    return form.venta_detalles[index].inscripcions.filter(
+        (elem) => elem.cliente_id != null && elem.cliente_id != "",
+    ).length;
+};
+
+const sincronizarVentaMetodos = () => {
+    const metodosActuales = new Map(
+        form.venta_metodos.map((item) => [item.metodo_pago_id, item]),
+    );
+
+    form.venta_metodos = form.venta_metodos_ids.map((metodoPagoId) => {
+        const metodoExistente = metodosActuales.get(metodoPagoId);
+
+        return (
+            metodoExistente || {
+                metodo_pago_id: metodoPagoId,
+                monto: 0,
+            }
+        );
+    });
+};
+
+watch(
+    () => [...form.venta_metodos_ids],
+    () => {
+        sincronizarVentaMetodos();
+    },
+    {
+        immediate: true,
+    },
+);
+
 const subTotalVenta = computed(() => {
-    if (!form?.venta_detalles) return 0;
+    if (!form?.venta_detalles) {
+        return 0;
+    }
+
     return form.venta_detalles.reduce((acc, item) => {
-        return acc + parseFloat(item.total_uni || 0);
+        return acc + (parseFloat(item.total_uni) || 0);
     }, 0);
+});
+
+const descuentoVenta = computed(() => {
+    const descuentoGeneral = parseFloat(form.descuento) || 0;
+
+    const descuentoConceptos = form.venta_detalles.reduce((acc, item) => {
+        return (
+            acc +
+            (parseFloat(item.tm_descuento_uni) || 0) *
+                (parseFloat(item.cantidad) || 0)
+        );
+    }, 0);
+
+    return descuentoGeneral + descuentoConceptos;
 });
 
 const totalVenta = computed(() => {
-    if (!form?.venta_detalles) return 0;
-    const subtotal = form.venta_detalles.reduce((acc, item) => {
-        return acc + parseFloat(item.total_uni || 0);
-    }, 0);
+    const subtotal = parseFloat(subTotalVenta.value) || 0;
 
-    const descuento = parseFloat(form.descuento) || 0;
-    return subtotal - descuento;
+    const descuentoGeneral = parseFloat(form.descuento) || 0;
+
+    return Math.max(subtotal - descuentoGeneral, 0);
+});
+
+const totalCancelado = computed(() => {
+    return form.venta_metodos.reduce((total, metodo) => {
+        return total + (parseFloat(metodo.monto) || 0);
+    }, 0);
 });
 const saldoVenta = computed(() => {
-    const cancelado =
-        (parseFloat(form.cancelado_efectivo) || 0) +
-        (parseFloat(form.cancelado_qr) || 0);
-    return (parseFloat(form.total) || 0) - cancelado;
+    const total = parseFloat(totalVenta.value) || 0;
+    const cancelado = parseFloat(totalCancelado.value) || 0;
+
+    return Math.max(total - cancelado, 0);
+});
+const excedenteVenta = computed(() => {
+    const total = parseFloat(totalVenta.value) || 0;
+    const cancelado = parseFloat(totalCancelado.value) || 0;
+
+    return Math.max(cancelado - total, 0);
 });
 
-watch([subTotalVenta, totalVenta, saldoVenta], () => {
-    form.metodo_pago = "";
-    if (form.cancelado > 0) {
-        form.metodo_pago = "EFECTIVO";
-    }
-    form.subtotal = subTotalVenta.value.toFixed(2);
-    form.total = totalVenta.value.toFixed(2);
-    form.saldo = saldoVenta.value.toFixed(2);
-});
+watch(
+    [subTotalVenta, totalVenta, totalCancelado, saldoVenta],
+    () => {
+        form.subtotal = subTotalVenta.value.toFixed(2);
+
+        form.total = totalVenta.value.toFixed(2);
+
+        form.cancelado = totalCancelado.value.toFixed(2);
+
+        form.saldo = saldoVenta.value.toFixed(2);
+    },
+    {
+        immediate: true,
+    },
+);
 
 const cambiarTipoVenta = () => {
     form.total_cancelado = form.total;
@@ -702,6 +838,50 @@ const cambiarTipoVenta = () => {
     }
 };
 
+const metodosPagoSeleccionados = computed(() => {
+    return form.venta_metodos;
+});
+
+const obtenerNombreMetodoPago = (metodoPagoId) => {
+    const metodo = props.metodo_pagos.find((item) => item.id === metodoPagoId);
+
+    return metodo?.nombre || "Método de pago";
+};
+const totalMontoMetodosPago = computed(() => {
+    return metodosPagoSeleccionados.value.reduce((total, metodo) => {
+        return total + Number(metodo.monto || 0);
+    }, 0);
+});
+
+const toggleMetodoPago = (metodoPagoId) => {
+    const index = form.venta_metodos_ids.indexOf(metodoPagoId);
+
+    if (index === -1) {
+        form.venta_metodos_ids.push(metodoPagoId);
+    } else {
+        form.venta_metodos_ids.splice(index, 1);
+    }
+};
+
+const obtenerMontoMetodo = (metodoPagoId) => {
+    const metodo = form.venta_metodos.find(
+        (item) => item.metodo_pago_id === metodoPagoId,
+    );
+
+    return metodo?.monto ?? 0;
+};
+
+const actualizarMontoMetodo = (metodoPagoId, monto) => {
+    const metodo = form.venta_metodos.find(
+        (item) => item.metodo_pago_id === metodoPagoId,
+    );
+
+    if (!metodo) {
+        return;
+    }
+
+    metodo.monto = Number(monto) || 0;
+};
 // CLIENTE
 const muestra_form_cliente = ref(false);
 const { setCliente, limpiarCliente, form: formCliente } = useClientes();
@@ -1462,12 +1642,6 @@ onMounted(() => {
                                                 min="1"
                                                 class="form-control form-control-sm text-center fw-bold"
                                                 v-model.number="item.cantidad"
-                                                @input="
-                                                    detectarCambioFila(
-                                                        item,
-                                                        index,
-                                                    )
-                                                "
                                                 @change="
                                                     detectarCambioFila(
                                                         item,
@@ -1488,12 +1662,6 @@ onMounted(() => {
                                                 step="0.01"
                                                 class="form-control text-end"
                                                 v-model.number="item.precio"
-                                                @input="
-                                                    detectarCambioFila(
-                                                        item,
-                                                        index,
-                                                    )
-                                                "
                                                 @change="
                                                     detectarCambioFila(
                                                         item,
@@ -1547,12 +1715,12 @@ onMounted(() => {
                                                 ({{
                                                     Number(
                                                         item.tp_descuento_uni,
-                                                    ) || 0
+                                                    ).toFixed(2) || 0
                                                 }}%)</strong
                                             >
                                         </div>
                                         <div>
-                                            <span>Precio finalsasdasd</span>
+                                            <span>Precio final</span>
                                             <strong class="text-total"
                                                 >Bs.
                                                 {{
@@ -1700,7 +1868,12 @@ onMounted(() => {
                                                     ><span
                                                         class="badge bg-success-subtle text-success"
                                                     >
-                                                        0 /
+                                                        {{
+                                                            totalBeneficiariosFila(
+                                                                index,
+                                                            )
+                                                        }}
+                                                        /
                                                         {{ item.cantidad }}
                                                         cupos </span
                                                     ><i
@@ -1945,7 +2118,7 @@ onMounted(() => {
                                 <span class="badge section-summary-value"
                                     >Bs.
                                     {{
-                                        Number(form.descuento || 0).toFixed(2)
+                                        Number(descuentoVenta || 0).toFixed(2)
                                     }}</span
                                 >
                                 <i
@@ -1966,12 +2139,11 @@ onMounted(() => {
                                                     (total, item) =>
                                                         total +
                                                         Number(
-                                                            item.descuento_uni ||
+                                                            item.tm_descuento_uni ||
                                                                 0,
                                                         ) *
                                                             Number(
-                                                                item.cantidad ||
-                                                                    0,
+                                                                item.cantidad,
                                                             ),
                                                     0,
                                                 )
@@ -1995,6 +2167,7 @@ onMounted(() => {
                                         min="0"
                                         step="0.01"
                                         placeholder="0.00"
+                                        @keyup="aplicarDescuentosTotal"
                                         @change="aplicarDescuentosTotal"
                                     />
                                 </div>
@@ -2010,20 +2183,24 @@ onMounted(() => {
                             <summary
                                 class="section-summary section-summary-success"
                             >
-                                <span class="section-summary-icon"
-                                    ><i class="fas fa-credit-card"></i
-                                ></span>
-                                <span class="flex-grow-1"
-                                    ><strong class="d-block"
-                                        >Métodos de pago</strong
-                                    ><small
-                                        >Selecciona cómo se realizará el
-                                        pago</small
-                                    ></span
-                                >
+                                <span class="section-summary-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </span>
+
+                                <span class="flex-grow-1">
+                                    <strong class="d-block">
+                                        Métodos de pago
+                                    </strong>
+
+                                    <small>
+                                        Selecciona cómo se realizará el pago
+                                    </small>
+                                </span>
+
+                                <!-- RESUMEN DE MÉTODOS Y MONTO PAGADO -->
                                 <el-popover
                                     placement="top"
-                                    width="260"
+                                    width="280"
                                     trigger="hover"
                                 >
                                     <div class="payment-popover">
@@ -2033,9 +2210,8 @@ onMounted(() => {
 
                                         <div
                                             v-if="
-                                                metodo_pagos.filter(
-                                                    (item) => item.seleccionado,
-                                                ).length === 0
+                                                metodosPagoSeleccionados.length ===
+                                                0
                                             "
                                             class="text-muted small"
                                         >
@@ -2044,23 +2220,47 @@ onMounted(() => {
 
                                         <div v-else>
                                             <div
-                                                v-for="metodo in metodo_pagos.filter(
-                                                    (item) => item.seleccionado,
-                                                )"
-                                                :key="metodo.id"
-                                                class="d-flex justify-content-between align-items-center gap-2 py-1 border-bottom"
+                                                v-for="metodo in metodosPagoSeleccionados"
+                                                :key="metodo.metodo_pago_id"
+                                                class="payment-popover-item"
                                             >
-                                                <span
-                                                    class="small text-truncate"
-                                                    >{{ metodo.nombre }}</span
-                                                >
-                                                <strong
-                                                    class="small text-nowrap"
-                                                    >Bs.
+                                                <span class="text-truncate">
+                                                    {{ metodo.nombre }}
+                                                </span>
+
+                                                <strong>
+                                                    Bs.
                                                     {{
-                                                        metodo.monto || "0.00"
-                                                    }}</strong
-                                                >
+                                                        Number(
+                                                            metodo.monto || 0,
+                                                        ).toFixed(2)
+                                                    }}
+                                                </strong>
+                                            </div>
+
+                                            <div class="payment-popover-total">
+                                                <span>Total pagado</span>
+
+                                                <strong>
+                                                    Bs.
+                                                    {{
+                                                        totalMontoMetodosPago.toFixed(
+                                                            2,
+                                                        )
+                                                    }}
+                                                </strong>
+                                            </div>
+
+                                            <div
+                                                v-if="saldoVenta > 0"
+                                                class="payment-popover-balance"
+                                            >
+                                                <span>Saldo restante</span>
+
+                                                <strong>
+                                                    Bs.
+                                                    {{ saldoVenta.toFixed(2) }}
+                                                </strong>
                                             </div>
                                         </div>
                                     </div>
@@ -2070,68 +2270,118 @@ onMounted(() => {
                                             class="badge section-summary-value payment-summary-badge"
                                         >
                                             {{
-                                                metodo_pagos.filter(
-                                                    (item) => item.seleccionado,
-                                                ).length
+                                                metodosPagoSeleccionados.length
                                             }}
                                         </span>
                                     </template>
                                 </el-popover>
+
                                 <i
                                     class="fas fa-chevron-down section-arrow"
                                 ></i>
                             </summary>
+
                             <div class="px-3 py-3">
-                                <div
-                                    v-for="metodo_pago in metodo_pagos"
-                                    :key="metodo_pago.id"
-                                    class="border rounded p-2 mb-2 payment-option"
-                                    :class="{
-                                        'payment-selected':
-                                            metodo_pago.seleccionado,
-                                    }"
-                                    @click="
-                                        metodo_pago.seleccionado =
-                                            !metodo_pago.seleccionado
-                                    "
+                                <el-checkbox-group
+                                    v-model="form.venta_metodos_ids"
+                                    class="w-100"
                                 >
                                     <div
-                                        class="d-flex align-items-center gap-2"
+                                        v-for="metodo_pago in metodo_pagos"
+                                        :key="metodo_pago.id"
+                                        class="border rounded p-2 mb-2 payment-option"
+                                        :class="{
+                                            'payment-selected':
+                                                form.venta_metodos_ids.includes(
+                                                    metodo_pago.id,
+                                                ),
+                                        }"
+                                        :aria-pressed="
+                                            form.venta_metodos_ids.includes(
+                                                metodo_pago.id,
+                                            )
+                                        "
+                                        @click="
+                                            toggleMetodoPago(metodo_pago.id)
+                                        "
                                     >
-                                        <div class="payment-icon">
-                                            <i :class="metodo_pago.icon"></i>
-                                        </div>
-                                        <div class="flex-grow-1 min-width-0">
-                                            <div class="fw-bold small">
-                                                {{ metodo_pago.nombre }}
-                                            </div>
-                                            <small
-                                                class="text-muted text-truncate d-block"
-                                                >{{
-                                                    metodo_pago.descripcion
-                                                }}</small
-                                            >
-                                        </div>
-                                        <i
-                                            v-if="metodo_pago.seleccionado"
-                                            class="fas fa-check-circle text-primary"
-                                        ></i>
-                                    </div>
-                                    <div
-                                        v-if="metodo_pago.seleccionado"
-                                        class="mt-2"
-                                        @click.stop
-                                    >
-                                        <el-input
-                                            v-model="metodo_pago.monto"
-                                            type="number"
-                                            min="0"
-                                            placeholder="Monto a pagar"
+                                        <div
+                                            class="d-flex align-items-center gap-2"
                                         >
-                                            <template #prepend>Bs.</template>
-                                        </el-input>
+                                            <div class="payment-icon">
+                                                <i
+                                                    :class="metodo_pago.icon"
+                                                ></i>
+                                            </div>
+
+                                            <div
+                                                class="flex-grow-1 min-width-0"
+                                            >
+                                                <div class="fw-bold small">
+                                                    {{ metodo_pago.nombre }}
+                                                </div>
+
+                                                <small
+                                                    class="text-muted text-truncate d-block"
+                                                >
+                                                    {{
+                                                        metodo_pago.descripcion
+                                                    }}
+                                                </small>
+                                            </div>
+
+                                            <!-- Checkbox vinculado al grupo,
+                         pero oculto visualmente -->
+                                            <el-checkbox
+                                                class="payment-checkbox-hidden"
+                                                :value="metodo_pago.id"
+                                                @click.stop
+                                            />
+
+                                            <i
+                                                v-if="
+                                                    form.venta_metodos_ids.includes(
+                                                        metodo_pago.id,
+                                                    )
+                                                "
+                                                class="fas fa-check-circle payment-check-icon"
+                                            ></i>
+                                        </div>
+
+                                        <!-- MONTO DEL MÉTODO -->
+                                        <div
+                                            v-if="
+                                                form.venta_metodos_ids.includes(
+                                                    metodo_pago.id,
+                                                )
+                                            "
+                                            class="mt-2"
+                                            @click.stop
+                                        >
+                                            <el-input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="Monto pagado"
+                                                :model-value="
+                                                    obtenerMontoMetodo(
+                                                        metodo_pago.id,
+                                                    )
+                                                "
+                                                @update:model-value="
+                                                    actualizarMontoMetodo(
+                                                        metodo_pago.id,
+                                                        $event,
+                                                    )
+                                                "
+                                            >
+                                                <template #prepend>
+                                                    Bs.
+                                                </template>
+                                            </el-input>
+                                        </div>
                                     </div>
-                                </div>
+                                </el-checkbox-group>
                             </div>
                         </details>
 

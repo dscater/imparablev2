@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal("descuento", 24, 2);
             $table->double("porcentaje_descuento", 8, 2);
             $table->decimal("total", 24, 2);
+            $table->decimal("cancelado", 24, 2)->default(0);
             $table->decimal("saldo", 24, 2);
             $table->date("fecha");
             $table->time("hora");

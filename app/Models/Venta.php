@@ -16,6 +16,7 @@ class Venta extends Model
         "descuento",
         "porcentaje_descuento",
         "total",
+        "cancelado",
         "saldo",
         "fecha",
         "hora",

@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Rules\VentaDetalleRule;
+use App\Rules\VentaMetodosRule;
+use App\Services\TipoVentaService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -23,6 +25,8 @@ class VentaStoreRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tipo_venta_service = new TipoVentaService();
+
         $rules = [
             "sucursal_id" => "required",
             "cliente_id" => "required",
@@ -34,8 +38,7 @@ class VentaStoreRequest extends FormRequest
             "subtotal" => "required|numeric|min:0",
             "total" => "required|numeric|min:0",
             "saldo" => "required|numeric|min:0",
-            "cancelado_efectivo" => "required|decimal:0,2|min:0",
-            "cancelado_qr" => "required|decimal:0,2|min:0",
+            "venta_metodos_ids" => ["required", new VentaMetodosRule($tipo_venta_service, $this->tipo_venta)],
             "venta_detalles" => ["required", new VentaDetalleRule()],
         ];
 

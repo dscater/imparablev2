@@ -904,3 +904,82 @@ details[open] .details-arrow {
     font-size: 0.62rem;
     font-weight: 700;
 }
+
+.payment-option {
+    cursor: pointer;
+    transition:
+        background-color 0.16s ease,
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
+}
+
+.payment-option:hover {
+    border-color: var(--bgBlueLight) !important;
+    background-color: var(--bgPrimary2);
+    transform: translateY(-1px);
+}
+
+.payment-option.payment-selected {
+    border-color: var(--bgBlue) !important;
+    background-color: var(--bgPrimary2);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+}
+
+.payment-checkbox-hidden {
+    display: none !important;
+}
+
+.payment-check-icon {
+    flex-shrink: 0;
+    color: var(--bgBlue);
+    font-size: 0.85rem;
+}
+
+.payment-option .el-input {
+    cursor: text;
+}
+
+.payment-option .el-input-group__prepend {
+    color: var(--bgBlue) !important;
+    background-color: var(--bgPrimary2) !important;
+    border-color: var(--bgBlueLight) !important;
+    font-weight: 600;
+}
+
+/* POPOVER */
+
+.payment-popover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--bgGrayLight);
+    font-size: 0.72rem;
+}
+
+.payment-popover-item span {
+    min-width: 0;
+}
+
+.payment-popover-item strong {
+    flex-shrink: 0;
+    color: var(--bgBlue);
+    white-space: nowrap;
+}
+
+.payment-popover-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.55rem;
+    border-top: 2px solid var(--bgGrayLight);
+    font-size: 0.75rem;
+}
+
+.payment-popover-total strong {
+    color: var(--bgSuccess);
+}
