@@ -11,6 +11,8 @@ class VentaLote extends Model
         "venta_detalle_id",
         "ingreso_detalle_id",
         "cantidad",
+        "costo_unitario",
+        "costo_total",
     ];
 
     public function venta()

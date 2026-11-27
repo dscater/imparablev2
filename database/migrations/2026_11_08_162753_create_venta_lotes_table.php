@@ -17,6 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger("venta_detalle_id");
             $table->unsignedBigInteger("ingreso_detalle_id");
             $table->double("cantidad", 8, 2);
+            $table->decimal("costo_unitario", 24, 2);
+            $table->decimal("costo_total", 24, 2);
             $table->timestamps();
 
             $table->foreign("venta_id")->on("ventas")->references("id");

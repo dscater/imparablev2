@@ -270,7 +270,7 @@ class UserService
     public function crear(array $datos): User
     {
         $sucursal_todos = $datos["tipo"] == "ADMINISTRACIÓN" ? 1 : 0;
-        $sucursal_ids = $datos["tipo"] == "ADMINISTRACIÓN" ? NULL : $datos["sucursal_ids"];
+        $sucursal_ids = $datos["tipo"] == "ADMINISTRACIÓN" && $datos["tipo"] != "CLIENTE" ? NULL : $datos["sucursal_ids"] ?? [];
 
         $user = User::create([
             "usuario" => $this->getNombreUsuario($datos["nombre"], $datos["paterno"]),
@@ -284,7 +284,7 @@ class UserService
             "acceso" => $datos["acceso"],
             "password" => $datos["ci"],
             "tipo" => mb_strtoupper($datos["tipo"]),
-            "role_id" => $datos["role_id"],
+            "role_id" => $datos["role_id"] ?? null,
             "sucursal_todos" => $sucursal_todos,
             "fecha_registro" => date("Y-m-d")
         ]);
@@ -294,14 +294,16 @@ class UserService
             $this->cargarFoto($user, $datos["foto"]);
         }
 
+        if ($datos["tipo"] != 'CLIENTE') {
+            $sucursales = collect($sucursal_ids)->map(function ($id) {
+                return [
+                    'sucursal_id' => $id,
+                ];
+            })->toArray();
 
-        $sucursales = collect($sucursal_ids)->map(function ($id) {
-            return [
-                'sucursal_id' => $id,
-            ];
-        })->toArray();
+            $user->user_sucursals()->createMany($sucursales);
+        }
 
-        $user->user_sucursals()->createMany($sucursales);
 
         $this->limpiarCacheListado();
         // registrar accion

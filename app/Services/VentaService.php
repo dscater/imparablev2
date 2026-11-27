@@ -11,8 +11,10 @@ use App\Models\Venta;
 use App\Models\User;
 use App\Models\VentaCobro;
 use App\Models\VentaDetalle;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +30,9 @@ class VentaService
         private HistorialAccionService $historialAccionService,
         private KardexProductoService $kardex_producto_service,
         private ProductoService $producto_service,
-        private MovimientoCajaService $movimiento_caja_service
+        private MovimientoCajaService $movimiento_caja_service,
+        private TipoVentaService $tipo_venta_service,
+        private UserService $user_service
     ) {}
 
     public function listado($fecha_ini = null, $fecha_fin = null): Collection
@@ -169,59 +173,55 @@ class VentaService
     public function crear(array $datos): Venta
     {
         $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
-        $cliente = Cliente::findOrFail($datos["cliente_id"]);
+        $cliente = Cliente::find($datos["cliente_id"]);
 
-        $tipo_pago = '';
-        if ((float)$datos["cancelado_efectivo"] > 0) {
-            $tipo_pago = 'EFECTIVO';
-        }
-        if ((float)$datos["cancelado_qr"] > 0) {
-            $tipo_pago = 'QR';
-        }
-        if ((float)$datos["cancelado_efectivo"] > 0 && (float)$datos["cancelado_qr"] > 0) {
-            $tipo_pago = 'EFECTIVO-QR';
+        if ($datos["tipo_venta"] == 'AL CONTADO') {
+            if (empty($datos["venta_metodos"])) {
+                throw new Exception("Debes agregar al menos un método de pago en una venta AL CONTADO");
+            }
         }
 
-        $total_cancelado = (float)($datos["cancelado_efectivo"] ?? 0) + (float)($datos["cancelado_qr"] ?? 0);
+        $venta_metodos = $datos["venta_metodos"];
+        $total_cancelado = array_sum(array_column($venta_metodos, "monto"));
 
         if ($datos["tipo_venta"] == 'AL CONTADO') {
             if ((float)$datos["total"] != (float)$total_cancelado || $datos["saldo"] > 0) {
                 throw new Exception("El monto cancelado en venta AL CONTADO debe ser igual al total y el saldo debe ser 0");
             }
-
-            if (!$datos["cancelado_efectivo"] && !$datos["cancelado_qr"]) {
-                throw new Exception("No puedes dejar vacíos los campos EFECTIVO y QR");
-            }
-
-            if ((float)$datos["cancelado_efectivo"] <= 0 && (float)$datos["cancelado_qr"] <= 0) {
-                throw new Exception("No puedes registrar EFECTIVO y QR con un valor menor o igual a 0");
-            }
         }
 
+        $fecha_actual = Carbon::now("America/La_Paz")->format("Y-m-d");
+        $hora_actual = Carbon::now("America/La_Paz")->format("H:i:s");
+        $user = Auth::user();
         $venta = Venta::create([
-            "sucursal_id" => $sucursal->sucursal_id,
             "sucursal_id" => $sucursal->id,
-            "cliente_id" => $cliente->id,
-            "tipo_documento_id" => $cliente->tipo_documento_id,
-            "nit_ci" => $cliente->full_ci,
+            "cliente_id" => $cliente ? $cliente->id : NULL,
+            "nit_ci" => $cliente ? $cliente->full_ci : '0',
             "tipo_venta" => mb_strtoupper($datos["tipo_venta"]),
-            "tipo_pago" => $tipo_pago ?? NULL,
             "subtotal" => $datos["subtotal"],
             "descuento" => $datos["descuento"] ?? 0,
             "porcentaje_descuento" => $datos["porcentaje_descuento"] ?? 0,
             "total" => $datos["total"],
-            "cancelado_efectivo" => $datos["cancelado_efectivo"],
-            "cancelado_qr" => $datos["cancelado_qr"],
-            "total_cancelado" => $total_cancelado,
+            "cancelado" => $total_cancelado,
             "saldo" => $datos["saldo"],
-            "fecha" => date("Y-m-d"),
-            "hora" => date("H:i:s"),
-            "fecha_registro" => date("Y-m-d"),
-            "user_id" => Auth::user()->id
+            "fecha" => $datos["fecha"] ?? $fecha_actual,
+            "hora" => $datos["hora"] ?? $hora_actual,
+            "fecha_registro" => $fecha_actual,
+            "user_id" => $user->id,
         ]);
 
         $venta->codigo_venta = "V" . $venta->id;
         $venta->save();
+
+        $datos_movimientos = array_map(function ($item) use ($venta) {
+            return [
+                "venta_id" => $venta->id,
+                "metodo_pago_id" => $item["metodo_pago_id"],
+                "monto" => $item["monto"],
+            ];
+        }, $datos["venta_metodos"]);
+
+        $venta->venta_metodos()->createMany($datos_movimientos);
         foreach ($datos["venta_detalles"] as $item) {
             $datos_venta_detalle = [
                 "venta_id" => $venta->id,
@@ -230,55 +230,165 @@ class VentaService
                 "precio" => $item["precio"],
                 "descuento_uni" => $item["descuento_uni"],
                 "porcen_du" => $item["porcen_du"],
+                "descuento_promocion" => $item["descuento_promocion"],
+                "porcen_promocion" => $item["porcen_promocion"],
+                "tm_descuento_uni" => $item["tm_descuento_uni"],
+                "tp_descuento_uni" => $item["tp_descuento_uni"],
                 "descuento_total" => $item["descuento_total"],
-                "porcen_dt" => $item["porcen_dt"] ?? 0,
-                "precio_final" => $item["precio_final"],
-                "total" => $item["total"],
+                "porcen_dt" => $item["porcen_dt"],
+                "precio_uni" => $item["precio_uni"],
+                "precio_total" => $item["precio_total"],
+                "total_sd" => $item["total_sd"],
                 "total_uni" => $item["total_uni"],
+                "desc_final_monto" => $item["desc_final_monto"],
+                "desc_final_porcentaje" => $item["desc_final_porcentaje"],
+                "total" => $item["total"],
             ];
 
             $venta_detalle = VentaDetalle::create($datos_venta_detalle);
             $producto = Producto::findOrFail($venta_detalle->producto_id);
 
-
             // VERIFICAR STOCK
-            $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->sucursal_id, $producto->id, $item["cantidad"]);
+            if ($producto->tipo == 'PRODUCTO') {
+                $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $producto->id, $item["cantidad"]);
 
-            if (!$verifica_stock[0]) {
-                throw new Exception("Stock insuficiente para el producto $producto->nombre. Disponible: $verifica_stock[1]");
+                if (!$verifica_stock[0]) {
+                    throw new Exception("Stock insuficiente para el producto $producto->nombre. Disponible: $verifica_stock[1]");
+                }
             }
 
-            // REGISTRAR EGRESO STOCK
-            $this->kardex_producto_service->registrarMovimiento(
-                $venta->sucursal_id,
-                $venta->sucursal_id,
-                "VENTA DE PRODUCTO",
-                "EGRESO",
-                NULL,
-                $producto,
-                $venta_detalle->cantidad,
-                $venta_detalle->precio_final,
-                "SALIDA POR VENTA",
-                "VentaDetalle",
-                $venta_detalle->id
-            );
+            // REGISTRAR PROMOCIONES
+            $detalle_promocions = $item["detalle_promocions"] ?? [];
+            if ($detalle_promocions) {
+                $datos_promociones = array_map(function ($elem) {
+                    return [
+                        "promocion_id" => $elem["promocion_id"],
+                        "porcentaje_monto" => $elem["porcentaje_monto"],
+                        "porcentaje" => $elem["porcentaje"],
+                        "monto" => $elem["monto"],
+                    ];
+                }, $detalle_promocions);
+
+                $venta_detalle->detalle_promocions()->createMany($datos_promociones);
+            }
+
+            // REGISTRAR EGRESO STOCK LOTE SI ES UN PRODUCTO
+            if ($producto->tipo == 'PRODUCTO') {
+                $salidasFIFO = $this->producto_service->obtenerLotesFIFO(
+                    sucursalId: $venta->sucursal_id,
+                    productoId: $producto->id,
+                    cantidadSolicitada: $venta_detalle->cantidad
+                );
+                $costoTotalVenta = 0;
+                foreach ($salidasFIFO as $salida) {
+                    $lote = IngresoDetalle::query()
+                        ->whereKey($salida['ingreso_detalle_id'])
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $cantidadSalida = (float) $salida['cantidad'];
+
+                    if ((float) $lote->cantidad_saldo < $cantidadSalida) {
+                        throw new \Exception(
+                            "Stock insuficiente en el lote {$lote->id}."
+                        );
+                    }
+
+                    $costoUnitario = (float) $lote->costo_unitario;
+                    $costoTotal = $cantidadSalida * $costoUnitario;
+
+                    $lote->update([
+                        'cantidad_salida' => (float) $lote->cantidad_salida
+                            + $cantidadSalida,
+
+                        'disponible' => (float) $lote->cantidad_saldo
+                            - $cantidadSalida,
+                    ]);
+
+                    $venta_detalle->venta_lotes()->create([
+                        'venta_id' => $venta->id,
+                        'venta_detalle_id' => $venta_detalle->id,
+                        'ingreso_detalle_id' => $lote->id,
+                        'cantidad' => $cantidadSalida,
+                        'costo_unitario' => $costoUnitario,
+                        'costo_total' => $costoTotal,
+                    ]);
+
+                    $this->registrarMovimientoFIFO(
+                        venta: $venta,
+                        venta_detalle: $venta_detalle,
+                        producto: $producto,
+                        lote: $lote,
+                        cantidad: $cantidadSalida,
+                        costoUnitario: $costoUnitario,
+                        costoTotal: $costoTotal
+                    );
+
+                    $costoTotalVenta += $costoTotal;
+                }
+
+                $venta_detalle->update([
+                    'costo_total' => $costoTotalVenta,
+                ]);
+            }
+
+            // INSCRIPCIONES
+            if ($producto->tipo == 'PLAN') {
+                $datos_inscripcions = array_map(function ($elem) use ($venta, $venta_detalle, $producto, $fecha_actual, $hora_actual, $user) {
+                    // crear su usuario
+                    $cliente = Cliente::find($elem["cliente_id"]);
+                    $user_cliente = $this->user_service->crear([
+                        "nombre" => mb_strtoupper($cliente->nombre),
+                        "paterno" => mb_strtoupper($cliente->paterno),
+                        "materno" => mb_strtoupper($cliente->materno),
+                        "ci" => $cliente->ci,
+                        "ci_exp" => $cliente->ci_exp,
+                        "correo" => $cliente->correo,
+                        "fono" => $cliente->fono,
+                        "tipo" => "CLIENTE",
+                        "acceso" => 1,
+                    ]);
+
+                    $fecha_fin = null;
+                    if ($producto->indefinido == 0) {
+                        $fecha_fin = Carbon::parse($elem["fecha_inicio"])
+                            ->addDays($producto->duracion_dias - 1)
+                            ->format('Y-m-d');
+                    }
+                    $dato_registro = [
+                        "sucursal_id" => $venta->sucursal_id,
+                        "user_cliente_id" => $user_cliente->id,
+                        "cliente_id" => $cliente->id,
+                        "producto_id" => $venta_detalle->producto_id,
+                        "venta_detalle_id" => $venta_detalle->id,
+                        "fecha_inicio" => $elem["fecha_inicio"],
+                        "estado" => 1,
+                        "dias_restantes" => $producto->duracion_dias,
+                        "fecha_fin" => $fecha_fin,
+                        "fecha" => $fecha_actual,
+                        "hora" => $hora_actual,
+                        "user_id" => $user->id,
+                    ];
+                    return $dato_registro;
+                }, $item["inscripcions"]);
+
+                $venta_detalle->inscripcions()->createMany($datos_inscripcions);
+            }
         }
 
         // MOVIMIENTO CAJA
         if ((float)$total_cancelado > 0) {
             $movimiento_caja = [
                 "sucursal_id" => $venta->sucursal_id,
-                "sucursal_id" => $venta->sucursal_id,
                 "tipo" => "VENTA",
                 "modulo" => "Venta",
                 "registro_id" => $venta->id,
-                "monto_efectivo" => $venta->cancelado_efectivo,
-                "monto_qr" => $venta->cancelado_qr,
+                "monto_total" => $venta->cancelado,
                 "tipo_movimiento" => "INGRESO",
-                "tipo_pago" => $venta->tipo_pago,
                 "descripcion" => "INGRESO POR VENTA",
                 "fecha" => $venta->fecha,
                 "hora" => $venta->hora,
+                "movimiento_metodos" => $venta->venta_metodos->toArray()
             ];
             $this->movimiento_caja_service->crear($movimiento_caja);
         }
@@ -340,7 +450,6 @@ class VentaService
         }
 
         $venta->update([
-            "sucursal_id" => $sucursal->sucursal_id,
             "sucursal_id" => $sucursal->id,
             "cliente_id" => $cliente->id,
             "tipo_documento_id" => $cliente->tipo_documento_id,
@@ -377,7 +486,7 @@ class VentaService
                 // CREAR
                 $venta_detalle = VentaDetalle::create($datos_venta_detalle);
                 // VERIFICAR STOCK
-                $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $venta->sucursal_id, $producto->id, $item["cantidad"]);
+                $verifica_stock = $this->producto_service->verificaStockCantidad($venta->sucursal_id, $producto->id, $item["cantidad"]);
 
                 if (!$verifica_stock[0]) {
                     throw new Exception("Stock insuficiente para el producto $producto->nombre. Disponible: $verifica_stock[1]");
@@ -385,7 +494,6 @@ class VentaService
 
                 // REGISTRAR EGRESO STOCK
                 $this->kardex_producto_service->registrarMovimiento(
-                    $venta->sucursal_id,
                     $venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "EGRESO",
@@ -402,7 +510,6 @@ class VentaService
                 // REGISTRAR INGRESO STOCK POR MODIFICACIÓN $old_venta
                 $this->kardex_producto_service->registrarMovimiento(
                     $old_venta->sucursal_id,
-                    $old_venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "INGRESO",
                     NULL,
@@ -418,7 +525,6 @@ class VentaService
 
                 // REGISTRAR EGRESO STOCK
                 $this->kardex_producto_service->registrarMovimiento(
-                    $venta->sucursal_id,
                     $venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "EGRESO",
@@ -439,7 +545,6 @@ class VentaService
                 $venta_detalle = VentaDetalle::findOrFail($id);
                 // REGISTRAR INGRESO STOCK POR ELIMINACIÓN
                 $this->kardex_producto_service->registrarMovimiento(
-                    $old_venta->sucursal_id,
                     $old_venta->sucursal_id,
                     "VENTA DE PRODUCTO",
                     "INGRESO",
@@ -472,7 +577,6 @@ class VentaService
         // MOVIMIENTO CAJA
         if ((float)$total_cancelado > 0) {
             $movimiento_caja = [
-                "sucursal_id" => $venta->sucursal_id,
                 "sucursal_id" => $venta->sucursal_id,
                 "tipo" => "VENTA",
                 "modulo" => "Venta",
@@ -519,7 +623,6 @@ class VentaService
             $producto = Producto::findOrFail($venta_detalle->producto_id);
             // REGISTRAR EGRESO STOCK POR ELIMINACIÓN
             $this->kardex_producto_service->registrarMovimiento(
-                $old_venta->sucursal_id,
                 $old_venta->sucursal_id,
                 "VENTA DE PRODUCTO",
                 "EGRESO",
@@ -576,7 +679,6 @@ class VentaService
             $producto = Producto::findOrFail($venta_detalle->producto_id);
             // REGISTRAR INGRESO STOCK POR ELIMINACIÓN
             $this->kardex_producto_service->registrarMovimiento(
-                $old_venta->sucursal_id,
                 $old_venta->sucursal_id,
                 "VENTA DE PRODUCTO",
                 "INGRESO",

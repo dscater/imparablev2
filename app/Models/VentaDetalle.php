@@ -25,6 +25,7 @@ class VentaDetalle extends Model
         "total_uni", // total por fila sin tomar en cuenta descuento del total para mostrar = cantidad * precio_uni
         "desc_final_monto", // descuento monto final (tm_descuento_uni + descuenti_total)
         "desc_final_porcentaje", // descueto porcentaje final (tp_descuento_uni + porcen_dt)
+        "costo_total", // costo del lote para la utilidad bruta
         "total", // total registrado = cantidad * precio_total | para calcular ingreso bruto
         "status",
     ];

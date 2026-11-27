@@ -15,7 +15,8 @@ class IngresoDetalle extends Model
         "faltantes",
         "repuesto",
         "observacion",
-        "cantidad_fisica", // Cantidad que ingresa al stock
+        "cantidad_fisica", // Cantidad que ingresa al stock existente del lote
+        "cantidad_salida", // Cantidad salida del lote
         "disponible", // Cantidad disponible del lote
         "costo",
         "subtotal",

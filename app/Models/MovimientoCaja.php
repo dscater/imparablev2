@@ -8,20 +8,16 @@ class MovimientoCaja extends Model
 {
     protected $fillable = [
         "sucursal_id",
-        "almacen_id",
         "tipo",
         "modulo",
         "registro_id",
-        "monto_efectivo",
-        "monto_qr",
         "monto_total",
         "tipo_movimiento", //INGRESO-EGRESO
-        "tipo_pago", //EFECTIVO-QR | EFECTIVO | QR
         "descripcion",
         "fecha",
         "hora",
         "user_id",
-        "status" // 1: activo, 0: eliminado
+        "status", // 1: activo, 0: eliminado
     ];
 
     protected $appends = ["fecha_t", "fecha_hora_t"];
@@ -41,9 +37,9 @@ class MovimientoCaja extends Model
         return $this->belongsTo(Sucursal::class, 'sucursal_id');
     }
 
-    public function almacen()
+    public function movimiento_metodos()
     {
-        return $this->belongsTo(Almacen::class, 'almacen_id');
+        return $this->hasMany(MovimientoMetodo::class, 'movimiento_caja_id');
     }
 
     public function user()

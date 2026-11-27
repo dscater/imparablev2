@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Models\Producto;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Translation\PotentiallyTranslatedString;
@@ -33,6 +34,22 @@ class VentaDetalleRule implements ValidationRule
 
             if (!is_numeric($detalle['cantidad']) || $detalle['cantidad'] < 0) {
                 $fail("La cantidad del producto " . ($index + 1) . " debe ser mayor a 0.");
+            }
+
+            if ($detalle["producto"]["tipo"] == 'PLAN') {
+                $producto_plan = Producto::find($detalle["producto_id"]);
+                if ($producto_plan->duracion_dias > 1) {
+                    // validar beneficiarios
+                    foreach ($detalle["inscripcions"] as $inscripcion) {
+                        // cliente
+                        if ($inscripcion['cliente_id'] === "" || $inscripcion['cliente_id'] === null) {
+                            $fail("Debes asignar el/los beneficiario(s) del concepto {$producto_plan->nombre}");
+                        }
+                        if ($inscripcion['fecha_inicio'] === "" || $inscripcion['fecha_inicio'] === null) {
+                            $fail("Debes indicar la fecha de inicio del concepto {$producto_plan->nombre}");
+                        }
+                    }
+                }
             }
         }
     }

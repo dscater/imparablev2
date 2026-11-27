@@ -305,7 +305,9 @@ class ProductoSucursalService
                 "venta_id" => "",
                 "venta_detalle_id" => "",
                 "ingreso_detalle_id" => $detalle->id,
-                "cantidad" => $cantidad_usar
+                "cantidad" => $cantidad_usar,
+                "costo_unitario" => $detalle->costo,
+                "costo_total" => $cantidad_usar * $detalle->costo,
             ];
 
             // Descontar la cantidad utilizada de la cantidad pendiente.
@@ -321,13 +323,63 @@ class ProductoSucursalService
         return ["producto" => $producto, "venta_lotes" => $venta_lotes];
     }
 
+    public function obtenerLotesFIFO(
+        int $sucursalId,
+        int $productoId,
+        float $cantidadSolicitada
+    ): array {
+        $lotes = IngresoDetalle::query()
+            ->whereHas('ingreso_producto', function ($q) use ($sucursalId) {
+                $q->where('sucursal_id', $sucursalId);
+            })
+            ->where('producto_id', $productoId)
+            ->where('disponible', '>', 0)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        $stockDisponible = (float) $lotes->sum('disponible');
+
+        if ($stockDisponible < $cantidadSolicitada) {
+            throw new \Exception(
+                "Stock insuficiente. Solicitado: {$cantidadSolicitada}, " .
+                    "disponible: {$stockDisponible}"
+            );
+        }
+
+        $pendiente = $cantidadSolicitada;
+        $salidas = [];
+
+        foreach ($lotes as $lote) {
+            if ($pendiente <= 0) {
+                break;
+            }
+
+            $stockLote = (float) $lote->disponible;
+            $cantidadSalida = min($pendiente, $stockLote);
+
+            $costoUnitario = (float) $lote->costo_unitario;
+            $costoTotal = $cantidadSalida * $costoUnitario;
+
+            $salidas[] = [
+                'ingreso_detalle_id' => $lote->id,
+                'cantidad' => $cantidadSalida,
+                'costo_unitario' => $costoUnitario,
+                'costo_total' => $costoTotal,
+            ];
+
+            $pendiente -= $cantidadSalida;
+        }
+
+        return $salidas;
+    }
+
     public function cargaProductoSucursals($datos)
     {
         $fecha_actual = date("Y-m-d");
         $sucursal_id = $datos["sucursal_id"];
 
         $sucursal = Sucursal::findOrFail($sucursal_id);
-        $sucursal = Sucursal::findOrFail($sucursal->sucursal_id);
 
         $archivo = $datos["archivo"];
 
@@ -804,7 +856,7 @@ class ProductoSucursalService
 
 
             $registro_producto = Producto::findOrFail($producto->id);
-            $registro = $this->kardex_producto_service->registrarMovimiento($sucursal->sucursal_id, $sucursal->id, "CARGA MASIVA", "INGRESO", NULL, $registro_producto, $stock, $registro_producto->precio_compra, "INCREMENTO DE STOCK", "", 0);
+            $registro = $this->kardex_producto_service->registrarMovimiento($sucursal->id, "CARGA MASIVA", "INGRESO", NULL, $registro_producto, $stock, $registro_producto->precio_compra, "INCREMENTO DE STOCK", "", 0);
 
             $productoSucursal[$producto->id] = $registro;
         }

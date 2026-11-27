@@ -7,6 +7,7 @@ use App\Rules\VentaMetodosRule;
 use App\Services\TipoVentaService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class VentaStoreRequest extends FormRequest
 {
@@ -29,22 +30,22 @@ class VentaStoreRequest extends FormRequest
 
         $rules = [
             "sucursal_id" => "required",
-            "cliente_id" => "required",
+            "cliente_id" => "nullable",
             "tipo_venta" => "required",
-            "tipo_documento_id" => "nullable",
             "descripcion" => "nullable",
-            "descuento" => "nullable|numeric|min:0",
+            "subtotal" => "required|decimal:0,2|min:0",
+            "descuento" => "nullable|decimal:0,2|min:0",
             "porcentaje_descuento" => "nullable|numeric|min:0",
-            "subtotal" => "required|numeric|min:0",
-            "total" => "required|numeric|min:0",
-            "saldo" => "required|numeric|min:0",
-            "venta_metodos_ids" => ["required", new VentaMetodosRule($tipo_venta_service, $this->tipo_venta)],
+            "total" => "required|decimal:0,2|min:0",
+            "saldo" => "required|decimal:0,2|min:0",
             "venta_detalles" => ["required", new VentaDetalleRule()],
         ];
 
-        // if ($this->cancelado > 0) {
-        //     $rules["tipo_pago"] = "required";
-        // }
+        if ($this->tipo_venta == 'AL CONTADO') {
+            $rules["venta_metodos"] = ["required", new VentaMetodosRule($tipo_venta_service, $this->tipo_venta)];
+        } else {
+            $rules["venta_metodos"] = ["nullable", new VentaMetodosRule($tipo_venta_service, $this->tipo_venta)];
+        }
 
         return $rules;
     }
@@ -64,12 +65,7 @@ class VentaStoreRequest extends FormRequest
             "saldo.numeric" => "El saldo debe ser un valor númerico",
             "descuento.numeric" => "El descuento debe ser un valor númerico",
             "venta_detalles.required" => "Debes agregar al menos un producto",
-            "cancelado_efectivo.required" => "Debes completar el campo de cancelado en efectivo.",
-            "cancelado_efectivo.decimal" => "Debes ingresar un valor númerico de hasta 2 decimales",
-            "cancelado_efectivo.min" => "Debes ingresar un valor númerico no puede ser menor :min",
-            "cancelado_qr.required" => "Debes completar el campo de cancelado en qr.",
-            "cancelado_qr.decimal" => "Debes ingresar un valor númerico de hasta 2 decimales",
-            "cancelado_qr.min" => "Debes ingresar un valor númerico no puede ser menor :min",
+            "venta_metodos.required" => "Debes agregar al menos un método de pago"
         ];
     }
 }

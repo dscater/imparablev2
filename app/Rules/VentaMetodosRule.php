@@ -2,9 +2,11 @@
 
 namespace App\Rules;
 
+use App\Models\MetodoPago;
 use App\Services\TipoVentaService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
 class VentaMetodosRule implements ValidationRule
@@ -32,19 +34,17 @@ class VentaMetodosRule implements ValidationRule
             return;
         }
 
-        foreach ($value as $index => $detalle) {
-            // precio
-            if ($detalle['precio'] === "" || $detalle['precio'] === null) {
-                $fail("El precio del producto " . ($index + 1) . " es obligatorio.");
-            }
+        foreach ($value as $index => $detalle_metodo) {
+            if ($this->tipoVenta == 'AL CONTADO') {
+                $metodo_pago = MetodoPago::find($detalle_metodo["metodo_pago_id"]);
+                // monto
+                if ($detalle_metodo['monto'] === "" || $detalle_metodo['monto'] === null) {
+                    $fail("El monto del método de pago {$metodo_pago->nombre} es obligatorio.");
+                }
 
-            // cantidad
-            if ($detalle['cantidad'] === "" || $detalle['cantidad'] === null) {
-                $fail("La cantidad del producto " . ($index + 1) . " es obligatorio.");
-            }
-
-            if (!is_numeric($detalle['cantidad']) || $detalle['cantidad'] < 0) {
-                $fail("La cantidad del producto " . ($index + 1) . " debe ser mayor a 0.");
+                if (!is_numeric($detalle_metodo['monto']) || $detalle_metodo['monto'] <= 0) {
+                    $fail("El monto del método de pago {$metodo_pago->nombre} no puede ser menor a 0.");
+                }
             }
         }
     }

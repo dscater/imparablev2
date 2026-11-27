@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string("modulo")->nullable();
             $table->unsignedBigInteger("registro_id")->nullable();
             $table->decimal("monto_total", 24, 2);
-            $table->unsignedBigInteger("metodo_pago_id");
             $table->string("tipo_movimiento"); //INGRESO-EGRESO
             $table->string("descripcion", 900);
             $table->date("fecha");
@@ -28,7 +27,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign("sucursal_id")->on("sucursals")->references("id");
-            $table->foreign("metodo_pago_id")->on("metodo_pagos")->references("id");
             $table->foreign("user_id")->on("users")->references("id");
         });
     }

@@ -401,6 +401,7 @@ const agregarProductoVenta = async (item) => {
                 desc_final_monto: 0,
                 desc_final_porcentaje: 0,
                 precio_total: precio,
+                costo_total: 0,
                 total: subtotal.toFixed(2),
                 detalle_promocions: detalle_promocions,
                 inscripcions: inscripcions,

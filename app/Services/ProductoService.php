@@ -277,18 +277,16 @@ class ProductoService
         return true;
     }
 
-    public function incrementarStock(int $sucursal_id, int $almacen_id, int $producto_id, float $cantidad = 1)
+    public function incrementarStock(int $sucursal_id, int $producto_id, float $cantidad = 1)
     {
         $producto = ProductoSucursal::where("producto_id", $producto_id)
             ->where("sucursal_id", $sucursal_id)
-            ->where("almacen_id", $almacen_id)
             ->get()
             ->first();
 
         if (!$producto) {
             $producto = ProductoSucursal::create([
                 "sucursal_id" => $sucursal_id,
-                "almacen_id" => $almacen_id,
                 "producto_id" => $producto_id,
                 "stock_actual" => 0,
             ]);
@@ -303,15 +301,14 @@ class ProductoService
 
         return $producto;
     }
-    public function decrementarStock(int $sucursal_id, int $almacen_id, int $producto_id, float $cantidad = 1)
+    public function decrementarStock(int $sucursal_id, int $producto_id, float $cantidad = 1)
     {
         $producto = ProductoSucursal::where("producto_id", $producto_id)
             ->where("sucursal_id", $sucursal_id)
-            ->where("almacen_id", $almacen_id)
             ->get()
             ->first();
         // validar stock
-        if (!$this->verificaStock($sucursal_id, $almacen_id, $producto_id, $cantidad)) {
+        if (!$this->verificaStock($sucursal_id, $producto_id, $cantidad)) {
             throw new Exception("Stock insuficiente del producto " . $producto->nombre . ", disponible " . $producto->stock_actual);
         }
 
@@ -325,11 +322,10 @@ class ProductoService
     }
 
     // stock_actual
-    public function verificaStock($sucursal_id, $almacen_id, $producto_id, $cantidad): bool
+    public function verificaStock($sucursal_id, $producto_id, $cantidad): bool
     {
         $producto = ProductoSucursal::where("producto_id", $producto_id)
             ->where("sucursal_id", $sucursal_id)
-            ->where("almacen_id", $almacen_id)
             ->get()
             ->first();
 
@@ -342,11 +338,10 @@ class ProductoService
     }
 
     // stock_actual
-    public function verificaStockCantidad($sucursal_id, $almacen_id, $producto_id, $cantidad): array
+    public function verificaStockCantidad($sucursal_id, $producto_id, $cantidad): array
     {
         $producto = ProductoSucursal::where("producto_id", $producto_id)
             ->where("sucursal_id", $sucursal_id)
-            ->where("almacen_id", $almacen_id)
             ->get()
             ->first();
         $disponible = false;
@@ -358,11 +353,10 @@ class ProductoService
     }
 
     // stock_actual
-    public function validaStockCantidad($sucursal_id, $almacen_id, $producto_id, $cantidad)
+    public function validaStockCantidad($sucursal_id, $producto_id, $cantidad)
     {
         $producto = ProductoSucursal::where("producto_id", $producto_id)
             ->where("sucursal_id", $sucursal_id)
-            ->where("almacen_id", $almacen_id)
             ->get()
             ->first();
         $disponible = false;

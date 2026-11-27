@@ -26,11 +26,12 @@ return new class extends Migration
             $table->decimal("tm_descuento_uni", 24, 2)->default(0); // total monto descontado x unidad
             $table->double("tp_descuento_uni", 11, 7)->default(0); // total porcentaje descontado x unidad
             $table->decimal("precio_uni", 24, 2); // precio uni (precio con descuentos) obtenido despues de descuento_uni + descuento_promocion
+            $table->decimal("precio_total", 24, 2); // precio total (precio_uni - descuento_total)
             $table->decimal("total_sd", 24, 2); // total sin descuento = cantidad * precio | para calcular ingreso bruto
             $table->decimal("total_uni", 24, 2); // total por fila sin tomar en cuenta descuento del total para mostrar = cantidad * (precio - descuento_uni)
             $table->decimal("desc_final_monto", 24, 2)->default(0); // descuento monto final (tm_descuento_uni + descuenti_total)
             $table->double("desc_final_porcentaje", 11, 7)->default(0); // descueto porcentaje final (tp_descuento_uni + porcen_dt)
-            $table->decimal("precio_total", 24, 2); // precio total (precio_uni - descuento_total)
+            $table->decimal("costo_total", 24, 2); // costo del lote para la utilidad bruta
             $table->decimal("total", 24, 2); // total registrado = cantidad * precio_final | para calcular ingreso bruto
             $table->integer("status")->default(1);
             $table->timestamps();

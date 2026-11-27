@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string("codigo_venta")->nullable();
             $table->unsignedBigInteger("sucursal_id");
-            $table->unsignedBigInteger("cliente_id");
+            $table->unsignedBigInteger("cliente_id")->nullable();
             $table->string("nit_ci")->nullable();
             $table->string("tipo_venta"); //CRÉDITO, AL CONTADO
             $table->decimal("subtotal", 24, 2);

@@ -46,7 +46,6 @@ class KardexProductoService
      */
     public function registrarMovimiento(
         int $sucursal_id,
-        int $almacen_id,
         string $tipo_registro,
         string $ingreso_salida,
         ?int $ingreso_detalle_id = null,
@@ -69,11 +68,21 @@ class KardexProductoService
             );
         }
 
-        $ultimo = KardexProducto::where('producto_id', $producto->id)
-            ->where('almacen_id', $almacen_id)
+        /*
+        |--------------------------------------------------------------------------
+        | Obtener el último saldo del kardex
+        |--------------------------------------------------------------------------
+        |
+        | Se bloquea el último registro para evitar que dos operaciones calculen
+        | el saldo usando exactamente el mismo movimiento anterior.
+        |
+        */
+        $ultimo = KardexProducto::query()
+            ->where('producto_id', $producto->id)
             ->where('sucursal_id', $sucursal_id)
             ->where('status', 1)
             ->orderByDesc('id')
+            ->lockForUpdate()
             ->first();
 
         $cantidadAnterior = (float) ($ultimo->cantidad_saldo ?? 0);
@@ -83,10 +92,20 @@ class KardexProductoService
         $cantidadSalida = 0;
         $montoIngreso = 0;
         $montoSalida = 0;
+        $cantidadSaldo = 0;
         $montoSaldo = 0;
+        $cu = 0;
 
+        /*
+        |--------------------------------------------------------------------------
+        | INGRESO
+        |--------------------------------------------------------------------------
+        |
+        | Cada ingreso representa un nuevo lote.
+        | El valor de $precio es el costo unitario de compra.
+        |
+        */
         if ($ingreso_salida === 'INGRESO') {
-            // El precio recibido representa el costo unitario de compra.
             if ($precio < 0) {
                 throw new \InvalidArgumentException(
                     'El costo de ingreso no puede ser negativo.'
@@ -94,16 +113,27 @@ class KardexProductoService
             }
 
             $cantidadIngreso = $cantidad;
-            $montoIngreso = $cantidad * $precio;
+            $montoIngreso = $cantidadIngreso * $precio;
 
             $cantidadSaldo = $cantidadAnterior + $cantidadIngreso;
             $montoSaldo = $montoAnterior + $montoIngreso;
 
-            // Promedio ponderado después de la compra.
-            $cu = $cantidadSaldo > 0
-                ? $montoSaldo / $cantidadSaldo
-                : 0;
-        } else {
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO
+            |--------------------------------------------------------------------------
+            | Para un ingreso, el costo unitario del movimiento es el costo
+            | unitario del nuevo lote.
+            |--------------------------------------------------------------------------
+            */
+            $cu = $precio;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | EGRESO FIFO
+        |--------------------------------------------------------------------------
+        */ else {
             if (!$ultimo) {
                 throw new \Exception(
                     'No existen movimientos previos para registrar el egreso.'
@@ -122,8 +152,71 @@ class KardexProductoService
                 );
             }
 
-            // Costo promedio vigente ANTES de la salida.
-            $cu = $montoAnterior / $cantidadAnterior;
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO NUEVO
+            |--------------------------------------------------------------------------
+            | En un egreso FIFO siempre debe recibirse el lote que se va a consumir.
+            |--------------------------------------------------------------------------
+            */
+            if (!$ingreso_detalle_id) {
+                throw new \InvalidArgumentException(
+                    'El egreso FIFO requiere un ingreso_detalle_id.'
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO NUEVO
+            |--------------------------------------------------------------------------
+            | Bloqueamos el lote para evitar que otra venta lo use
+            | simultáneamente.
+            |--------------------------------------------------------------------------
+            */
+            $lote = IngresoDetalle::query()
+                ->whereKey($ingreso_detalle_id)
+                ->where('producto_id', $producto->id)
+                ->where('sucursal_id', $sucursal_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lote) {
+                throw new \Exception(
+                    'El lote indicado no pertenece al producto o sucursal.'
+                );
+            }
+
+            $saldoLote = (float) $lote->cantidad_saldo;
+
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO NUEVO
+            |--------------------------------------------------------------------------
+            | La cantidad recibida para este movimiento no puede superar
+            | el saldo disponible del lote.
+            |--------------------------------------------------------------------------
+            */
+            if ($saldoLote <= 0) {
+                throw new \Exception(
+                    "El lote {$lote->id} no tiene existencias disponibles."
+                );
+            }
+
+            if ($cantidad > $saldoLote) {
+                throw new \Exception(
+                    "La cantidad solicitada supera el saldo del lote {$lote->id}."
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO NUEVO
+            |--------------------------------------------------------------------------
+            | El costo del egreso sale del lote.
+            | No se utiliza el precio de venta ni el promedio del kardex.
+            |--------------------------------------------------------------------------
+            */
+            $cu = (float) $lote->costo_unitario;
 
             $cantidadSalida = $cantidad;
             $montoSalida = $cantidadSalida * $cu;
@@ -131,41 +224,121 @@ class KardexProductoService
             $cantidadSaldo = $cantidadAnterior - $cantidadSalida;
             $montoSaldo = $montoAnterior - $montoSalida;
 
-            // Evitar pequeños residuos por precisión decimal.
+            /*
+            |--------------------------------------------------------------------------
+            | FIFO NUEVO
+            |--------------------------------------------------------------------------
+            | Actualizamos el saldo del lote consumido.
+            |--------------------------------------------------------------------------
+            */
+            $lote->update([
+                'cantidad_salida' => (float) $lote->cantidad_salida
+                    + $cantidadSalida,
+
+                'cantidad_saldo' => $saldoLote - $cantidadSalida,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Evitar residuos pequeños por precisión decimal.
+            |--------------------------------------------------------------------------
+            */
             if (abs($cantidadSaldo) < 0.000001) {
                 $cantidadSaldo = 0;
+            }
+
+            if (abs($montoSaldo) < 0.000001) {
                 $montoSaldo = 0;
+            }
+
+            if ($cantidadSaldo < 0) {
+                throw new \Exception(
+                    'El kardex no puede quedar con cantidad negativa.'
+                );
+            }
+
+            if ($montoSaldo < 0 && abs($montoSaldo) < 0.01) {
+                $montoSaldo = 0;
+            }
+
+            if ($montoSaldo < 0) {
+                throw new \Exception(
+                    'El kardex no puede quedar con monto negativo.'
+                );
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Crear movimiento de kardex
+        |--------------------------------------------------------------------------
+        */
         $datosMovimiento = [
             'sucursal_id' => $sucursal_id,
-            'almacen_id' => $almacen_id,
             'tipo_registro' => $tipo_registro,
-            'registro_id' => $registro_id !== 0 ? $registro_id : null,
+            'registro_id' => $registro_id !== 0
+                ? $registro_id
+                : null,
+
             'modulo' => $modulo,
+
+            /*
+        |--------------------------------------------------------------------------
+        | FIFO NUEVO
+        |--------------------------------------------------------------------------
+        | En un egreso se guarda el lote que originó la salida.
+        |--------------------------------------------------------------------------
+        */
             'ingreso_detalle_id' => $ingreso_detalle_id,
+
             'producto_id' => $producto->id,
             'presentacion_producto_id' => null,
             'detalle' => $detalle,
-            'precio' => $ingreso_salida === 'INGRESO' ? $precio : $cu,
+
+            /*
+        |--------------------------------------------------------------------------
+        | FIFO NUEVO
+        |--------------------------------------------------------------------------
+        | En un ingreso, $precio es el costo del lote.
+        | En un egreso, $cu es el costo del lote FIFO.
+        |--------------------------------------------------------------------------
+        */
+            'precio' => $cu,
+
             'tipo_is' => $ingreso_salida,
+
             'cantidad_ingreso' => $cantidadIngreso,
             'cantidad_salida' => $cantidadSalida,
+
             'monto_ingreso' => $montoIngreso,
             'monto_salida' => $montoSalida,
+
             'cantidad_saldo' => $cantidadSaldo,
             'monto_saldo' => $montoSaldo,
+
+            /*
+        |--------------------------------------------------------------------------
+        | FIFO NUEVO
+        |--------------------------------------------------------------------------
+        | Para un egreso, este costo corresponde al lote utilizado.
+        |--------------------------------------------------------------------------
+        */
             'cu' => $cu,
+
             'fecha' => now('America/La_Paz')->toDateString(),
+            'status' => 1,
         ];
 
         KardexProducto::create($datosMovimiento);
 
+        /*
+    |--------------------------------------------------------------------------
+    | Actualizar stock general del producto
+    |--------------------------------------------------------------------------
+    */
         if ($ingreso_salida === 'INGRESO') {
             return $this->productoService->incrementarStock(
                 $sucursal_id,
-                $almacen_id,
                 $producto->id,
                 $cantidad
             );
@@ -173,14 +346,12 @@ class KardexProductoService
 
         return $this->productoService->decrementarStock(
             $sucursal_id,
-            $almacen_id,
             $producto->id,
             $cantidad
         );
     }
 
     // REPORTE INGRESO BRUTO
-
     public function obtenerDatosIngresoBrutoProductos(Request $request)
     {
         $categoria_id = $request->categoria_id ?? 'todos';
