@@ -1736,7 +1736,6 @@ onMounted(() => {
                                     </div>
 
                                     <!-- PROMOCIONES / DESCUENTOS: EJEMPLO VISUAL -->
-                                    <!-- FUTURO: reemplazar estos ejemplos por item.promociones e item.descuentos -->
                                     <details class="discount-details mt-2">
                                         <summary
                                             class="d-flex align-items-center justify-content-between gap-2"

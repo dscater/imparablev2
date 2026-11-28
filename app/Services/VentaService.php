@@ -181,7 +181,7 @@ class VentaService
             }
         }
 
-        $venta_metodos = $datos["venta_metodos"];
+        $venta_metodos = $datos["venta_metodos"] ?? [];
         $total_cancelado = array_sum(array_column($venta_metodos, "monto"));
 
         if ($datos["tipo_venta"] == 'AL CONTADO') {
@@ -219,8 +219,7 @@ class VentaService
                 "metodo_pago_id" => $item["metodo_pago_id"],
                 "monto" => $item["monto"],
             ];
-        }, $datos["venta_metodos"]);
-
+        }, $venta_metodos);
         $venta->venta_metodos()->createMany($datos_movimientos);
         foreach ($datos["venta_detalles"] as $item) {
             $datos_venta_detalle = [
@@ -337,17 +336,20 @@ class VentaService
                 $datos_inscripcions = array_map(function ($elem) use ($venta, $venta_detalle, $producto, $fecha_actual, $hora_actual, $user) {
                     // crear su usuario
                     $cliente = Cliente::find($elem["cliente_id"]);
-                    $user_cliente = $this->user_service->crear([
-                        "nombre" => mb_strtoupper($cliente->nombre),
-                        "paterno" => mb_strtoupper($cliente->paterno),
-                        "materno" => mb_strtoupper($cliente->materno),
-                        "ci" => $cliente->ci,
-                        "ci_exp" => $cliente->ci_exp,
-                        "correo" => $cliente->correo,
-                        "fono" => $cliente->fono,
-                        "tipo" => "CLIENTE",
-                        "acceso" => 1,
-                    ]);
+                    $user_cliente = $this->user_service->existeUserCliente($cliente->ci, $cliente->ci_exp);
+                    if (!$user_cliente) {
+                        $user_cliente = $this->user_service->crear([
+                            "nombre" => mb_strtoupper($cliente->nombre),
+                            "paterno" => mb_strtoupper($cliente->paterno),
+                            "materno" => mb_strtoupper($cliente->materno),
+                            "ci" => $cliente->ci,
+                            "ci_exp" => $cliente->ci_exp,
+                            "correo" => $cliente->correo,
+                            "fono" => $cliente->fono,
+                            "tipo" => "CLIENTE",
+                            "acceso" => 1,
+                        ]);
+                    }
 
                     $fecha_fin = null;
                     if ($producto->indefinido == 0) {

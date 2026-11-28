@@ -19,7 +19,8 @@ return new class extends Migration
             $table->unsignedBigInteger("proveedor_id");
             $table->string("descripcion");
             $table->decimal("total", 24, 2);
-            $table->decimal("saldo", 24, 2);
+            $table->decimal("cancelado", 24, 2)->default(0);
+            $table->decimal("saldo", 24, 2)->default(0);
             $table->string("tipo_compra"); //CONTADO, CRÉDITO
             $table->date("fecha_registro")->nullable();
             $table->unsignedBigInteger("user_id");

@@ -415,6 +415,11 @@ class UserService
         }
     }
 
+    public function existeUserCliente($ci, $ci_exp)
+    {
+        return User::where("ci", trim($ci))->where("ci_exp", trim($ci_exp))->first();
+    }
+
     /**
      * Eliminar user
      *

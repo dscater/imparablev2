@@ -3,22 +3,23 @@ import Content from "@/Components/Content.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { useIngresoProductos } from "@/composables/ingreso_productos/useIngresoProductos";
 import Formulario from "./Formulario.vue";
+import { onMounted, onUnmounted } from "vue";
 const { props: props_page } = usePage();
 
 const props = defineProps({
-    almacens: {
-        type: Array,
-        default: () => [],
-    },
-    categorias: {
-        type: Array,
-        default: () => [],
-    },
-    marcas: {
+    sucursals: {
         type: Array,
         default: () => [],
     },
     proveedors: {
+        type: Array,
+        default: () => [],
+    },
+    tipo_compras: {
+        type: Array,
+        default: () => [],
+    },
+    metodo_pagos: {
         type: Array,
         default: () => [],
     },
@@ -30,6 +31,18 @@ const props = defineProps({
 
 const { setIngresoProducto, limpiarIngresoProducto, form } =
     useIngresoProductos();
+
+onMounted(() => {
+    document
+        .getElementsByTagName("body")[0]
+        .classList.add("sidebar-mini", "sidebar-collapse");
+});
+
+onUnmounted(() => {
+    document
+        .getElementsByTagName("body")[0]
+        .classList.remove("sidebar-mini", "sidebar-collapse");
+});
 </script>
 <template>
     <Head title="Orden de Compra"></Head>
@@ -58,10 +71,10 @@ const { setIngresoProducto, limpiarIngresoProducto, form } =
             <div class="col-md-12">
                 <Formulario
                     :form="form"
-                    :almacens="almacens"
-                    :categorias="categorias"
-                    :marcas="marcas"
+                    :sucursals="sucursals"
                     :proveedors="proveedors"
+                    :tipo_compras="tipo_compras"
+                    :metodo_pagos="metodo_pagos"
                     :tipo_ingresos="tipo_ingresos"
                     @envio-formulario="limpiarIngresoProducto"
                 ></Formulario>

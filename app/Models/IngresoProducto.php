@@ -9,14 +9,11 @@ class IngresoProducto extends Model
     protected $fillable = [
         "codigo",
         "sucursal_id",
-        "almacen_id",
         "tipo_ingreso_id",
         "proveedor_id",
         "descripcion",
         "total",
-        "cancelado_efectivo",
-        "cancelado_qr",
-        "total_cancelado",
+        "cancelado",
         "saldo",
         "tipo_compra", //CONTADO, CRÉDITO
         "fecha_registro",
@@ -61,6 +58,11 @@ class IngresoProducto extends Model
     public function ingreso_detalles_faltantes()
     {
         return $this->hasMany(IngresoDetalle::class, 'ingreso_producto_id')->where("faltantes", ">", 0);
+    }
+
+    public function ingreso_metodos()
+    {
+        return $this->hasMany(IngresoMetodo::class, 'ingreso_producto_id');
     }
 
     public function ingreso_pagos()

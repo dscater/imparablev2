@@ -7,23 +7,24 @@ use App\Http\Requests\IngresoProductoFaltantesRequest;
 use App\Http\Requests\IngresoProductoStoreRequest;
 use App\Http\Requests\IngresoProductoUpdateRequest;
 use App\Http\Requests\IngresoProductoVerificarRequest;
-use App\Models\Almacen;
+use App\Models\Sucursal;
 use App\Models\IngresoDetalle;
 use App\Models\IngresoPago;
 use App\Models\IngresoProducto;
 use App\Models\User;
-use App\Services\AlmacenService;
+use App\Services\SucursalService;
 use App\Services\CategoriaService;
 use App\Services\IngresoPagoService;
 use App\Services\IngresoProductoService;
 use App\Services\MarcaService;
+use App\Services\MetodoPagoService;
 use App\Services\ProveedorService;
+use App\Services\TipoCompraService;
 use App\Services\TipoIngresoService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
@@ -37,10 +38,12 @@ class IngresoProductoController extends Controller
     public function __construct(
         private IngresoProductoService $ingreso_productoService,
         private IngresoPagoService $ingreso_pago_service,
-        private AlmacenService $almacen_service,
+        private SucursalService $sucursal_service,
         private CategoriaService $categoria_service,
         private MarcaService $marca_service,
+        private MetodoPagoService $metodo_pago_service,
         private ProveedorService $proveedor_service,
+        private TipoCompraService $tipo_compra_service,
         private TipoIngresoService $tipo_ingreso_service
     ) {}
 
@@ -69,9 +72,9 @@ class IngresoProductoController extends Controller
                 'fecha_registro',
                 'proveedor_id',
                 'sucursal_id',
-                'almacen_id',
+                'sucursal_id',
             ])
-            ->with(['proveedor:id,nombre', "sucursal:id,nombre", "almacen:id,nombre"])
+            ->with(['proveedor:id,nombre', "sucursal:id,nombre", "sucursal:id,nombre"])
             ->where('status', 1)
             ->where(function ($query) use ($busqueda) {
                 $query->where('codigo', 'like', "%{$busqueda}%");
@@ -88,27 +91,27 @@ class IngresoProductoController extends Controller
 
     public function lista_pagos_pendientes(Request $request): JsonResponse
     {
-        $almacen_id = $request->input("almacen_id", null);
+        $sucursal_id = $request->input("sucursal_id", null);
         $codigo = $request->input("codigo", null);
         $fecha_ini = $request->input("fecha_ini", null);
         $fecha_fin = $request->input("fecha_fin", null);
         $ingreso_productos = IngresoProducto::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
+            "sucursal:id,nombre",
             "proveedor:id,nombre",
             "tipo_ingreso:id,nombre",
             "user:id,nombre,paterno,materno",
             "ingreso_detalles",
             "ingreso_pagos.user",
             "ingreso_pagos.sucursal",
-            "ingreso_pagos.almacen",
+            "ingreso_pagos.sucursal",
         ]);
 
         $ingreso_productos->where("saldo", ">", 0);
         $ingreso_productos->where("tipo_compra", "CRÉDITO");
 
-        if ($almacen_id && $almacen_id != 'todos') {
-            $ingreso_productos->where("almacen_id", $almacen_id);
+        if ($sucursal_id && $sucursal_id != 'todos') {
+            $ingreso_productos->where("sucursal_id", $sucursal_id);
         }
 
         if ($codigo) {
@@ -131,9 +134,9 @@ class IngresoProductoController extends Controller
         try {
             // crear el IngresoProducto
             $datos = $request->validated();
-            $almacen = Almacen::findOrFail($datos["almacen_id"]);
+            $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
             $datos["ingreso_producto_id"] = $ingreso_producto->id;
-            $datos["sucursal_id"] = $almacen->sucursal_id;
+            $datos["sucursal_id"] = $sucursal->sucursal_id;
             $datos["proveedor_id"] = $ingreso_producto->proveedor_id;
             $ingreso_pago = $this->ingreso_pago_service->crear($datos);
             DB::commit();
@@ -159,9 +162,9 @@ class IngresoProductoController extends Controller
         try {
             // crear el IngresoProducto
             $datos = $request->validated();
-            $almacen = Almacen::findOrFail($datos["almacen_id"]);
+            $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
             $datos["ingreso_producto_id"] = $ingreso_pago->ingreso_producto_id;
-            $datos["sucursal_id"] = $almacen->sucursal_id;
+            $datos["sucursal_id"] = $sucursal->sucursal_id;
             $datos["proveedor_id"] = $ingreso_pago->proveedor_id;
             $ingreso_pago = $this->ingreso_pago_service->actualizar($datos, $ingreso_pago);
             DB::commit();
@@ -257,17 +260,17 @@ class IngresoProductoController extends Controller
 
     public function create(): ResponseInertia
     {
-        $almacens = $this->almacen_service->listado(1);
-        $categorias = $this->categoria_service->listado();
-        $marcas = $this->marca_service->listado();
+        $sucursals = $this->sucursal_service->listado(1);
         $proveedors = $this->proveedor_service->listado();
+        $tipo_compras = $this->tipo_compra_service->listado();
+        $metodo_pagos = $this->metodo_pago_service->listado();
         $tipo_ingresos = $this->tipo_ingreso_service->listado();
 
         return Inertia::render("Admin/IngresoProductos/Create", [
-            "almacens" => $almacens,
-            "categorias" => $categorias,
-            "marcas" => $marcas,
+            "sucursals" => $sucursals,
             "proveedors" => $proveedors,
+            "tipo_compras" => $tipo_compras,
+            "metodo_pagos" => $metodo_pagos,
             "tipo_ingresos" => $tipo_ingresos,
         ]);
     }
@@ -298,16 +301,16 @@ class IngresoProductoController extends Controller
     }
     public function lista_sin_verificar(Request $request)
     {
-        $almacen_id = $request->input("almacen_id", null);
+        $sucursal_id = $request->input("sucursal_id", null);
         $codigo = $request->input("codigo", null);
         $fecha_ini = $request->input("fecha_ini", null);
         $fecha_fin = $request->input("fecha_fin", null);
 
-        $ingreso_productos = IngresoProducto::with(["sucursal", "almacen", "tipo_ingreso", "proveedor", "ingreso_detalles.producto"])
+        $ingreso_productos = IngresoProducto::with(["sucursal", "sucursal", "tipo_ingreso", "proveedor", "ingreso_detalles.producto"])
             ->where("estado_ingreso", "PENDIENTE");
 
-        if ($almacen_id && $almacen_id != 'todos') {
-            $ingreso_productos->where("almacen_id", $almacen_id);
+        if ($sucursal_id && $sucursal_id != 'todos') {
+            $ingreso_productos->where("sucursal_id", $sucursal_id);
         }
 
         if ($codigo) {
@@ -325,16 +328,16 @@ class IngresoProductoController extends Controller
 
     public function lista_faltantes(Request $request)
     {
-        $almacen_id = $request->input("almacen_id", null);
+        $sucursal_id = $request->input("sucursal_id", null);
         $codigo = $request->input("codigo", null);
         $fecha_ini = $request->input("fecha_ini", null);
         $fecha_fin = $request->input("fecha_fin", null);
 
-        $ingreso_productos = IngresoProducto::with(["sucursal", "almacen", "tipo_ingreso", "proveedor", "ingreso_detalles.producto", "ingreso_detalles_faltantes"])
+        $ingreso_productos = IngresoProducto::with(["sucursal", "sucursal", "tipo_ingreso", "proveedor", "ingreso_detalles.producto", "ingreso_detalles_faltantes"])
             ->where("estado_faltantes", "PENDIENTE");
 
-        if ($almacen_id && $almacen_id != 'todos') {
-            $ingreso_productos->where("almacen_id", $almacen_id);
+        if ($sucursal_id && $sucursal_id != 'todos') {
+            $ingreso_productos->where("sucursal_id", $sucursal_id);
         }
 
         if ($codigo) {
@@ -351,21 +354,21 @@ class IngresoProductoController extends Controller
 
     public function verificacion_ingresos()
     {
-        $almacens = $this->almacen_service->listado(1);
+        $sucursals = $this->sucursal_service->listado(1);
         return Inertia::render("Admin/IngresoProductos/VerificacionIngresos", [
-            "almacens" => $almacens
+            "sucursals" => $sucursals
         ]);
     }
 
     public function verificacion_create(IngresoProducto $ingreso_producto)
     {
-        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "almacen", "ingreso_detalles.producto", "ingreso_detalles.ingreso_recepcions"]);
+        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "sucursal", "ingreso_detalles.producto", "ingreso_detalles.ingreso_recepcions"]);
         return Inertia::render("Admin/IngresoProductos/VerificacionCreate", compact("ingreso_producto"));
     }
 
     public function verificacion_edit(IngresoProducto $ingreso_producto)
     {
-        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "almacen", "ingreso_detalles"]);
+        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "sucursal", "ingreso_detalles"]);
         return Inertia::render("Admin/IngresoProductos/VerificacionEdit", compact("ingreso_producto"));
     }
 
@@ -388,16 +391,16 @@ class IngresoProductoController extends Controller
     }
     public function faltantes_ingresos()
     {
-        $almacens = $this->almacen_service->listado(1);
+        $sucursals = $this->sucursal_service->listado(1);
         return Inertia::render("Admin/IngresoProductos/FaltantesIngresos", [
-            "almacens" => $almacens
+            "sucursals" => $sucursals
         ]);
     }
 
 
     public function faltantes_create(IngresoProducto $ingreso_producto)
     {
-        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "almacen"]);
+        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "sucursal"]);
 
         $ingreso_producto->ingreso_detalles = IngresoDetalle::with(["producto",  "ingreso_recepcions"])
             ->where("ingreso_producto_id", $ingreso_producto->id)
@@ -408,7 +411,7 @@ class IngresoProductoController extends Controller
     }
     public function faltantes_edit(IngresoProducto $ingreso_producto)
     {
-        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "almacen"]);
+        $ingreso_producto = $ingreso_producto->load(["proveedor", "sucursal", "sucursal"]);
         $ingreso_producto->ingreso_detalles = IngresoDetalle::with(["producto", "ingreso_recepcions_faltantes", "ingreso_recepcions"])
             ->where("ingreso_producto_id", $ingreso_producto->id)
             ->where("faltantes", ">", 0)
@@ -476,17 +479,18 @@ class IngresoProductoController extends Controller
     {
         $ingreso_producto = $ingreso_producto->load(["ingreso_detalles.producto", "ingreso_detalles.tipo_ingreso"]);
 
-        $almacens = $this->almacen_service->listado(1);
-        $categorias = $this->categoria_service->listado();
-        $marcas = $this->marca_service->listado();
+        $sucursals = $this->sucursal_service->listado(1);
+        $metodo_pagos = $this->metodo_pago_service->listado();
+        $tipo_compras = $this->tipo_compra_service->listado();
+
         $proveedors = $this->proveedor_service->listado();
         $tipo_ingresos = $this->tipo_ingreso_service->listado();
 
         return Inertia::render("Admin/IngresoProductos/Edit", [
             "ingreso_producto" => $ingreso_producto,
-            "almacens" => $almacens,
-            "categorias" => $categorias,
-            "marcas" => $marcas,
+            "sucursals" => $sucursals,
+            "metodo_pagos" => $metodo_pagos,
+            "tipo_compras" => $tipo_compras,
             "proveedors" => $proveedors,
             "tipo_ingresos" => $tipo_ingresos,
         ]);

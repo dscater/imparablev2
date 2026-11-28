@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Almacen;
+use App\Models\Sucursal;
 use App\Models\IngresoDetalle;
 use App\Services\HistorialAccionService;
 use App\Models\IngresoProducto;
@@ -54,7 +54,6 @@ class IngresoProductoService
     {
         $ingreso_productos = IngresoProducto::with([
             "sucursal:id,nombre",
-            "almacen:id,nombre",
             "proveedor:id,nombre",
             "tipo_ingreso:id,nombre",
         ])
@@ -108,7 +107,7 @@ class IngresoProductoService
      */
     public function crear(array $datos): IngresoProducto
     {
-        $almacen = Almacen::findOrFail($datos["almacen_id"]);
+        $sucursal = Sucursal::findOrFail($datos["sucursal_id"]);
 
         $tipo_pago = '';
         if ((float)$datos["cancelado_efectivo"] > 0) {
@@ -125,8 +124,7 @@ class IngresoProductoService
 
         $ingreso_producto = IngresoProducto::create([
             "codigo" => mb_strtoupper($datos["codigo"]),
-            "sucursal_id" => $almacen->sucursal_id,
-            "almacen_id" => $almacen->id,
+            "sucursal_id" => $sucursal->id,
             "tipo_ingreso_id" => $datos["tipo_ingreso_id"],
             "proveedor_id" => $datos["proveedor_id"],
             "descripcion" => mb_strtoupper($datos["descripcion"]) ?? NULL,
@@ -166,7 +164,7 @@ class IngresoProductoService
             // REGISTRAR INGRESO STOCK
             // $this->kardex_producto_service->registrarMovimiento(
             //     $ingreso_producto->sucursal_id,
-            //     $ingreso_producto->almacen_id,
+            //     $ingreso_producto->sucursal_id,
             //     "INGRESO DE PRODUCTO",
             //     "INGRESO",
             //     $ingreso_detalle->id,
@@ -183,7 +181,6 @@ class IngresoProductoService
         if ((float)$total_cancelado > 0) {
             $movimiento_caja = [
                 "sucursal_id" => $ingreso_producto->sucursal_id,
-                "almacen_id" => $ingreso_producto->almacen_id,
                 "tipo" => "COMPRA DE PRODUCTOS",
                 "modulo" => "IngresoProducto",
                 "registro_id" => $ingreso_producto->id,
@@ -229,16 +226,15 @@ class IngresoProductoService
             // recorrer las recepciones
             $array_recepcions = [];
             foreach ($detalle["ingreso_recepcions"] as $key_detalle => $recepcion) {
-                $almacen = Almacen::find($recepcion["almacen_id"]);
+                $sucursal = Sucursal::find($recepcion["sucursal_id"]);
                 if (!$recepcion["cantidad"] || (float)$recepcion["cantidad"] <= 0) {
-                    throw new Exception("La cantidad ingresada del producto {$producto->nombre}, en el almacén {$almacen->nombre} es invalida");
+                    throw new Exception("La cantidad ingresada del producto {$producto->nombre}, en el almacén {$sucursal->nombre} es invalida");
                 }
                 $total_verificado += (float)$recepcion["cantidad"];
                 $array_recepcions[] = [
                     "ingreso_producto_id" => $ingreso_producto->id,
                     "ingreso_detalle_id" => $detalle["id"],
-                    "sucursal_id" => $almacen->sucursal_id,
-                    "almacen_id" => $almacen->id,
+                    "sucursal_id" => $sucursal->id,
                     "producto_id" => $detalle["producto_id"],
                     "cantidad" => $recepcion["cantidad"],
                     "tipo" => "RECEPCION",
@@ -272,7 +268,6 @@ class IngresoProductoService
 
                 $this->kardex_producto_service->registrarMovimiento(
                     $ingreso_recepcion->sucursal_id,
-                    $ingreso_recepcion->almacen_id,
                     "INGRESO DE PRODUCTO",
                     "INGRESO",
                     $ingreso_detalle->id,
@@ -307,7 +302,7 @@ class IngresoProductoService
                 continue;
 
             foreach ($detalle["ingreso_recepcions_faltantes"] as $key_detalle => $recepcion) {
-                $almacen = Almacen::find($recepcion["almacen_id"]);
+                $sucursal = Sucursal::find($recepcion["sucursal_id"]);
                 if (!$recepcion["cantidad"] || (float)$recepcion["cantidad"] <= 0) {
                     continue;
                 }
@@ -315,8 +310,7 @@ class IngresoProductoService
                 $array_recepcions[] = [
                     "ingreso_producto_id" => $ingreso_producto->id,
                     "ingreso_detalle_id" => $detalle["id"],
-                    "sucursal_id" => $almacen->sucursal_id,
-                    "almacen_id" => $almacen->id,
+                    "sucursal_id" => $sucursal->id,
                     "producto_id" => $detalle["producto_id"],
                     "cantidad" => $recepcion["cantidad"],
                     "tipo" => "FALTANTE",
@@ -352,7 +346,6 @@ class IngresoProductoService
 
                 $this->kardex_producto_service->registrarMovimiento(
                     $ingreso_recepcion->sucursal_id,
-                    $ingreso_recepcion->almacen_id,
                     "INGRESO DE PRODUCTO",
                     "INGRESO",
                     $ingreso_detalle->id,
